@@ -113,24 +113,151 @@ def create_orden(nombre_usuario, telefono_usuario, tipo_pedido, especial_id=None
         return jsonify({"msg": "Error al crear la orden"}), 500
 
 def delete_orden(orden_id):
-    """Eliminar una orden por ID"""
+    """Eliminar orden - solo permitido si está en estado 'entregado'"""
     try:
+        print(f"\n{'='*50}")
+        print(f"[ELIMINAR ORDEN] Procesando orden ID: {orden_id}")
+        
         # Verificar si la orden existe
         existing_orden = Orden.find_by_id(orden_id)
+        
         if not existing_orden:
+            print(f"[ELIMINAR ORDEN] Orden {orden_id} NO encontrada")
             return jsonify({"msg": "Orden no encontrada"}), 404
         
-        # Eliminar la orden
+        print(f"[ELIMINAR ORDEN] Datos de la orden:")
+        print(f"  - ID: {existing_orden.id}")
+        print(f"  - Código único: {existing_orden.codigo_unico}")
+        print(f"  - Cliente: {existing_orden.nombre_usuario}")
+        print(f"  - Estado actual: {existing_orden.estado}")
+        print(f"  - Fecha creación: {existing_orden.fecha_creacion}")
+        
+        # REGLA: Solo se puede eliminar si está en estado 'entregado'
+        if existing_orden.estado != 'entregado':
+            print(f"[ELIMINAR ORDEN] Orden NO está entregada (estado: {existing_orden.estado})")
+            
+            # Opciones según el estado
+            if existing_orden.estado == 'pendiente':
+                sugerencia = "Primero debe marcar la orden como 'Entregado' antes de poder eliminarla"
+                accion_recomendada = "marcar_entregado"
+            elif existing_orden.estado == 'preparando':
+                sugerencia = "La orden está en preparación. Complete el proceso marcándola como 'Entregado' primero"
+                accion_recomendada = "continuar_proceso"
+            elif existing_orden.estado == 'listo':
+                sugerencia = "La orden está lista para entregar. Márquela como 'Entregado' primero"
+                accion_recomendada = "marcar_entregado"
+            elif existing_orden.estado == 'cancelado':
+                sugerencia = "Las órdenes canceladas no pueden ser eliminadas"
+                accion_recomendada = "no_permitido"
+            else:
+                sugerencia = f"Las órdenes en estado '{existing_orden.estado}' no pueden ser eliminadas"
+                accion_recomendada = "no_permitido"
+            
+            return jsonify({
+                "msg": f"No se puede eliminar una orden en estado '{existing_orden.estado}'",
+                "detalle": sugerencia,
+                "estado_actual": existing_orden.estado,
+                "accion_recomendada": accion_recomendada,
+                "tipo": "estado_no_permitido"
+            }), 400
+        
+        # Verificar si han pasado al menos 24 horas desde la entrega
+        from datetime import datetime, timedelta
+        fecha_actualizacion = existing_orden.fecha_actualizacion or existing_orden.fecha_creacion
+        
+        if fecha_actualizacion:
+            tiempo_transcurrido = datetime.utcnow() - fecha_actualizacion
+            horas_transcurridas = tiempo_transcurrido.total_seconds() / 3600
+            
+            print(f"[ELIMINAR ORDEN] Horas desde actualización: {horas_transcurridas:.1f}")
+            
+            if horas_transcurridas < 1:  # Menos de 1 hora
+                return jsonify({
+                    "msg": "No se puede eliminar una orden recién entregada",
+                    "detalle": "Espere al menos 1 hora después de la entrega para poder eliminar la orden",
+                    "horas_transcurridas": round(horas_transcurridas, 1),
+                    "tipo": "tiempo_insuficiente"
+                }), 400
+        
+        print(f"[ELIMINAR ORDEN] Orden está entregada, intentando eliminación...")
+        
+        # Primero intentar eliminar notificaciones relacionadas
+        notificaciones_eliminadas = 0
+        try:
+            from Models.Notificaciones import Notificacion
+            notificaciones_eliminadas = Notificacion.delete_by_orden_id(orden_id)
+            print(f"[ELIMINAR ORDEN] Notificaciones eliminadas: {notificaciones_eliminadas}")
+        except Exception as notif_error:
+            print(f"[ELIMINAR ORDEN] Error al eliminar notificaciones: {notif_error}")
+            # Continuar de todos modos
+        
+        # Intentar eliminar físicamente la orden
         result = Orden.delete_orden(orden_id)
         
         if result:
-            return jsonify({"msg": "Orden eliminada exitosamente"}), 200
+            print(f"[ELIMINAR ORDEN] ✅ Orden {orden_id} eliminada exitosamente")
+            print(f"[ELIMINAR ORDEN] Notificaciones eliminadas: {notificaciones_eliminadas}")
+            
+            return jsonify({
+                "msg": "✅ Orden eliminada exitosamente",
+                "detalle": f"Se eliminó la orden y {notificaciones_eliminadas} notificación(es) asociada(s)",
+                "notificaciones_eliminadas": notificaciones_eliminadas,
+                "tipo": "eliminacion_exitosa"
+            }), 200
         else:
-            return jsonify({"msg": "Error al eliminar la orden"}), 500
+            print(f"[ELIMINAR ORDEN] ❌ Error al eliminar orden físicamente")
+            
+            # Intentar como última opción: marcar como "eliminada" en lugar de borrar
+            try:
+                from datetime import datetime
+                # Agregar sufijo al nombre para indicar que está "eliminada"
+                nuevo_nombre = f"{existing_orden.nombre_usuario} [ELIMINADO]"
+                Orden.update_orden(orden_id, {
+                    'nombre_usuario': nuevo_nombre,
+                    'estado': 'cancelado',
+                    'telefono_usuario': '0000000000'  # Anonimizar
+                })
+                
+                return jsonify({
+                    "msg": "⚠️ No se pudo eliminar físicamente la orden",
+                    "detalle": "Se marcó la orden como 'Eliminada' en el sistema",
+                    "tipo": "marcada_como_eliminada",
+                    "estado": "cancelado"
+                }), 200
+                
+            except Exception as fallback_error:
+                print(f"[ELIMINAR ORDEN] Error en fallback: {fallback_error}")
+                
+                return jsonify({
+                    "msg": "❌ Error crítico al eliminar la orden",
+                    "detalle": "No se pudo eliminar ni modificar la orden",
+                    "tipo": "error_critico"
+                }), 500
             
     except Exception as error:
-        print(f"Error al eliminar orden {orden_id}: {str(error)}")
-        return jsonify({"msg": "Error interno del servidor al eliminar orden"}), 500
+        print(f"\n[ELIMINAR ORDEN] ⚠️ ERROR EXCEPCIÓN:")
+        print(f"Tipo: {type(error).__name__}")
+        print(f"Mensaje: {str(error)}")
+        
+        # Detectar error de clave foránea
+        error_str = str(error)
+        if "foreign key constraint" in error_str.lower():
+            return jsonify({
+                "msg": "⚠️ No se puede eliminar esta orden porque tiene notificaciones activas",
+                "detalle": "Las notificaciones asociadas deben ser procesadas primero",
+                "tipo": "notificaciones_activas"
+            }), 400
+        
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            "msg": "❌ Error interno del servidor",
+            "error": str(error),
+            "tipo": "error_interno"
+        }), 500
+    finally:
+        print(f"{'='*50}\n")
 
 def update_orden(orden_id, nombre_usuario=None, telefono_usuario=None, estado=None, 
                 precio=None, tipo_pedido=None, especial_id=None, ingredientes_personalizados=None):

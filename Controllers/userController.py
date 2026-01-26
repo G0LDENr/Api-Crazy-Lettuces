@@ -18,6 +18,7 @@ def login_user(email, password):
         
         if user:
             print(f"✅ Usuario autenticado: {user.correo}")
+            print(f"📝 Datos del usuario - Nombre: {user.nombre}, Teléfono: {user.telefono}")
             
             # CORRECCIÓN: El identity debe ser un string (solo el ID)
             user_identity = str(user.id)  # Solo el ID como string
@@ -26,6 +27,7 @@ def login_user(email, password):
             
             # Convertir usuario a formato para frontend
             user_dict = User.to_dict(user)
+            print(f"📋 Diccionario del usuario a enviar: {user_dict}")
             
             return jsonify({
                 'access_token': access_token,
@@ -156,6 +158,7 @@ def update_user(user_id, name=None, email=None, password=None, role=None, telefo
         
         update_data = {}
         
+        # Solo agregar al diccionario si el valor no es None
         if name is not None:
             update_data['nombre'] = name
         if email is not None:
@@ -175,23 +178,34 @@ def update_user(user_id, name=None, email=None, password=None, role=None, telefo
         if sexo is not None:
             update_data['sexo'] = sexo
         
+        print(f"🔧 Datos para actualizar usuario {user_id}: {update_data}")
+        
         if update_data:
+            print(f"🔄 Actualizando usuario {user_id} con datos: {update_data}")
             if User.update_user(user_id, update_data):
+                print(f"✅ Usuario {user_id} actualizado exitosamente")
                 # Obtener el usuario actualizado
                 updated_user = User.find_by_id(user_id)
-                user_dict = User.to_dict(updated_user)
-                
-                return jsonify({
-                    "msg": "Usuario actualizado exitosamente",
-                    "user": user_dict
-                }), 200
+                if updated_user:
+                    user_dict = User.to_dict(updated_user)
+                    return jsonify({
+                        "msg": "Usuario actualizado exitosamente",
+                        "user": user_dict
+                    }), 200
+                else:
+                    print(f"⚠️ Usuario {user_id} no encontrado después de actualizar")
+                    return jsonify({"msg": "Usuario actualizado pero no encontrado"}), 500
             else:
-                return jsonify({"msg": "No se realizaron cambios en el usuario"}), 200
+                print(f"❌ No se pudieron actualizar los datos del usuario {user_id}")
+                return jsonify({"msg": "No se pudieron actualizar los datos"}), 500
         else:
+            print(f"⚠️ No se proporcionaron datos para actualizar usuario {user_id}")
             return jsonify({"msg": "No se proporcionaron datos para actualizar"}), 400
             
     except Exception as error:
-        print(f"Error al actualizar el usuario: {error}")
+        print(f"💥 Error al actualizar el usuario: {error}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "msg": "Error al actualizar el usuario",
             "error": str(error)

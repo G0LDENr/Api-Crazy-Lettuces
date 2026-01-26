@@ -179,14 +179,17 @@ class User(db.Model):
     
     @classmethod
     def to_dict(cls, user):
-        """Convertir usuario a diccionario"""
+        """Convertir objeto usuario a diccionario para JSON"""
+        if not user:
+            return None
+        
         return {
             'id': user.id,
             'nombre': user.nombre,
             'correo': user.correo,
-            'rol': user.rol,  # Número del rol
-            'rol_texto': cls.get_role_name(user.rol),  # Nombre del rol
-            'telefono': user.telefono,
-            'sexo': user.sexo,
-            'fecha_registro': user.fecha_registro.isoformat() if user.fecha_registro else None
-        }
+            'telefono': getattr(user, 'telefono', ''),
+            'sexo': getattr(user, 'sexo', ''),
+            'rol': user.rol,
+            'rol_texto': cls.get_role_name(user.rol) if hasattr(cls, 'get_role_name') else ('admin' if user.rol == 1 else 'cliente'),
+            'fecha_registro': user.fecha_registro.strftime('%Y-%m-%d %H:%M:%S') if user.fecha_registro else None
+    }

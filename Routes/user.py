@@ -105,7 +105,30 @@ def get_users_by_role_route(role_id):
         description: Usuarios del rol especificado
     """
     return get_users_by_role(role_id)
-  
+
+# NUEVA RUTA: Obtener usuario actual desde token JWT
+@user_bp.route('/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    """
+    Obtener información del usuario actual (desde token JWT)
+    ---
+    tags:
+      - Usuarios
+    responses:
+      200:
+        description: Información del usuario autenticado
+      401:
+        description: No autorizado
+    """
+    try:
+        # Obtener el ID del usuario desde el token JWT
+        current_user_id = int(get_jwt_identity())
+        return get_single_user(current_user_id)
+    except Exception as e:
+        print(f"Error en /me endpoint: {e}")
+        return jsonify({"msg": "Error al obtener datos del usuario"}), 500
+
 @user_bp.route('/<int:user_id>', methods=['GET'])
 @jwt_required()
 def get_user(user_id):
@@ -147,7 +170,69 @@ def get_profile_route(user_id):
         description: Usuario no encontrado
     """
     return get_user_profile(user_id)
-  
+
+# NUEVA RUTA: Actualizar usuario actual desde token JWT
+@user_bp.route('/update', methods=['PUT'])
+@jwt_required()
+def update_current_user():
+    """
+    Actualizar perfil del usuario actual (desde token JWT)
+    ---
+    tags:
+      - Usuarios
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            nombre:
+              type: string
+              example: Juan Pérez
+            telefono:
+              type: string
+              example: "5512345678"
+            sexo:
+              type: string
+              example: "Masculino"
+            correo:
+              type: string
+              example: juan@ejemplo.com
+    responses:
+      200:
+        description: Perfil actualizado exitosamente
+      400:
+        description: Datos inválidos
+      401:
+        description: No autorizado
+    """
+    try:
+        # Obtener el ID del usuario desde el token JWT
+        current_user_id = int(get_jwt_identity())
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'msg': 'No se proporcionaron datos'}), 400
+        
+        # Mapear los nombres de campos del frontend al backend
+        # El frontend envía: nombre, telefono, sexo, correo
+        # El backend espera: name, email, telefono, sexo
+        
+        return update_user(
+            user_id=current_user_id,
+            name=data.get('nombre'),
+            email=data.get('correo'),
+            telefono=data.get('telefono'),
+            sexo=data.get('sexo'),
+            password=None,  # No actualizar contraseña aquí
+            role=None       # No actualizar rol aquí
+        )
+        
+    except Exception as e:
+        print(f"Error en /update endpoint: {e}")
+        return jsonify({"msg": "Error al actualizar el perfil"}), 500
+
 @user_bp.route('/add_user', methods=['POST'])
 def add_user():
     """
