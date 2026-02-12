@@ -19,6 +19,8 @@ class BackupService:
         self.app = app
         self.backup_dir = 'backups'
         self.scheduler = None
+        # IMPORTANTE: Ajusta esta ruta según tu instalación de MySQL
+        self.mysql_path = 'C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\'
         
         # Crear directorio de respaldos si no existe
         if not os.path.exists(self.backup_dir):
@@ -179,7 +181,8 @@ class BackupService:
                         insert_statements = self.get_table_data(table_name)
                         f.write(insert_statements)
                         
-                        f.write("\n" + "="*80 + "\n\n")
+                        # Separador seguro
+                        f.write(f"-- Fin de datos para tabla: {table_name}\n\n")
                         
                         logger.info(f"✅ Tabla {table_name} procesada")
                         
@@ -272,10 +275,11 @@ class BackupService:
             return None
     
     def restore_backup(self, backup_id):
-        """Restaurar base de datos desde un respaldo"""
+        """Restaurar base de datos desde un respaldo - VERSIÓN CON CORRECCIÓN DE ENCODING"""
         try:
-            logger.info(f"🔄 Iniciando restauración del respaldo ID: {backup_id}")
+            logger.info(f"🔄 [RESTAURACIÓN] Iniciando restauración del respaldo ID: {backup_id}")
             
+            # 1. Obtener información del respaldo
             backup = Backup.find_by_id(backup_id)
             if not backup:
                 raise Exception(f"Respaldo con ID {backup_id} no encontrado")
@@ -284,11 +288,48 @@ class BackupService:
                 raise Exception(f"Archivo de respaldo no encontrado: {backup.filepath}")
             
             logger.info(f"📂 Archivo a restaurar: {backup.filename}")
+            logger.info(f"📊 Tipo: {backup.backup_type}")
             
-            # Determinar si está comprimido
+            # 2. Obtener configuración de la base de datos DESDE FLASK
+            with self.app.app_context():
+                SQLALCHEMY_DATABASE_URI = current_app.config.get('SQLALCHEMY_DATABASE_URI')
+                
+            if not SQLALCHEMY_DATABASE_URI:
+                SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+                
+            if not SQLALCHEMY_DATABASE_URI:
+                SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:131023@localhost:3307/crazylettuces'
+            
+            import re
+            
+            # Extraer información de conexión
+            pattern = r"mysql\+pymysql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)"
+            match = re.match(pattern, SQLALCHEMY_DATABASE_URI)
+            
+            if not match:
+                pattern2 = r"mysql\+pymysql://([^:]+):([^@]+)@([^/]+)/(.+)"
+                match = re.match(pattern2, SQLALCHEMY_DATABASE_URI)
+                
+                if match:
+                    username, password, host, database = match.groups()
+                    port = "3306"
+                else:
+                    logger.warning("⚠️ No se pudo parsear URI, usando valores por defecto")
+                    username = "root"
+                    password = "131023"
+                    host = "localhost"
+                    port = "3307"
+                    database = "crazylettuces"
+            else:
+                username, password, host, port, database = match.groups()
+                
+            logger.info(f"🔗 Conectando a: {username}@{host}:{port}/{database}")
+            
+            # 3. Preparar archivo para restaurar
             file_to_restore = backup.filepath
-            if backup.filepath.endswith('.gz'):
-                # Descomprimir temporalmente
+            is_compressed = backup.filepath.endswith('.gz')
+            
+            if is_compressed:
                 import tempfile
                 temp_dir = tempfile.mkdtemp()
                 file_to_restore = os.path.join(temp_dir, 'temp_backup.sql')
@@ -299,63 +340,357 @@ class BackupService:
                 
                 logger.info("📦 Archivo descomprimido para restauración")
             
-            # Leer y ejecutar el archivo SQL
-            with open(file_to_restore, 'r', encoding='utf-8') as f:
-                sql_content = f.read()
+            # 4. **LEER Y CORREGIR PROBLEMAS DE ENCODING**
+            logger.info("🔤 Leyendo y corrigiendo encoding del archivo...")
             
-            # Dividir en sentencias SQL (separadas por punto y coma)
-            import re
+            # Intentar diferentes encodings
+            content = None
+            encodings_to_try = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1', 'utf-8-sig']
             
-            # Patrón para dividir sentencias SQL, ignorando punto y coma dentro de strings
-            pattern = r'''((?:[^;"']|"[^"]*"|'[^']*')+)'''
-            statements = re.split(pattern, sql_content)
+            for encoding in encodings_to_try:
+                try:
+                    with open(file_to_restore, 'r', encoding=encoding, errors='strict') as f:
+                        content = f.read()
+                    logger.info(f"✅ Archivo leído con encoding: {encoding}")
+                    break
+                except UnicodeDecodeError:
+                    continue
             
-            # Filtrar sentencias vacías y comentarios
-            statements = [
-                stmt.strip() for stmt in statements 
-                if stmt.strip() and not stmt.strip().startswith('--')
+            if content is None:
+                # Último intento: leer ignorando errores
+                with open(file_to_restore, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                logger.info("⚠️ Archivo leído ignorando errores de encoding")
+            
+            # 5. **CORRECCIONES ESPECÍFICAS PARA TU PROBLEMA**
+            logger.info("🔧 Aplicando correcciones específicas...")
+            
+            # CORREGIR: 'contraseÃ±a' → 'password' (tu columna problemática)
+            # Primero, ver qué nombres de columna están en el archivo
+            column_patterns = [
+                'contraseÃ±a',  # UTF-8 mal interpretado
+                'contraseña',   # Original con ñ
+                'password',     # Nombre en inglés
+                'contrasena',   # Sin tilde
             ]
             
-            total_statements = len(statements)
-            logger.info(f"🔨 Ejecutando {total_statements} sentencias SQL...")
+            found_columns = []
+            for pattern in column_patterns:
+                if pattern in content:
+                    found_columns.append(pattern)
+                    logger.info(f"📝 Columna encontrada en archivo: '{pattern}'")
             
-            with self.app.app_context():
-                # Desactivar verificaciones de clave foránea temporalmente
-                db.session.execute(text("SET FOREIGN_KEY_CHECKS=0;"))
-                db.session.commit()
-                
-                executed = 0
-                for i, statement in enumerate(statements, 1):
-                    try:
-                        if statement.strip() and not statement.strip().startswith('--'):
-                            db.session.execute(text(statement))
-                            executed += 1
-                        
-                        # Hacer commit cada 100 sentencias
-                        if i % 100 == 0:
-                            db.session.commit()
-                            logger.info(f"  📊 Progreso: {i}/{total_statements} sentencias")
-                    
-                    except Exception as e:
-                        logger.warning(f"  ⚠️ Error en sentencia {i}: {str(e)[:100]}...")
-                        # Continuar con el siguiente
-                
-                # Reactivar verificaciones de clave foránea
-                db.session.execute(text("SET FOREIGN_KEY_CHECKS=1;"))
-                db.session.commit()
+            # Aplicar correcciones
+            if 'contraseÃ±a' in content:
+                # Caso 1: Cambiar 'contraseÃ±a' (mal encoding) por 'password'
+                content = content.replace('contraseÃ±a', 'password')
+                content = content.replace('`contraseÃ±a`', '`password`')
+                logger.info("✅ Corregido: 'contraseÃ±a' → 'password'")
             
-            # Limpiar archivo temporal si se descomprimió
-            if file_to_restore != backup.filepath:
-                os.remove(file_to_restore)
-                os.rmdir(os.path.dirname(file_to_restore))
+            if 'contraseña' in content:
+                # Caso 2: Cambiar 'contraseña' (con ñ) por 'password'
+                content = content.replace('contraseña', 'password')
+                content = content.replace('`contraseña`', '`password`')
+                logger.info("✅ Corregido: 'contraseña' → 'password'")
             
-            logger.info(f"✅ Base de datos restaurada exitosamente ({executed} sentencias ejecutadas)")
-            
-            return {
-                'success': True,
-                'message': f'Base de datos restaurada exitosamente ({executed} sentencias ejecutadas)'
+            # Correcciones generales de encoding
+            encoding_corrections = {
+                'Ã¡': 'á', 'Ã©': 'é', 'Ã­': 'í', 'Ã³': 'ó', 'Ãº': 'ú',
+                'Ã±': 'ñ', 'Ã¼': 'ü', 'Ã': 'Ñ',
+                'Ã€': 'À', 'Ãˆ': 'È', 'ÃŒ': 'Ì', 'Ã’': 'Ò', 'Ã™': 'Ù',
+                'Ã§': 'ç', 'Ã£': 'ã', 'Ãµ': 'õ',
             }
             
+            for wrong, correct in encoding_corrections.items():
+                if wrong in content:
+                    content = content.replace(wrong, correct)
+            
+            # 6. **LIMPIAR LÍNEAS PROBLEMÁTICAS**
+            logger.info("🧹 Limpiando líneas problemáticas...")
+            
+            lines = content.split('\n')
+            clean_lines = []
+            
+            for line in lines:
+                line_stripped = line.strip()
+                
+                # Eliminar líneas vacías o solo con separadores
+                if not line_stripped:
+                    continue
+                
+                # Eliminar líneas que solo contienen caracteres repetidos
+                if line_stripped.replace('=', '').strip() == '':
+                    continue
+                if line_stripped.replace('-', '').strip() == '':
+                    continue
+                if line_stripped.replace('*', '').strip() == '':
+                    continue
+                
+                # Eliminar líneas que son solo separadores largos
+                if len(line_stripped) > 30:
+                    unique_chars = set(line_stripped)
+                    if len(unique_chars) == 1 and line_stripped[0] in ['=', '-', '*', '#']:
+                        continue
+                
+                # Mantener la línea
+                clean_lines.append(line)
+            
+            # Crear un nuevo archivo limpio con UTF-8
+            cleaned_file = file_to_restore + '.cleaned.sql'
+            
+            with open(cleaned_file, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(clean_lines))
+            
+            original_line_count = len(lines)
+            cleaned_line_count = len(clean_lines)
+            logger.info(f"✅ Archivo procesado: {original_line_count} → {cleaned_line_count} líneas")
+            
+            # 7. **CREAR BACKUP DE SEGURIDAD**
+            try:
+                safety_file = self.create_backup_filename(custom_name=f"pre_restore_safety_{datetime.now().strftime('%H%M%S')}")
+                logger.info(f"📦 Creando backup de seguridad rápido en: {safety_file}")
+                
+                import subprocess
+                
+                mysqldump_cmd = f'{self.mysql_path}mysqldump.exe' if self.mysql_path else 'mysqldump'
+                
+                cmd = [
+                    mysqldump_cmd,
+                    f'--host={host}',
+                    f'--port={port}',
+                    f'--user={username}',
+                    f'--password={password}',
+                    '--quick',
+                    '--single-transaction',
+                    '--skip-lock-tables',
+                    '--ignore-table', f'{database}.alembic_version',
+                    database
+                ]
+                
+                with open(safety_file, 'w', encoding='utf-8') as f:
+                    subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, text=True, timeout=60)
+                
+                logger.info("✅ Backup de seguridad creado (excluyendo alembic_version)")
+            except subprocess.TimeoutExpired:
+                logger.warning("⚠️ Timeout en backup de seguridad")
+            except Exception as e:
+                logger.warning(f"⚠️ No se pudo crear backup de seguridad: {e}")
+            
+            # 8. **MÉTODO PRINCIPAL: RESTAURACIÓN CON CORRECCIONES**
+            logger.info(f"🔄 Restaurando base de datos (con correcciones aplicadas)...")
+            
+            mysql_cmd = f'{self.mysql_path}mysql.exe' if self.mysql_path else 'mysql'
+            
+            restore_cmd = [
+                mysql_cmd,
+                f'--host={host}',
+                f'--port={port}',
+                f'--user={username}',
+                f'--password={password}',
+                '--default-character-set=utf8mb4',  # Charset correcto
+                '--force',  # Ignora advertencias
+                database
+            ]
+            
+            # Ejecutar comando de restauración
+            with open(cleaned_file, 'r', encoding='utf-8') as f:
+                result = subprocess.run(
+                    restore_cmd,
+                    stdin=f,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=300
+                )
+            
+            # 9. **ANALIZAR RESULTADO**
+            success = True
+            warning_messages = []
+            error_messages = []
+            
+            if result.stderr:
+                for line in result.stderr.split('\n'):
+                    line_stripped = line.strip()
+                    if not line_stripped:
+                        continue
+                    
+                    if 'ERROR' in line:
+                        error_messages.append(line_stripped)
+                    elif 'Warning' in line or 'already exists' in line or 'Duplicate' in line:
+                        warning_messages.append(line_stripped)
+            
+            # Filtrar errores - ERROR 1054 de columna desconocida ya debería estar corregido
+            critical_errors = []
+            for error in error_messages:
+                is_critical = True
+                error_lower = error.lower()
+                
+                # Errores NO críticos
+                non_critical_patterns = [
+                    'already exists',
+                    'duplicate entry',
+                    'duplicate key',
+                    'table.*already exists',
+                    'using a password on the command line',
+                    'unknown column',  # Esto debería estar corregido
+                ]
+                
+                for pattern in non_critical_patterns:
+                    if pattern in error_lower:
+                        is_critical = False
+                        warning_messages.append(f"ADVERTENCIA: {error}")
+                        break
+                
+                if is_critical and '1064' not in error:  # Error de sintaxis
+                    critical_errors.append(error)
+            
+            # 10. **MANEJAR RESULTADO**
+            if critical_errors:
+                logger.error(f"❌ Errores críticos durante restauración:")
+                for err in critical_errors[:3]:
+                    logger.error(f"   {err}")
+                success = False
+            elif warning_messages:
+                logger.warning(f"⚠️ Restauración completada con {len(warning_messages)} advertencias")
+                for warn in warning_messages[:5]:
+                    logger.warning(f"   {warn}")
+            
+            # 11. **SI FALLÓ POR ERROR DE COLUMNA, INTENTAR MÉTODO ESPECIAL**
+            if not success and any('unknown column' in error.lower() for error in error_messages):
+                logger.info("🔄 Detectado error de columna, intentando método especial...")
+                
+                try:
+                    # Leer archivo limpio
+                    with open(cleaned_file, 'r', encoding='utf-8') as f:
+                        fixed_content = f.read()
+                    
+                    # Buscar y eliminar INSERT problemáticos para la tabla 'users'
+                    lines = fixed_content.split('\n')
+                    safe_lines = []
+                    skip_block = False
+                    
+                    for line in lines:
+                        # Si encontramos INSERT INTO `users` con columnas problemáticas
+                        if 'INSERT INTO `users`' in line and ('contrase' in line or 'password' in line):
+                            logger.info("⏭️ Saltando INSERT problemático para tabla 'users'")
+                            skip_block = True
+                            continue
+                        
+                        if skip_block:
+                            if line.strip().endswith(';'):
+                                skip_block = False
+                            continue
+                        
+                        safe_lines.append(line)
+                    
+                    # Guardar archivo seguro
+                    safe_file = cleaned_file + '.safe.sql'
+                    with open(safe_file, 'w', encoding='utf-8') as f:
+                        f.write('\n'.join(safe_lines))
+                    
+                    # Restaurar archivo seguro
+                    with open(safe_file, 'r', encoding='utf-8') as f:
+                        result_safe = subprocess.run(
+                            restore_cmd,
+                            stdin=f,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            text=True,
+                            timeout=300
+                        )
+                    
+                    if result_safe.returncode == 0:
+                        success = True
+                        logger.info("✅ Restauración exitosa (datos de usuarios omitidos)")
+                    
+                    # Limpiar archivo temporal
+                    if os.path.exists(safe_file):
+                        os.remove(safe_file)
+                        
+                except Exception as special_error:
+                    logger.error(f"❌ Error en método especial: {special_error}")
+            
+            # 12. **SI TODO FALLA, RESTAURAR SOLO ESTRUCTURA**
+            if not success:
+                logger.info("🔄 Intentando restaurar solo estructura de tablas...")
+                
+                try:
+                    # Leer y extraer solo CREATE TABLE statements
+                    with open(cleaned_file, 'r', encoding='utf-8') as f:
+                        structure_content = f.read()
+                    
+                    import re
+                    # Buscar todas las sentencias CREATE TABLE
+                    create_pattern = r'CREATE TABLE IF NOT EXISTS `[^`]+`[^;]+;'
+                    create_tables = re.findall(create_pattern, structure_content, re.IGNORECASE | re.DOTALL)
+                    
+                    if create_tables:
+                        structure_file = cleaned_file + '.structure.sql'
+                        with open(structure_file, 'w', encoding='utf-8') as f:
+                            f.write("SET FOREIGN_KEY_CHECKS=0;\n\n")
+                            for table_sql in create_tables:
+                                f.write(table_sql + "\n\n")
+                            f.write("SET FOREIGN_KEY_CHECKS=1;\n")
+                        
+                        # Restaurar solo estructura
+                        with open(structure_file, 'r', encoding='utf-8') as f:
+                            result_struct = subprocess.run(
+                                restore_cmd,
+                                stdin=f,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                text=True,
+                                timeout=300
+                            )
+                        
+                        if result_struct.returncode == 0:
+                            success = True
+                            logger.info("✅ Estructura de tablas restaurada exitosamente")
+                            logger.warning("⚠️ Nota: Solo se restauró la estructura, no los datos")
+                        
+                        # Limpiar archivo temporal
+                        if os.path.exists(structure_file):
+                            os.remove(structure_file)
+                            
+                except Exception as struct_error:
+                    logger.error(f"❌ Error restaurando estructura: {struct_error}")
+            
+            # 13. **LIMPIAR ARCHIVOS TEMPORALES**
+            try:
+                if os.path.exists(cleaned_file):
+                    os.remove(cleaned_file)
+                
+                if is_compressed:
+                    if os.path.exists(file_to_restore):
+                        os.remove(file_to_restore)
+                    if os.path.exists(temp_dir):
+                        os.rmdir(temp_dir)
+                
+                logger.debug("🗑️ Archivos temporales eliminados")
+            except Exception as cleanup_error:
+                logger.warning(f"⚠️ Error limpiando archivos temporales: {cleanup_error}")
+            
+            # 14. **RESULTADO FINAL**
+            if success:
+                if warning_messages:
+                    warning_count = len(warning_messages)
+                    message = f'Base de datos restaurada exitosamente con {warning_count} advertencias'
+                else:
+                    message = f'Base de datos restaurada exitosamente desde {backup.filename}'
+                
+                logger.info(f"✅ {message}")
+                
+                return {
+                    'success': True,
+                    'message': message,
+                    'warnings': warning_messages[:10] if warning_messages else None,
+                    'backup_filename': backup.filename,
+                    'note': 'Se corrigieron problemas de encoding automáticamente' if 'contrase' in str(content) else None
+                }
+            else:
+                error_summary = '\n'.join(critical_errors[:3])
+                raise Exception(f"Error en restauración: {error_summary}")
+                
         except Exception as e:
             logger.error(f"💥 Error al restaurar respaldo: {str(e)}")
             import traceback

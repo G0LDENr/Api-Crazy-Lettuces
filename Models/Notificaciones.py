@@ -5,23 +5,21 @@ class Notificacion(db.Model):
     __tablename__ = 'notificaciones'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=False)  # ID del usuario (admin o cliente)
-    user_type = db.Column(db.String(20), nullable=False)  # 'admin' o 'cliente'
-    tipo = db.Column(db.String(50), nullable=False)  # 'nuevo_pedido', 'estado_cambiado', 'estado_pedido', etc.
+    user_id = db.Column(db.Integer, nullable=False)
+    user_type = db.Column(db.String(20), nullable=False)
+    tipo = db.Column(db.String(50), nullable=False)
     titulo = db.Column(db.String(200), nullable=False)
     mensaje = db.Column(db.Text, nullable=False)
     leida = db.Column(db.Boolean, default=False)
     datos_adicionales = db.Column(db.JSON, nullable=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
     fecha_leida = db.Column(db.DateTime, nullable=True)
-    
-    # Relación con orden (opcional)
     orden_id = db.Column(db.Integer, db.ForeignKey('ordenes.id'), nullable=True)
     
     @classmethod
     def crear_notificacion(cls, user_id, user_type, tipo, titulo, mensaje, datos_adicionales=None, orden_id=None):
         """Crear una nueva notificación"""
-        print(f"\n🔔 [MODELO] Creando notificación:")
+        print(f"\n[MODELO] Creando notificación:")
         print(f"   - user_id: {user_id}")
         print(f"   - user_type: {user_type}")
         print(f"   - tipo: {tipo}")
@@ -40,15 +38,18 @@ class Notificacion(db.Model):
         db.session.add(notificacion)
         db.session.commit()
         
-        print(f"✅ [MODELO] Notificación creada - ID: {notificacion.id}")
+        print(f"[MODELO] Notificación creada - ID: {notificacion.id}")
         return notificacion
     
     @classmethod
     def crear_notificacion_admin(cls, admin_id, tipo, titulo, mensaje, datos_adicionales=None, orden_id=None):
         """Crear notificación para un administrador específico"""
-        print(f"\n📋 [MODELO] Creando notificación para ADMIN ID: {admin_id}")
+        print(f"\n[MODELO] Creando notificación para ADMIN ID: {admin_id}")
+        print(f"   Tipo: {tipo}")
+        print(f"   Título: {titulo}")
+        
         return cls.crear_notificacion(
-            user_id=admin_id,  # ID del administrador
+            user_id=admin_id,
             user_type='admin',
             tipo=tipo,
             titulo=titulo,
@@ -61,8 +62,11 @@ class Notificacion(db.Model):
     def crear_notificacion_cliente(cls, cliente_id, tipo, titulo, mensaje, datos_adicionales=None, orden_id=None):
         """Crear notificación para un cliente específico"""
         print(f"\n👤 [MODELO] Creando notificación para CLIENTE ID: {cliente_id}")
+        print(f"   Tipo: {tipo}")
+        print(f"   Título: {titulo}")
+        
         return cls.crear_notificacion(
-            user_id=cliente_id,  # ID del cliente
+            user_id=cliente_id,
             user_type='cliente',
             tipo=tipo,
             titulo=titulo,
@@ -93,17 +97,18 @@ class Notificacion(db.Model):
     
     @classmethod
     def notificar_nuevo_pedido(cls, orden):
-        """Crear notificaciones cuando se hace un nuevo pedido"""
-        print(f"\n📦 [MODELO] NOTIFICAR NUEVO PEDIDO - Orden {orden.id}")
+        """Crear notificaciones cuando se hace un nuevo pedido - CORREGIDO"""
+        print(f"\n[MODELO] NOTIFICAR NUEVO PEDIDO - Orden {orden.id}")
         print(f"   - Código: {orden.codigo_unico}")
         print(f"   - Cliente: {orden.nombre_usuario}")
         print(f"   - Teléfono: {orden.telefono_usuario}")
         print(f"   - Precio: ${orden.precio}")
         
-        # Extraer ingredientes del pedido
+        # Extraer ingredientes del pedido - CORREGIDO
         ingredientes_desc = "Sin detalles"
-        if orden.tipo_pedido == 'especial' and orden.especial_nombre:
-            ingredientes_desc = f"Especial: {orden.especial_nombre}"
+        if orden.tipo_pedido == 'especial' and orden.especial:
+            # Usar ingredientes en lugar de nombre (más informativo)
+            ingredientes_desc = f"Especial '{orden.especial.nombre}': {orden.especial.ingredientes}"
         elif orden.tipo_pedido == 'personalizado' and orden.ingredientes_personalizados:
             ingredientes_desc = f"Personalizado: {orden.ingredientes_personalizados}"
         else:
@@ -131,7 +136,7 @@ class Notificacion(db.Model):
         print(f"\n👥 Administradores encontrados: {len(admins)}")
         
         for admin in admins:
-            print(f"\n📤 Creando notificación para ADMIN {admin.id}...")
+            print(f"\nCreando notificación para ADMIN {admin.id}...")
             
             # Mensaje para admin
             mensaje_admin = f"Nuevo pedido de {orden.nombre_usuario} ({orden.telefono_usuario})\n"
@@ -143,21 +148,21 @@ class Notificacion(db.Model):
             
             notif_admin = cls.crear_notificacion_admin(
                 admin_id=admin.id,
-                tipo='nuevo_pedido',  # Tipo específico para admin
+                tipo='nuevo_pedido',
                 titulo=titulo_admin,
                 mensaje=mensaje_admin,
                 datos_adicionales=datos_comunes,
                 orden_id=orden.id
             )
             notificaciones_creadas.append(notif_admin)
-            print(f"✅ Notificación admin creada: ID {notif_admin.id}")
+            print(f"Notificación admin creada: ID {notif_admin.id}")
         
         # 2. NOTIFICACIÓN PARA EL CLIENTE
-        print(f"\n🔍 Buscando usuario CLIENTE con teléfono: {orden.telefono_usuario}")
+        print(f"\nBuscando usuario CLIENTE con teléfono: {orden.telefono_usuario}")
         usuario_cliente = User.query.filter_by(telefono=orden.telefono_usuario).first()
         
         if usuario_cliente:
-            print(f"✅ Cliente encontrado:")
+            print(f"Cliente encontrado:")
             print(f"   - ID: {usuario_cliente.id}")
             print(f"   - Nombre: {usuario_cliente.nombre}")
             print(f"   - Teléfono: {usuario_cliente.telefono}")
@@ -172,10 +177,10 @@ class Notificacion(db.Model):
             # Título para cliente
             titulo_cliente = f"Pedido recibido: {ingredientes_desc[:30]}..."
             
-            print(f"\n📤 Creando notificación para CLIENTE {usuario_cliente.id}...")
+            print(f"\nCreando notificación para CLIENTE {usuario_cliente.id}...")
             notif_cliente = cls.crear_notificacion_cliente(
                 cliente_id=usuario_cliente.id,
-                tipo='estado_pedido',  # Tipo específico para cliente
+                tipo='estado_pedido',
                 titulo=titulo_cliente,
                 mensaje=mensaje_cliente,
                 datos_adicionales=datos_comunes,
@@ -183,14 +188,10 @@ class Notificacion(db.Model):
             )
             notificaciones_creadas.append(notif_cliente)
             print(f"✅ Notificación cliente creada: ID {notif_cliente.id}")
-            print(f"   - user_id asignado: {usuario_cliente.id}")
-            print(f"   - user_type: cliente")
-            print(f"   - tipo: estado_pedido")
         else:
             print(f"⚠️ No se encontró usuario cliente con teléfono: {orden.telefono_usuario}")
             print("   Se creará notificación con user_id=None para asignación posterior")
             
-            # Mensaje para cliente (sin user_id por ahora)
             mensaje_cliente = f"¡Hola {orden.nombre_usuario}!\n"
             mensaje_cliente += f"Tu pedido ({ingredientes_desc}) ha sido recibido correctamente.\n"
             mensaje_cliente += f"Código de pedido: {orden.codigo_unico}\n"
@@ -199,9 +200,8 @@ class Notificacion(db.Model):
             
             titulo_cliente = f"Pedido recibido: {ingredientes_desc[:30]}..."
             
-            # Crear notificación sin user_id (se asignará cuando el usuario inicie sesión)
             notif_cliente = cls.crear_notificacion(
-                user_id=None,  # Sin ID por ahora
+                user_id=None,
                 user_type='cliente',
                 tipo='estado_pedido',
                 titulo=titulo_cliente,
@@ -211,20 +211,14 @@ class Notificacion(db.Model):
             )
             notificaciones_creadas.append(notif_cliente)
             print(f"✅ Notificación cliente creada sin user_id: ID {notif_cliente.id}")
-            print(f"   - user_id: None (se asignará por teléfono)")
-            print(f"   - user_type: cliente")
-            print(f"   - tipo: estado_pedido")
-            print(f"   - telefono_cliente guardado: {orden.telefono_usuario}")
         
         print(f"\n✅ [MODELO] TOTAL notificaciones creadas: {len(notificaciones_creadas)}")
-        print("   - Para admins: tipo 'nuevo_pedido'")
-        print("   - Para cliente: tipo 'estado_pedido'")
         
         return notificaciones_creadas
     
     @classmethod
     def notificar_cambio_estado(cls, orden, nuevo_estado):
-        """Crear notificaciones cuando cambia el estado de un pedido"""
+        """Crear notificaciones cuando cambia el estado de un pedido - CORREGIDO"""
         try:
             print(f"\n🔔 [MODELO] NOTIFICAR CAMBIO ESTADO ======")
             print(f"📦 Orden ID: {orden.id}")
@@ -244,10 +238,11 @@ class Notificacion(db.Model):
             
             titulo_estado = estados_espanol.get(nuevo_estado, nuevo_estado)
             
-            # Extraer ingredientes del pedido
+            # Extraer ingredientes del pedido - CORREGIDO
             ingredientes_desc = "Sin detalles"
-            if orden.tipo_pedido == 'especial' and orden.especial_nombre:
-                ingredientes_desc = f"Especial: {orden.especial_nombre}"
+            if orden.tipo_pedido == 'especial' and orden.especial:
+                # Usar ingredientes en lugar de solo nombre
+                ingredientes_desc = f"Especial '{orden.especial.nombre}': {orden.especial.ingredientes}"
             elif orden.tipo_pedido == 'personalizado' and orden.ingredientes_personalizados:
                 ingredientes_desc = f"Personalizado: {orden.ingredientes_personalizados}"
             else:
@@ -283,7 +278,7 @@ class Notificacion(db.Model):
                 
                 notif_admin = cls.crear_notificacion_admin(
                     admin_id=admin.id,
-                    tipo='estado_cambiado',  # Tipo específico para admin
+                    tipo='estado_cambiado',
                     titulo=titulo_admin,
                     mensaje=mensaje_admin,
                     datos_adicionales=datos_comunes,
@@ -318,7 +313,7 @@ class Notificacion(db.Model):
                 print(f"\n📤 Creando notificación para CLIENTE {usuario_cliente.id}...")
                 notif_cliente = cls.crear_notificacion_cliente(
                     cliente_id=usuario_cliente.id,
-                    tipo='estado_pedido',  # Tipo específico para cliente
+                    tipo='estado_pedido',
                     titulo=titulo_cliente,
                     mensaje=mensaje_cliente,
                     datos_adicionales=datos_comunes,
@@ -326,9 +321,6 @@ class Notificacion(db.Model):
                 )
                 notificaciones_creadas.append(notif_cliente)
                 print(f"✅ Notificación cliente creada: ID {notif_cliente.id}")
-                print(f"   - user_id: {usuario_cliente.id}")
-                print(f"   - user_type: cliente")
-                print(f"   - tipo: estado_pedido")
             else:
                 print(f"⚠️ Cliente no encontrado, creando notificación sin user_id")
                 
@@ -351,13 +343,8 @@ class Notificacion(db.Model):
                 )
                 notificaciones_creadas.append(notif_cliente)
                 print(f"✅ Notificación cliente creada sin user_id: ID {notif_cliente.id}")
-                print(f"   - user_id: None (se asignará por teléfono)")
-                print(f"   - user_type: cliente")
-                print(f"   - tipo: estado_pedido")
             
             print(f"\n✅ [MODELO] TOTAL notificaciones creadas: {len(notificaciones_creadas)}")
-            print("   - Para admins: tipo 'estado_cambiado'")
-            print("   - Para cliente: tipo 'estado_pedido'")
             
             return notificaciones_creadas
                     

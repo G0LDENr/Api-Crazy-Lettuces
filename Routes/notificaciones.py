@@ -13,9 +13,12 @@ from Controllers.notificacionesController import (
     obtener_contador_notificaciones,
     notificar_nuevo_pedido,
     notificar_cambio_estado_pedido,
-    notificar_pedido_cancelado
+    notificar_pedido_cancelado,
+    notificar_ingrediente_no_disponible
 )
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from Models.User import User
+from Models.Notificaciones import Notificacion
 
 notificaciones_bp = Blueprint('notificaciones_bp', __name__)
 
@@ -110,7 +113,22 @@ def obtener_notificaciones_no_leidas_route():
             notificaciones:
               type: array
               items:
-                $ref: '#/definitions/Notificacion'
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  titulo:
+                    type: string
+                  mensaje:
+                    type: string
+                  tipo:
+                    type: string
+                  leida:
+                    type: boolean
+                  fecha_creacion:
+                    type: string
+                  metadata:
+                    type: object
             total_no_leidas:
               type: integer
       401:
@@ -427,9 +445,9 @@ def obtener_usuarios_para_mensaje_route():
                 type: string
               telefono:
                 type: string
-              role:
+              rol:
                 type: integer
-              role_nombre:
+              rol_nombre:
                 type: string
       401:
         description: No autorizado
@@ -463,7 +481,22 @@ def obtener_notificaciones_por_orden_route(orden_id):
             notificaciones:
               type: array
               items:
-                $ref: '#/definitions/Notificacion'
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  titulo:
+                    type: string
+                  mensaje:
+                    type: string
+                  tipo:
+                    type: string
+                  leida:
+                    type: boolean
+                  fecha_creacion:
+                    type: string
+                  metadata:
+                    type: object
             total:
               type: integer
       401:
@@ -626,3 +659,196 @@ def notificar_pedido_cancelado_route(orden_id):
         "success": notificar_pedido_cancelado(orden_id, motivo),
         "msg": "Notificación de pedido cancelado enviada"
     }), 200
+
+@notificaciones_bp.route('/ingrediente/<int:ingrediente_id>/no-disponible', methods=['POST'])
+@jwt_required()
+def notificar_ingrediente_no_disponible_route(ingrediente_id):
+    """
+    Notificar que un ingrediente no está disponible
+    ---
+    tags:
+      - Notificaciones
+    consumes:
+      - application/json
+    produces:
+      - application/json
+    parameters:
+      - name: ingrediente_id
+        in: path
+        type: integer
+        required: true
+        description: ID del ingrediente no disponible
+      - name: body
+        in: body
+        required: false
+        schema:
+          type: object
+          properties:
+            fecha:
+              type: string
+              example: "hoy"
+              enum: [hoy, mañana, esta_semana, proximos_dias, hasta_nuevo_aviso, fecha_especifica]
+              description: Período de no disponibilidad
+            motivo:
+              type: string
+              example: "Falta de stock"
+              description: Motivo por el que no está disponible
+            notificar_clientes:
+              type: boolean
+              example: true
+              description: Si se deben notificar a los clientes afectados
+            notificar_admins:
+              type: boolean
+              example: true
+              description: Si se deben notificar a los administradores
+    responses:
+      200:
+        description: Notificación enviada
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            msg:
+              type: string
+            data:
+              type: object
+              properties:
+                ingrediente:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    categoria:
+                      type: string
+                fecha_afectada:
+                  type: string
+                motivo:
+                  type: string
+                ordenes_afectadas:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      codigo:
+                        type: string
+                      cliente:
+                        type: string
+                      telefono:
+                        type: string
+                      estado:
+                        type: string
+                total_ordenes_afectadas:
+                  type: integer
+                usuarios_notificados:
+                  type: array
+                  items:
+                    type: integer
+                total_usuarios_notificados:
+                  type: integer
+                notificaciones_admin_enviadas:
+                  type: integer
+                timestamp:
+                  type: string
+      400:
+        description: Datos inválidos
+      401:
+        description: No autorizado
+      403:
+        description: Solo administradores pueden enviar estas notificaciones
+      404:
+        description: Ingrediente no encontrado
+      500:
+        description: Error del servidor
+    """
+    try:
+        # Verificar que el usuario es admin
+        user_id = get_jwt_identity()
+        usuario = User.query.get(user_id)
+        
+        if not usuario or usuario.rol != 1:
+            return jsonify({
+                "success": False,
+                "msg": "Solo los administradores pueden enviar estas notificaciones"
+            }), 403
+        
+        data = request.get_json() or {}
+        fecha = data.get('fecha', 'hoy')
+        motivo = data.get('motivo')
+        notificar_clientes = data.get('notificar_clientes', True)
+        notificar_admins = data.get('notificar_admins', True)
+        
+        # Obtener información del ingrediente para validación
+        from Models.Ingredientes import Ingrediente
+        ingrediente = Ingrediente.find_by_id(ingrediente_id)
+        
+        if not ingrediente:
+            return jsonify({
+                "success": False,
+                "msg": f"Ingrediente con ID {ingrediente_id} no encontrado"
+            }), 404
+        
+        # Si no se deben notificar clientes, solo notificar admins
+        if not notificar_clientes:
+            # Solo notificar a admins
+            admins = User.query.filter_by(rol=1).all()
+            for admin in admins:
+                notificacion = Notificacion.crear_notificacion(
+                    user_id=admin.id,
+                    user_type='admin',
+                    tipo='ingrediente_no_disponible',
+                    titulo=f'📋 Ingrediente marcado como no disponible',
+                    mensaje=f"El ingrediente '{ingrediente.nombre}' ha sido marcado como no disponible {fecha}.\nMotivo: {motivo or 'No especificado'}",
+                    datos_adicionales={
+                        'ingrediente_id': ingrediente_id,
+                        'ingrediente_nombre': ingrediente.nombre,
+                        'fecha_afectada': fecha,
+                        'motivo': motivo,
+                        'solo_informacion': True,
+                        'notificacion_clientes': False
+                    }
+                )
+            
+            return jsonify({
+                "success": True,
+                "msg": f"Ingrediente '{ingrediente.nombre}' marcado como no disponible (solo información interna)",
+                "data": {
+                    "ingrediente": {
+                        "id": ingrediente.id,
+                        "nombre": ingrediente.nombre,
+                        "categoria": ingrediente.categoria
+                    },
+                    "fecha": fecha,
+                    "motivo": motivo,
+                    "tipo": "solo_informacion"
+                }
+            }), 200
+        
+        # Ejecutar notificación completa
+        resultado = notificar_ingrediente_no_disponible(ingrediente_id, fecha, motivo)
+        
+        if resultado.get('success'):
+            return jsonify({
+                "success": True,
+                "msg": f"Notificaciones enviadas exitosamente",
+                "data": resultado
+            }), 200
+        else:
+            error_msg = resultado.get('error', 'Error desconocido')
+            return jsonify({
+                "success": False,
+                "msg": f"Error al enviar notificaciones: {error_msg}"
+            }), 500
+            
+    except Exception as error:
+        print(f"❌ Error en notificar_ingrediente_no_disponible_route: {error}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "msg": f"Error del servidor: {str(error)}"
+        }), 500

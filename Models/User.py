@@ -147,6 +147,16 @@ class User(db.Model):
             print(f"   Email: {user.correo}")
             print(f"   Rol: {user.rol}")
             
+            # Eliminar primero las direcciones del usuario (si existen)
+            try:
+                from Models.Direccion import Direccion
+                direcciones = Direccion.get_direcciones_by_user(user_id)
+                for direccion in direcciones:
+                    Direccion.delete_direccion(direccion.id)
+                print(f"🗑️ DEBUG MODELO - Direcciones del usuario eliminadas: {len(direcciones)}")
+            except Exception as dir_error:
+                print(f"⚠️ DEBUG MODELO - Error al eliminar direcciones: {dir_error}")
+            
             # Intentar eliminar el usuario
             db.session.delete(user)
             db.session.commit()
@@ -178,12 +188,12 @@ class User(db.Model):
         return cls.query.filter_by(rol=role_id).all()
     
     @classmethod
-    def to_dict(cls, user):
+    def to_dict(cls, user, include_direcciones=False):
         """Convertir objeto usuario a diccionario para JSON"""
         if not user:
             return None
         
-        return {
+        user_dict = {
             'id': user.id,
             'nombre': user.nombre,
             'correo': user.correo,
@@ -192,4 +202,23 @@ class User(db.Model):
             'rol': user.rol,
             'rol_texto': cls.get_role_name(user.rol) if hasattr(cls, 'get_role_name') else ('admin' if user.rol == 1 else 'cliente'),
             'fecha_registro': user.fecha_registro.strftime('%Y-%m-%d %H:%M:%S') if user.fecha_registro else None
-    }
+        }
+        
+        # Incluir direcciones si se solicita
+        if include_direcciones:
+            try:
+                from Models.Direccion import Direccion
+                direcciones = Direccion.get_direcciones_by_user(user.id)
+                user_dict['direcciones'] = [Direccion.to_dict(dir) for dir in direcciones]
+                user_dict['total_direcciones'] = len(direcciones)
+                
+                # Obtener dirección predeterminada
+                direccion_predeterminada = Direccion.get_direccion_predeterminada(user.id)
+                user_dict['direccion_predeterminada'] = Direccion.to_dict(direccion_predeterminada) if direccion_predeterminada else None
+            except Exception as e:
+                print(f"⚠️ Error al obtener direcciones del usuario: {e}")
+                user_dict['direcciones'] = []
+                user_dict['total_direcciones'] = 0
+                user_dict['direccion_predeterminada'] = None
+        
+        return user_dict

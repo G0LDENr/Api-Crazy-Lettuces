@@ -63,6 +63,8 @@ from Routes.especiales import especiales_bp
 from Routes.ordenes import orden_bp
 from Routes.notificaciones import notificaciones_bp
 from Routes.backup import backup_bp
+from Routes.ingredientes import ingredientes_bp
+from Routes.direccion import direccion_bp
 
 
 app.register_blueprint(user_bp, url_prefix='/user')
@@ -70,6 +72,8 @@ app.register_blueprint(especiales_bp, url_prefix='/especiales')
 app.register_blueprint(orden_bp, url_prefix='/ordenes')
 app.register_blueprint(notificaciones_bp, url_prefix='/notificaciones')
 app.register_blueprint(backup_bp, url_prefix='/backups')
+app.register_blueprint(ingredientes_bp, url_prefix='/ingredientes')
+app.register_blueprint(direccion_bp, url_prefix='/direcciones')
 
 if __name__ == '__main__':
     app.run(debug=True)

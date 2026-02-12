@@ -1,4 +1,5 @@
 from Models.User import User
+from Models.Direccion import Direccion
 from flask import jsonify, request
 from flask_jwt_extended import create_access_token
 from datetime import datetime
@@ -25,8 +26,8 @@ def login_user(email, password):
             
             access_token = create_access_token(identity=user_identity)
             
-            # Convertir usuario a formato para frontend
-            user_dict = User.to_dict(user)
+            # Convertir usuario a formato para frontend CON DIRECCIONES
+            user_dict = User.to_dict(user, include_direcciones=True)
             print(f"📋 Diccionario del usuario a enviar: {user_dict}")
             
             return jsonify({
@@ -47,13 +48,13 @@ def get_all_users():
     """
     try:
         users = User.get_all_users()
-        users_dict = [User.to_dict(user) for user in users]
+        users_dict = [User.to_dict(user, include_direcciones=False) for user in users]
         return jsonify(users_dict), 200
     except Exception as error:
         print(f"Error al obtener usuarios: {error}")
         return jsonify({"msg": "Error al obtener los usuarios"}), 500
 
-def get_single_user(user_id):
+def get_single_user(user_id, include_direcciones=True):
     """
     Obtener un usuario por ID
     """
@@ -62,13 +63,13 @@ def get_single_user(user_id):
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
-        user_dict = User.to_dict(user)
+        user_dict = User.to_dict(user, include_direcciones=include_direcciones)
         return jsonify(user_dict), 200
     except Exception as error:
         print(f"Error al obtener el usuario: {error}")
         return jsonify({"msg": "Error al obtener el usuario"}), 500
 
-def create_user(name, email, password, role=2, telefono='', sexo=''):
+def create_user(name, email, password, role=2, telefono='', sexo='', direccion_data=None):
     """
     Crear nuevo usuario - CON BCRYPT Y MYSQL
     """
@@ -95,7 +96,30 @@ def create_user(name, email, password, role=2, telefono='', sexo=''):
         
         user_id = User.create_user(user_data)
         user = User.find_by_id(user_id)
-        user_dict = User.to_dict(user)
+        
+        # Crear dirección si se proporciona
+        if direccion_data:
+            try:
+                # Validar datos de dirección
+                campos_requeridos = ['calle', 'numero_exterior', 'colonia', 'ciudad', 'estado', 'codigo_postal']
+                for campo in campos_requeridos:
+                    if not direccion_data.get(campo):
+                        return jsonify({"msg": f"Para crear dirección, el campo '{campo}' es requerido"}), 400
+                
+                # Validar código postal
+                cp = direccion_data['codigo_postal']
+                if not cp.isdigit() or len(cp) != 5:
+                    return jsonify({"msg": "El código postal debe tener 5 dígitos"}), 400
+                
+                # Crear dirección como predeterminada
+                direccion_data['predeterminada'] = True
+                Direccion.create_direccion(user_id, direccion_data)
+                print(f"✅ Dirección creada para usuario {user_id}")
+            except Exception as dir_error:
+                print(f"⚠️ Error al crear dirección para usuario nuevo: {dir_error}")
+                # No retornar error, solo continuar sin dirección
+        
+        user_dict = User.to_dict(user, include_direcciones=True)
         
         return jsonify({
             "msg": "Usuario creado exitosamente",
@@ -187,7 +211,7 @@ def update_user(user_id, name=None, email=None, password=None, role=None, telefo
                 # Obtener el usuario actualizado
                 updated_user = User.find_by_id(user_id)
                 if updated_user:
-                    user_dict = User.to_dict(updated_user)
+                    user_dict = User.to_dict(updated_user, include_direcciones=True)
                     return jsonify({
                         "msg": "Usuario actualizado exitosamente",
                         "user": user_dict
@@ -212,8 +236,8 @@ def update_user(user_id, name=None, email=None, password=None, role=None, telefo
         }), 500
 
 def get_user_profile(user_id):
-    """Obtener perfil de usuario"""
-    return get_single_user(user_id)
+    """Obtener perfil de usuario CON DIRECCIONES"""
+    return get_single_user(user_id, include_direcciones=True)
 
 def create_social_user(name, email, social_id, social_provider):
     """Crear usuario desde red social"""
@@ -221,16 +245,22 @@ def create_social_user(name, email, social_id, social_provider):
         if not name or not email or not social_id or not social_provider:
             return jsonify({"msg": "Datos incompletos para crear usuario social"}), 400
             
-        user_id = User.create_social_user(name, email, social_id, social_provider)
+        # Crear usuario normal sin contraseña
+        user_data = {
+            'nombre': name,
+            'correo': email.lower().strip(),
+            'contraseña': social_id,  # Usar social_id como contraseña temporal
+            'rol': 2,
+            'telefono': '',
+            'sexo': ''
+        }
+        
+        user_id = User.create_user(user_data)
         user = User.find_by_id(user_id)
-        user_dict = User.to_dict(user)
+        user_dict = User.to_dict(user, include_direcciones=True)
         
         # Crear token JWT
-        token_data = {
-            'id': user.id,
-            'rol': user.rol,
-            'rol_texto': User.get_role_name(user.rol)
-        }
+        token_data = str(user.id)
         access_token = create_access_token(identity=token_data)
         
         return jsonify({
@@ -246,7 +276,7 @@ def search_users(query):
     """Buscar usuarios por nombre o email"""
     try:
         users = User.search_users(query)
-        users_dict = [User.to_dict(user) for user in users]
+        users_dict = [User.to_dict(user, include_direcciones=False) for user in users]
         return jsonify(users_dict), 200
         
     except Exception as error:
@@ -290,7 +320,7 @@ def get_users_by_role(role_id):
             return jsonify({"msg": "Rol inválido"}), 400
             
         users = User.get_users_by_role(role_id)
-        users_dict = [User.to_dict(user) for user in users]
+        users_dict = [User.to_dict(user, include_direcciones=False) for user in users]
         return jsonify(users_dict), 200
     except Exception as error:
         print(f"Error al obtener usuarios por rol: {error}")
@@ -306,3 +336,72 @@ def get_available_roles():
     except Exception as error:
         print(f"Error al obtener roles: {error}")
         return jsonify({"msg": "Error al obtener los roles"}), 500
+
+# NUEVAS FUNCIONES PARA DIRECCIONES EN USER CONTROLLER
+
+def get_user_with_direcciones(user_id):
+    """
+    Obtener usuario con todas sus direcciones
+    """
+    return get_single_user(user_id, include_direcciones=True)
+
+def create_user_with_direccion(name, email, password, role=2, telefono='', sexo='', direccion_data=None):
+    """
+    Crear usuario con dirección inicial
+    """
+    return create_user(name, email, password, role, telefono, sexo, direccion_data)
+
+def update_user_with_direccion(user_id, name=None, email=None, password=None, role=None, telefono=None, sexo=None, direccion_data=None):
+    """
+    Actualizar usuario y/o su dirección predeterminada
+    """
+    try:
+        # Actualizar datos básicos del usuario
+        update_data = {}
+        if name is not None: update_data['nombre'] = name
+        if email is not None: update_data['correo'] = email.lower().strip()
+        if password is not None: update_data['contraseña'] = password
+        if role is not None: update_data['rol'] = role
+        if telefono is not None: update_data['telefono'] = telefono
+        if sexo is not None: update_data['sexo'] = sexo
+        
+        # Actualizar usuario si hay datos
+        if update_data:
+            User.update_user(user_id, update_data)
+        
+        # Si se proporciona dirección, actualizarla o crearla
+        if direccion_data:
+            # Validar datos de dirección
+            campos_requeridos = ['calle', 'numero_exterior', 'colonia', 'ciudad', 'estado', 'codigo_postal']
+            for campo in campos_requeridos:
+                if not direccion_data.get(campo):
+                    return jsonify({"msg": f"El campo '{campo}' es requerido para la dirección"}), 400
+            
+            # Validar código postal
+            cp = direccion_data['codigo_postal']
+            if not cp.isdigit() or len(cp) != 5:
+                return jsonify({"msg": "El código postal debe tener 5 dígitos"}), 400
+            
+            # Buscar si el usuario ya tiene una dirección predeterminada
+            direccion_predeterminada = Direccion.get_direccion_predeterminada(user_id)
+            
+            if direccion_predeterminada:
+                # Actualizar dirección predeterminada existente
+                Direccion.update_direccion(direccion_predeterminada.id, direccion_data)
+            else:
+                # Crear nueva dirección como predeterminada
+                direccion_data['predeterminada'] = True
+                Direccion.create_direccion(user_id, direccion_data)
+        
+        # Obtener usuario actualizado
+        user = User.find_by_id(user_id)
+        user_dict = User.to_dict(user, include_direcciones=True)
+        
+        return jsonify({
+            "msg": "Usuario actualizado exitosamente",
+            "user": user_dict
+        }), 200
+        
+    except Exception as error:
+        print(f"Error al actualizar usuario con dirección: {error}")
+        return jsonify({"msg": "Error al actualizar usuario"}), 500

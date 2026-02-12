@@ -11,7 +11,10 @@ from Controllers.userController import (
     search_users,
     change_password,
     get_users_by_role,
-    get_available_roles
+    get_available_roles,
+    get_user_with_direcciones,
+    create_user_with_direccion,
+    update_user_with_direccion
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -106,7 +109,75 @@ def get_users_by_role_route(role_id):
     """
     return get_users_by_role(role_id)
 
-# NUEVA RUTA: Obtener usuario actual desde token JWT
+# NUEVA RUTA: Obtener usuario con direcciones
+@user_bp.route('/<int:user_id>/with-direcciones', methods=['GET'])
+@jwt_required()
+def get_user_with_direcciones_route(user_id):
+    """
+    Obtener usuario con todas sus direcciones
+    ---
+    tags:
+      - Usuarios
+    parameters:
+      - name: user_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Usuario con direcciones
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            nombre:
+              type: string
+            correo:
+              type: string
+            rol:
+              type: integer
+            rol_texto:
+              type: string
+            telefono:
+              type: string
+            sexo:
+              type: string
+            fecha_registro:
+              type: string
+            direcciones:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  calle:
+                    type: string
+                  numero_exterior:
+                    type: string
+                  colonia:
+                    type: string
+                  ciudad:
+                    type: string
+                  estado:
+                    type: string
+                  codigo_postal:
+                    type: string
+                  tipo:
+                    type: string
+                  predeterminada:
+                    type: boolean
+            total_direcciones:
+              type: integer
+            direccion_predeterminada:
+              type: object
+      404:
+        description: Usuario no encontrado
+    """
+    return get_user_with_direcciones(user_id)
+
+# NUEVA RUTA: Obtener usuario actual desde token JWT CON DIRECCIONES
 @user_bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
@@ -117,14 +188,41 @@ def get_current_user():
       - Usuarios
     responses:
       200:
-        description: Información del usuario autenticado
+        description: Información del usuario autenticado CON DIRECCIONES
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            nombre:
+              type: string
+            correo:
+              type: string
+            rol:
+              type: integer
+            rol_texto:
+              type: string
+            telefono:
+              type: string
+            sexo:
+              type: string
+            fecha_registro:
+              type: string
+            direcciones:
+              type: array
+              items:
+                type: object
+            total_direcciones:
+              type: integer
+            direccion_predeterminada:
+              type: object
       401:
         description: No autorizado
     """
     try:
         # Obtener el ID del usuario desde el token JWT
         current_user_id = int(get_jwt_identity())
-        return get_single_user(current_user_id)
+        return get_user_with_direcciones(current_user_id)
     except Exception as e:
         print(f"Error en /me endpoint: {e}")
         return jsonify({"msg": "Error al obtener datos del usuario"}), 500
@@ -148,7 +246,7 @@ def get_user(user_id):
       404:
         description: Usuario no encontrado
     """
-    return get_single_user(user_id)
+    return get_single_user(user_id, include_direcciones=True)
 
 @user_bp.route('/profile/<int:user_id>', methods=['GET'])
 @jwt_required()
@@ -171,7 +269,7 @@ def get_profile_route(user_id):
     """
     return get_user_profile(user_id)
 
-# NUEVA RUTA: Actualizar usuario actual desde token JWT
+# NUEVA RUTA: Actualizar usuario actual con dirección
 @user_bp.route('/update', methods=['PUT'])
 @jwt_required()
 def update_current_user():
@@ -199,6 +297,33 @@ def update_current_user():
             correo:
               type: string
               example: juan@ejemplo.com
+            direccion:
+              type: object
+              properties:
+                calle:
+                  type: string
+                  example: "Av. Principal"
+                numero_exterior:
+                  type: string
+                  example: "123"
+                colonia:
+                  type: string
+                  example: "Centro"
+                ciudad:
+                  type: string
+                  example: "CDMX"
+                estado:
+                  type: string
+                  example: "Ciudad de México"
+                codigo_postal:
+                  type: string
+                  example: "01000"
+                referencias:
+                  type: string
+                  example: "Entre calles"
+                tipo:
+                  type: string
+                  example: "casa"
     responses:
       200:
         description: Perfil actualizado exitosamente
@@ -215,19 +340,42 @@ def update_current_user():
         if not data:
             return jsonify({'msg': 'No se proporcionaron datos'}), 400
         
-        # Mapear los nombres de campos del frontend al backend
-        # El frontend envía: nombre, telefono, sexo, correo
-        # El backend espera: name, email, telefono, sexo
+        # Separar datos de usuario y dirección
+        user_data = {}
+        direccion_data = data.get('direccion')
         
-        return update_user(
-            user_id=current_user_id,
-            name=data.get('nombre'),
-            email=data.get('correo'),
-            telefono=data.get('telefono'),
-            sexo=data.get('sexo'),
-            password=None,  # No actualizar contraseña aquí
-            role=None       # No actualizar rol aquí
-        )
+        if 'nombre' in data:
+            user_data['nombre'] = data.get('nombre')
+        if 'correo' in data:
+            user_data['correo'] = data.get('correo')
+        if 'telefono' in data:
+            user_data['telefono'] = data.get('telefono')
+        if 'sexo' in data:
+            user_data['sexo'] = data.get('sexo')
+        
+        # Si hay datos de dirección, actualizar con dirección
+        if direccion_data:
+            return update_user_with_direccion(
+                user_id=current_user_id,
+                name=user_data.get('nombre'),
+                email=user_data.get('correo'),
+                telefono=user_data.get('telefono'),
+                sexo=user_data.get('sexo'),
+                password=None,
+                role=None,
+                direccion_data=direccion_data
+            )
+        else:
+            # Solo actualizar datos de usuario
+            return update_user(
+                user_id=current_user_id,
+                name=user_data.get('nombre'),
+                email=user_data.get('correo'),
+                telefono=user_data.get('telefono'),
+                sexo=user_data.get('sexo'),
+                password=None,
+                role=None
+            )
         
     except Exception as e:
         print(f"Error en /update endpoint: {e}")
@@ -270,6 +418,37 @@ def add_user():
             sexo:
               type: string
               example: "M"
+            direccion:
+              type: object
+              description: Dirección opcional
+              properties:
+                calle:
+                  type: string
+                  example: "Av. Principal"
+                numero_exterior:
+                  type: string
+                  example: "123"
+                colonia:
+                  type: string
+                  example: "Centro"
+                ciudad:
+                  type: string
+                  example: "CDMX"
+                estado:
+                  type: string
+                  example: "Ciudad de México"
+                codigo_postal:
+                  type: string
+                  example: "01000"
+                referencias:
+                  type: string
+                  example: "Entre calles"
+                tipo:
+                  type: string
+                  example: "casa"
+                predeterminada:
+                  type: boolean
+                  example: true
     responses:
       201:
         description: Usuario creado exitosamente
@@ -288,11 +467,13 @@ def add_user():
     role = data.get('role', 2)
     telefono = data.get('telefono', '')
     sexo = data.get('sexo', '')
+    direccion_data = data.get('direccion')
 
     if not email or not name or not password:
         return jsonify({'msg': 'Faltan datos requeridos'}), 400
     
-    return create_user(name, email, password, role, telefono, sexo)
+    # Usar la nueva función que incluye dirección
+    return create_user_with_direccion(name, email, password, role, telefono, sexo, direccion_data)
 
 @user_bp.route('/social', methods=['POST'])
 def create_social_user_route():
@@ -389,6 +570,14 @@ def login():
                   type: string
                 fecha_registro:
                   type: string
+                direcciones:
+                  type: array
+                  items:
+                    type: object
+                total_direcciones:
+                  type: integer
+                direccion_predeterminada:
+                  type: object
       401:
         description: Credenciales inválidas
       500:
@@ -503,6 +692,33 @@ def user_update(user_id):
             sexo:
               type: string
               example: "M"
+            direccion:
+              type: object
+              properties:
+                calle:
+                  type: string
+                  example: "Av. Principal"
+                numero_exterior:
+                  type: string
+                  example: "123"
+                colonia:
+                  type: string
+                  example: "Centro"
+                ciudad:
+                  type: string
+                  example: "CDMX"
+                estado:
+                  type: string
+                  example: "Ciudad de México"
+                codigo_postal:
+                  type: string
+                  example: "01000"
+                referencias:
+                  type: string
+                  example: "Entre calles"
+                tipo:
+                  type: string
+                  example: "casa"
     responses:
       200:
         description: Usuario actualizado exitosamente
@@ -521,8 +737,23 @@ def user_update(user_id):
     role = data.get('role')
     telefono = data.get('telefono')
     sexo = data.get('sexo')
+    direccion_data = data.get('direccion')
 
-    if name is None and email is None and password is None and role is None and telefono is None and sexo is None:
-        return jsonify({'msg': 'No se proporcionaron datos para actualizar'}), 400
-      
-    return update_user(user_id, name, email, password, role, telefono, sexo)
+    # Si hay datos de dirección, usar la función que actualiza dirección también
+    if direccion_data:
+        return update_user_with_direccion(
+            user_id=user_id,
+            name=name,
+            email=email,
+            password=password,
+            role=role,
+            telefono=telefono,
+            sexo=sexo,
+            direccion_data=direccion_data
+        )
+    else:
+        # Solo actualizar datos de usuario
+        if name is None and email is None and password is None and role is None and telefono is None and sexo is None:
+            return jsonify({'msg': 'No se proporcionaron datos para actualizar'}), 400
+          
+        return update_user(user_id, name, email, password, role, telefono, sexo)

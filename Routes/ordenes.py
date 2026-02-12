@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from Controllers.ordenesController import (
     get_all_ordenes,
-    create_orden,
+    create_orden_completa,  # ✅ Cambiado a la nueva función
     delete_orden,
     update_orden,
     get_single_orden,
@@ -127,7 +127,7 @@ def get_orden(orden_id):
 @orden_bp.route('/', methods=['POST'])
 def add_orden():
     """
-    Crear una nueva orden
+    Crear una nueva orden - VERSIÓN ACTUALIZADA CON CARRITO
     ---
     tags:
       - Órdenes
@@ -147,37 +147,59 @@ def add_orden():
               example: "Juan Pérez"
             telefono_usuario:
               type: string
-              example: "7294030702"
+              example: "+525538986602"
             tipo_pedido:
               type: string
-              enum: [especial, personalizado]
-              example: "especial"
+              enum: [especial, personalizado, carrito]
+              example: "carrito"
+            metodo_pago:
+              type: string
+              enum: [efectivo, tarjeta]
+              example: "efectivo"
             especial_id:
               type: integer
               example: 1
+            direccion_texto:
+              type: string
+              example: "Calle Principal #123, Colonia Centro, Ciudad, Estado, CP: 12345"
+            direccion_id:
+              type: integer
+              example: 1
+            pedido_json:
+              type: string
+              example: '{"tipo": "carrito", "items": [{"nombre": "Hamburguesa", "cantidad": 2, "precio": 50}], "total": 100}'
             ingredientes_personalizados:
               type: string
               example: "Carne, Queso, Lechuga, Tomate"
+            cantidad:
+              type: integer
+              example: 2
+            precio:
+              type: number
+              example: 100.00
+            info_pago:
+              type: object
+              example: {"tipo": "visa", "ultimos_4_digitos": "1234", "titular": "Juan Pérez"}
+            notas:
+              type: string
+              example: "Sin cebolla, entregar en puerta"
     responses:
       201:
         description: Orden creada exitosamente
+        schema:
+          type: object
+          properties:
+            msg:
+              type: string
+            orden:
+              type: object
+            notificaciones_generadas:
+              type: boolean
       400:
         description: Error al crear la orden
     """
-    data = request.get_json()
-    if not data:
-        return jsonify({'msg': 'No se proporcionaron datos'}), 400
-      
-    nombre_usuario = data.get('nombre_usuario')
-    telefono_usuario = data.get('telefono_usuario')
-    tipo_pedido = data.get('tipo_pedido')
-    especial_id = data.get('especial_id')
-    ingredientes_personalizados = data.get('ingredientes_personalizados')
-
-    if not nombre_usuario or not telefono_usuario or not tipo_pedido:
-        return jsonify({'msg': 'Nombre, teléfono y tipo de pedido son requeridos'}), 400
-    
-    return create_orden(nombre_usuario, telefono_usuario, tipo_pedido, especial_id, ingredientes_personalizados)
+    # ✅ Ahora llama a la nueva función que maneja todos los campos
+    return create_orden_completa()
 
 @orden_bp.route('/<int:orden_id>', methods=['DELETE'])
 @jwt_required()
@@ -263,7 +285,7 @@ def orden_update(orden_id):
               example: "Juan Pérez Actualizado"
             telefono_usuario:
               type: string
-              example: "7294030703"
+              example: "+525538986603"
             estado:
               type: string
               example: "entregado"
@@ -275,6 +297,12 @@ def orden_update(orden_id):
               enum: [especial, personalizado]
               example: "especial"
             especial_id:
+              type: integer
+              example: 2
+            direccion_texto:
+              type: string
+              example: "Calle Nueva #456, Colonia Nueva"
+            direccion_id:
               type: integer
               example: 2
             ingredientes_personalizados:
@@ -296,10 +324,13 @@ def orden_update(orden_id):
     precio = data.get('precio')
     tipo_pedido = data.get('tipo_pedido')
     especial_id = data.get('especial_id')
+    direccion_texto = data.get('direccion_texto')
+    direccion_id = data.get('direccion_id')
     ingredientes_personalizados = data.get('ingredientes_personalizados')
 
     if (nombre_usuario is None and telefono_usuario is None and estado is None and 
         precio is None and tipo_pedido is None and especial_id is None and 
+        direccion_texto is None and direccion_id is None and 
         ingredientes_personalizados is None):
         return jsonify({'msg': 'No se proporcionaron datos para actualizar'}), 400
       
