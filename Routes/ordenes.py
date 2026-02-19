@@ -198,7 +198,7 @@ def add_orden():
       400:
         description: Error al crear la orden
     """
-    # ✅ Ahora llama a la nueva función que maneja todos los campos
+    # Ahora llama a la nueva función que maneja todos los campos
     return create_orden_completa()
 
 @orden_bp.route('/<int:orden_id>', methods=['DELETE'])

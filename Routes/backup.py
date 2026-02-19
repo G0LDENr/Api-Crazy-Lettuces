@@ -11,7 +11,7 @@ from Controllers.backupController import (
     cancel_scheduled_backup,
     get_database_tables,
     get_backup_stats,
-    upload_backup  # <-- IMPORTAR LA NUEVA FUNCIÓN
+    upload_backup
 )
 from flask_jwt_extended import jwt_required
 

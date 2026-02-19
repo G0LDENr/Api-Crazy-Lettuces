@@ -20,8 +20,8 @@ class Direccion(db.Model):
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
     fecha_actualizacion = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relación con usuario
-    usuario = db.relationship('User', backref=db.backref('direcciones', lazy=True))
+    # Relación con usuario (usando back_populates para que coincida con User)
+    usuario = db.relationship('User', back_populates='direcciones')
     
     @classmethod
     def create_direccion(cls, user_id, direccion_data):

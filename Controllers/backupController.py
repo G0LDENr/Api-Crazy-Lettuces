@@ -1,18 +1,14 @@
 from flask import jsonify, request, send_file
-from flask_jwt_extended import jwt_required
 from Models.Backup import Backup
 from Services.BackupService import backup_service
 import os
 import json
 from datetime import datetime
-import shutil
 import gzip
 import re
 
 def get_all_backups():
-    """
-    Obtener todos los respaldos
-    """
+    """Obtener todos los respaldos"""
     try:
         backups = Backup.get_all_backups()
         backups_list = [backup.to_dict() for backup in backups]
@@ -21,7 +17,6 @@ def get_all_backups():
             'backups': backups_list,
             'count': len(backups_list)
         }), 200
-        
     except Exception as error:
         print(f"Error al obtener respaldos: {error}")
         return jsonify({
@@ -30,9 +25,7 @@ def get_all_backups():
         }), 500
 
 def get_single_backup(backup_id):
-    """
-    Obtener un respaldo por ID
-    """
+    """Obtener un respaldo por ID"""
     try:
         backup = Backup.find_by_id(backup_id)
         if not backup:
@@ -40,12 +33,10 @@ def get_single_backup(backup_id):
                 'success': False,
                 'message': 'Respaldo no encontrado'
             }), 404
-        
         return jsonify({
             'success': True,
             'backup': backup.to_dict()
         }), 200
-        
     except Exception as error:
         print(f"Error al obtener el respaldo: {error}")
         return jsonify({
@@ -54,9 +45,7 @@ def get_single_backup(backup_id):
         }), 500
 
 def create_backup():
-    """
-    Crear nuevo respaldo
-    """
+    """Crear nuevo respaldo"""
     try:
         data = request.get_json()
         if not data:
@@ -68,7 +57,6 @@ def create_backup():
         tables = data.get('tables', None)
         custom_name = data.get('custom_name', None)
         
-        # Validar si es respaldo parcial
         if tables and isinstance(tables, str):
             tables = [t.strip() for t in tables.split(',')]
         
@@ -82,7 +70,6 @@ def create_backup():
         else:
             print(f"❌ Error al crear respaldo: {result.get('message')}")
             return jsonify(result), 500
-            
     except Exception as error:
         print(f"💥 Error completo al crear respaldo: {error}")
         return jsonify({
@@ -91,13 +78,10 @@ def create_backup():
         }), 500
 
 def upload_backup():
-    """
-    Subir/Importar un respaldo existente a la base de datos
-    """
+    """Subir/Importar un respaldo existente"""
     try:
         print(f"📤 Iniciando importación de respaldo...")
         
-        # Verificar si se envió archivo
         if 'backup_file' not in request.files:
             return jsonify({
                 'success': False,
@@ -106,14 +90,12 @@ def upload_backup():
         
         backup_file = request.files['backup_file']
         
-        # Verificar que se seleccionó un archivo
         if backup_file.filename == '':
             return jsonify({
                 'success': False,
                 'message': 'No se seleccionó ningún archivo'
             }), 400
         
-        # Verificar extensión
         allowed_extensions = {'.sql', '.sql.gz', '.gz', '.backup'}
         filename = backup_file.filename.lower()
         
@@ -123,25 +105,19 @@ def upload_backup():
                 'message': 'Formato de archivo no válido. Use .sql, .sql.gz o .gz'
             }), 400
         
-        # Crear directorio de respaldos si no existe
         backup_dir = 'backups'
         if not os.path.exists(backup_dir):
             os.makedirs(backup_dir, exist_ok=True)
         
-        # Generar nombre único para el archivo
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
-        # Limpiar nombre del archivo
         original_name = os.path.splitext(backup_file.filename)[0]
-        # Remover extensión .gz si existe
         if original_name.endswith('.sql'):
             original_name = original_name[:-4]
         
-        # Crear nombre seguro
         safe_name = ''.join(c for c in original_name if c.isalnum() or c in ['_', '-', ' '])
         safe_name = safe_name.replace(' ', '_').replace('/', '_').replace('\\', '_')
         
-        # Mantener la extensión original
         if backup_file.filename.endswith('.sql.gz'):
             file_extension = '.sql.gz'
         elif backup_file.filename.endswith('.gz'):
@@ -152,35 +128,27 @@ def upload_backup():
         new_filename = f"imported_{timestamp}_{safe_name}{file_extension}"
         filepath = os.path.join(backup_dir, new_filename)
         
-        # Guardar el archivo
         backup_file.save(filepath)
         print(f"💾 Archivo guardado en: {filepath}")
         
-        # Calcular tamaño
         size_bytes = os.path.getsize(filepath)
         size_mb = size_bytes / (1024 * 1024)
         
-        # Determinar tipo de respaldo
         backup_type = 'full'
         tables_included = None
         
-        # Intentar analizar el archivo para determinar tipo y tablas
         try:
             content = ""
             if filepath.endswith('.gz'):
-                # Descomprimir para leer
                 with gzip.open(filepath, 'rt', encoding='utf-8', errors='ignore') as f:
-                    content = f.read(20000)  # Leer primeros 20KB
+                    content = f.read(20000)
             else:
                 with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read(20000)
             
-            # Buscar indicios de tipo
             if '-- Tipo: PARTIAL' in content.upper() or 'partial' in content.upper():
                 backup_type = 'partial'
             
-            # Buscar tablas en el contenido
-            # Patrones para encontrar nombres de tablas
             patterns = [
                 r'CREATE TABLE `([^`]+)`',
                 r'INSERT INTO `([^`]+)`',
@@ -198,9 +166,8 @@ def upload_backup():
             
             if found_tables:
                 tables_included = list(found_tables)
-                if len(tables_included) < 5:  # Si tiene pocas tablas, probablemente es parcial
+                if len(tables_included) < 5:
                     backup_type = 'partial'
-                    
         except Exception as e:
             print(f"⚠️ No se pudo analizar archivo: {e}")
         
@@ -209,7 +176,6 @@ def upload_backup():
         print(f"   Tipo: {backup_type}")
         print(f"   Tablas detectadas: {len(tables_included) if tables_included else 0}")
         
-        # Crear registro en base de datos
         backup_data = {
             'filename': new_filename,
             'filepath': os.path.abspath(filepath),
@@ -228,10 +194,8 @@ def upload_backup():
             'filename': new_filename,
             'size_mb': round(size_mb, 2),
             'backup_type': backup_type,
-            'tables_included': tables_included,
-            'filepath': filepath
+            'tables_included': tables_included
         }), 201
-        
     except Exception as error:
         print(f"💥 Error al importar respaldo: {error}")
         import traceback
@@ -242,13 +206,10 @@ def upload_backup():
         }), 500
 
 def delete_backup(backup_id):
-    """
-    Eliminar un respaldo por ID
-    """
+    """Eliminar un respaldo por ID"""
     try:
-        print(f"🔍 DEBUG - Solicitando eliminación del respaldo ID: {backup_id}")
+        print(f"🔍 Solicitando eliminación del respaldo ID: {backup_id}")
         
-        # Verificar si el respaldo existe
         existing_backup = Backup.find_by_id(backup_id)
         if not existing_backup:
             print(f"❌ Respaldo {backup_id} no encontrado")
@@ -257,9 +218,6 @@ def delete_backup(backup_id):
                 'message': 'Respaldo no encontrado'
             }), 404
         
-        print(f"🔍 Respaldo encontrado: {existing_backup.filename}")
-        
-        # Eliminar respaldo
         success = Backup.delete_backup(backup_id)
         
         if success:
@@ -274,7 +232,6 @@ def delete_backup(backup_id):
                 'success': False,
                 'message': 'Error al eliminar el respaldo'
             }), 500
-            
     except Exception as error:
         print(f"💥 Error completo al eliminar respaldo: {error}")
         return jsonify({
@@ -283,9 +240,7 @@ def delete_backup(backup_id):
         }), 500
 
 def download_backup(backup_id):
-    """
-    Descargar archivo de respaldo
-    """
+    """Descargar archivo de respaldo"""
     try:
         backup = Backup.find_by_id(backup_id)
         
@@ -303,10 +258,8 @@ def download_backup(backup_id):
         
         print(f"📥 Descargando respaldo: {backup.filename}")
         
-        # Determinar mimetype basado en extensión
         if backup.filepath.endswith('.gz'):
             mimetype = 'application/gzip'
-            # Asegurar que el nombre tenga .gz
             if not backup.filename.endswith('.gz'):
                 download_name = f"{backup.filename}.gz"
             else:
@@ -321,7 +274,6 @@ def download_backup(backup_id):
             download_name=download_name,
             mimetype=mimetype
         )
-        
     except Exception as error:
         print(f"💥 Error al descargar respaldo: {error}")
         return jsonify({
@@ -331,7 +283,7 @@ def download_backup(backup_id):
 
 def restore_backup(backup_id):
     """
-    Restaurar base de datos desde respaldo
+    Restaurar base de datos desde respaldo - VERSIÓN CORREGIDA
     """
     try:
         data = request.get_json() or {}
@@ -344,27 +296,30 @@ def restore_backup(backup_id):
             }), 400
         
         print(f"🔄 Iniciando restauración del respaldo ID: {backup_id}")
+        print(f"⚡ Usando método REPLACE para actualizar/insertar datos")
         
         result = backup_service.restore_backup(backup_id)
         
         if result['success']:
             print(f"✅ Base de datos restaurada exitosamente")
+            result['method_used'] = 'REPLACE'
+            result['note'] = 'Los registros existentes fueron actualizados con los datos del respaldo'
             return jsonify(result), 200
         else:
             print(f"❌ Error en restauración: {result.get('message')}")
             return jsonify(result), 500
-            
     except Exception as error:
         print(f"💥 Error al restaurar respaldo: {error}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
-            'message': 'Error al restaurar el respaldo'
+            'message': 'Error al restaurar el respaldo',
+            'error_detail': str(error)
         }), 500
 
 def schedule_backup():
-    """
-    Programar respaldo automático
-    """
+    """Programar respaldo automático"""
     try:
         data = request.get_json()
         if not data:
@@ -396,7 +351,6 @@ def schedule_backup():
         )
         
         return jsonify(result), 200
-        
     except Exception as error:
         print(f"💥 Error al programar respaldo: {error}")
         return jsonify({
@@ -405,18 +359,14 @@ def schedule_backup():
         }), 500
 
 def get_scheduled_backups():
-    """
-    Obtener respaldos programados
-    """
+    """Obtener respaldos programados"""
     try:
         jobs = backup_service.get_scheduled_jobs()
-        
         return jsonify({
             'success': True,
             'scheduled_jobs': jobs,
             'count': len(jobs)
         }), 200
-        
     except Exception as error:
         print(f"Error al obtener respaldos programados: {error}")
         return jsonify({
@@ -425,12 +375,9 @@ def get_scheduled_backups():
         }), 500
 
 def cancel_scheduled_backup(job_id):
-    """
-    Cancelar respaldo programado
-    """
+    """Cancelar respaldo programado"""
     try:
         success = backup_service.remove_scheduled_job(job_id)
-        
         if success:
             return jsonify({
                 'success': True,
@@ -441,7 +388,6 @@ def cancel_scheduled_backup(job_id):
                 'success': False,
                 'message': 'No se pudo cancelar el respaldo programado'
             }), 400
-            
     except Exception as error:
         print(f"Error al cancelar respaldo programado: {error}")
         return jsonify({
@@ -450,9 +396,7 @@ def cancel_scheduled_backup(job_id):
         }), 500
 
 def get_database_tables():
-    """
-    Obtener lista de tablas de la base de datos
-    """
+    """Obtener lista de tablas de la base de datos"""
     try:
         from config import db
         from sqlalchemy import inspect
@@ -465,7 +409,6 @@ def get_database_tables():
             'tables': tables,
             'count': len(tables)
         }), 200
-        
     except Exception as error:
         print(f"Error al obtener tablas: {error}")
         return jsonify({
@@ -474,9 +417,7 @@ def get_database_tables():
         }), 500
 
 def get_backup_stats():
-    """
-    Obtener estadísticas de respaldos
-    """
+    """Obtener estadísticas de respaldos"""
     try:
         backups = Backup.get_all_backups()
         
@@ -509,7 +450,6 @@ def get_backup_stats():
             'success': True,
             'stats': stats
         }), 200
-        
     except Exception as error:
         print(f"Error al obtener estadísticas: {error}")
         return jsonify({

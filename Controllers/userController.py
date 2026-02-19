@@ -44,11 +44,14 @@ def login_user(email, password):
 
 def get_all_users():
     """
-    Obtener todos los usuarios
+    Obtener todos los usuarios - AHORA INCLUYE DIRECCIÓN PRINCIPAL
     """
     try:
         users = User.get_all_users()
+        # Cambio importante: include_direcciones=False pero la dirección principal
+        # ya viene incluida automáticamente por la propiedad direccion_texto en to_dict
         users_dict = [User.to_dict(user, include_direcciones=False) for user in users]
+        print(f"📋 Usuarios enviados con dirección: {[{'id': u['id'], 'direccion': u['direccion']} for u in users_dict]}")
         return jsonify(users_dict), 200
     except Exception as error:
         print(f"Error al obtener usuarios: {error}")
@@ -146,6 +149,7 @@ def delete_user(user_id):
             print(f"   Nombre: {existing_user.nombre}")
             print(f"   Email: {existing_user.correo}")
             print(f"   Rol: {existing_user.rol}")
+            print(f"   Direcciones: {len(existing_user.direcciones) if existing_user.direcciones else 0}")
         else:
             print(f"❌ DEBUG CONTROLADOR - Usuario {user_id} no existe en la base de datos")
             return jsonify({"msg": "Usuario no encontrado"}), 404

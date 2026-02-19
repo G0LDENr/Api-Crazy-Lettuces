@@ -55,7 +55,7 @@ def create_orden_completa():
     try:
         data = request.get_json()
         
-        print(f"📦 [CONTROLADOR] Datos recibidos para crear orden:")
+        print(f"[CONTROLADOR] Datos recibidos para crear orden:")
         print(f"   - Tipo: {data.get('tipo_pedido')}")
         print(f"   - Nombre: {data.get('nombre_usuario')}")
         print(f"   - Método pago: {data.get('metodo_pago', 'efectivo')}")
@@ -123,7 +123,7 @@ def create_orden_completa():
             except:
                 pass  # Mantener el precio calculado
         
-        # ✅ Preparar datos para crear la orden CON NUEVOS CAMPOS
+        # Preparar datos para crear la orden CON NUEVOS CAMPOS
         orden_data = {
             'nombre_usuario': data['nombre_usuario'].strip(),
             'telefono_usuario': data['telefono_usuario'].strip(),
@@ -142,7 +142,7 @@ def create_orden_completa():
             'info_pago': data.get('info_pago')  # Solo info básica para tarjeta
         }
         
-        print(f"📊 [CONTROLADOR] Creando orden tipo: {data['tipo_pedido']}")
+        print(f"[CONTROLADOR] Creando orden tipo: {data['tipo_pedido']}")
         print(f"   Método pago: {orden_data.get('metodo_pago')}")
         print(f"   Precio: {precio}")
         
@@ -153,14 +153,14 @@ def create_orden_completa():
         if not orden:
             return jsonify({"msg": "Error al obtener la orden creada"}), 500
         
-        print(f"✅ [CONTROLADOR] Orden creada: ID={orden.id}, Código={orden.codigo_unico}")
+        print(f"[CONTROLADOR] Orden creada: ID={orden.id}, Código={orden.codigo_unico}")
         
-        # ✅ Generar notificaciones automáticamente
+        # Generar notificaciones automáticamente
         notificaciones_generadas = False
         try:
             notificar_nuevo_pedido(orden_id)
             notificaciones_generadas = True
-            print(f"✅ [CONTROLADOR] Notificaciones generadas para orden {orden_id}")
+            print(f"[CONTROLADOR] Notificaciones generadas para orden {orden_id}")
         except Exception as notify_error:
             print(f"⚠️ [CONTROLADOR] Error al generar notificaciones: {notify_error}")
             import traceback
@@ -176,7 +176,7 @@ def create_orden_completa():
         }), 201
         
     except Exception as error:
-        print(f"❌ [CONTROLADOR] Error al crear la orden: {error}")
+        print(f"[CONTROLADOR] Error al crear la orden: {error}")
         import traceback
         traceback.print_exc()
         return jsonify({"msg": f"Error al crear la orden: {str(error)}"}), 500
@@ -235,25 +235,25 @@ def delete_orden(orden_id):
                 db.session.delete(orden_a_eliminar)
                 db.session.commit()
                 
-                print(f"[ELIMINAR ORDEN] ✅ Orden {orden_id} ELIMINADA PERMANENTEMENTE")
+                print(f"[ELIMINAR ORDEN] Orden {orden_id} ELIMINADA PERMANENTEMENTE")
                 print(f"[ELIMINAR ORDEN] Notificaciones eliminadas: {notificaciones_eliminadas}")
                 
                 return jsonify({
-                    "msg": "✅ Orden eliminada permanentemente",
+                    "msg": "Orden eliminada permanentemente",
                     "detalle": f"Se eliminó la orden y {notificaciones_eliminadas} notificación(es) asociada(s)",
                     "notificaciones_eliminadas": notificaciones_eliminadas,
                     "eliminacion_fisica": True,
                     "tipo": "eliminacion_exitosa"
                 }), 200
             else:
-                print(f"[ELIMINAR ORDEN] ❌ No se pudo encontrar la orden para eliminar")
+                print(f"[ELIMINAR ORDEN] No se pudo encontrar la orden para eliminar")
                 return jsonify({
                     "msg": "Error al encontrar la orden para eliminar",
                     "tipo": "error_encontrar"
                 }), 500
                 
         except Exception as delete_error:
-            print(f"[ELIMINAR ORDEN] ❌ Error al eliminar orden físicamente: {delete_error}")
+            print(f"[ELIMINAR ORDEN] Error al eliminar orden físicamente: {delete_error}")
             
             # Si hay error de clave foránea, intentar eliminar manualmente
             error_str = str(delete_error)
@@ -277,9 +277,9 @@ def delete_orden(orden_id):
                 result = Orden.delete_orden(orden_id)
                 
                 if result:
-                    print(f"[ELIMINAR ORDEN] ✅ Orden eliminada mediante método del modelo")
+                    print(f"[ELIMINAR ORDEN] Orden eliminada mediante método del modelo")
                     return jsonify({
-                        "msg": "✅ Orden eliminada permanentemente",
+                        "msg": "Orden eliminada permanentemente",
                         "detalle": f"Se eliminó la orden y {notificaciones_eliminadas} notificación(es) asociada(s)",
                         "notificaciones_eliminadas": notificaciones_eliminadas,
                         "eliminacion_fisica": True,
@@ -292,7 +292,7 @@ def delete_orden(orden_id):
                 print(f"[ELIMINAR ORDEN] Error en método del modelo: {model_error}")
                 
                 # ÚLTIMO RECURSO: Actualizar estado y marcar como eliminada
-                print(f"[ELIMINAR ORDEN] ❌ No se pudo eliminar físicamente, marcando como eliminada...")
+                print(f"[ELIMINAR ORDEN] No se pudo eliminar físicamente, marcando como eliminada...")
                 try:
                     nuevo_nombre = f"{existing_orden.nombre_usuario} [ELIMINADO]"
                     Orden.update_orden(orden_id, {
@@ -315,7 +315,7 @@ def delete_orden(orden_id):
                 except Exception as fallback_error:
                     print(f"[ELIMINAR ORDEN] Error crítico en fallback: {fallback_error}")
                     return jsonify({
-                        "msg": "❌ Error crítico al eliminar la orden",
+                        "msg": "Error crítico al eliminar la orden",
                         "detalle": "No se pudo eliminar ni modificar la orden",
                         "tipo": "error_critico"
                     }), 500
@@ -329,7 +329,7 @@ def delete_orden(orden_id):
         traceback.print_exc()
         
         return jsonify({
-            "msg": "❌ Error interno del servidor al eliminar la orden",
+            "msg": "Error interno del servidor al eliminar la orden",
             "error": str(error),
             "tipo": "error_interno"
         }), 500

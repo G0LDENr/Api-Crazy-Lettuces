@@ -11,8 +11,10 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configuración JWT
+# Configuración JWT - SIN EXPIRACIÓN (token permanente)
 app.config['JWT_SECRET_KEY'] = "hola"
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # ¡IMPORTANTE! Token nunca expira
+
 jwt = JWTManager(app)
 
 # Configuración Base de Datos
@@ -28,7 +30,7 @@ backup_service.init_app(app)
 
 # CONFIGURACIÓN CORS MÁS ESPECÍFICA
 CORS(app, 
-    origins=["http://localhost:3000","http://localhost:3001"],
+    origins=["http://localhost:3000","http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"],
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "Accept"],
     supports_credentials=True
