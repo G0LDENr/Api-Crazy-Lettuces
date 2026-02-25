@@ -66,7 +66,7 @@ def create_orden_completa():
             if field not in data:
                 return jsonify({"msg": f"Campo requerido: {field}"}), 400
         
-        # Validar tipo de pedido (ahora incluye 'carrito')
+        # Validar tipo de pedido
         tipos_validos = ['especial', 'personalizado', 'carrito']
         if data['tipo_pedido'] not in tipos_validos:
             return jsonify({"msg": f"Tipo de pedido inválido. Use: {', '.join(tipos_validos)}"}), 400
@@ -84,10 +84,24 @@ def create_orden_completa():
             if not especial:
                 return jsonify({"msg": "Especial no encontrado"}), 404
             
-            if not especial.activo:
+            # ===== CORRECCIÓN: Verificar si es diccionario (MongoDB) u objeto (MySQL) =====
+            # Verificar activo
+            activo = False
+            if hasattr(especial, 'activo'):  # Es objeto SQL
+                activo = especial.activo
+                precio_base = float(especial.precio) if especial.precio else 0.0
+                print(f"   ✅ Especial SQL encontrado: {especial.nombre}, activo: {activo}, precio: {precio_base}")
+            elif isinstance(especial, dict):  # Es diccionario de MongoDB
+                activo = especial.get('activo', True)
+                precio_base = float(especial.get('precio', 0))
+                print(f"   ✅ Especial MongoDB encontrado: {especial.get('nombre')}, activo: {activo}, precio: {precio_base}")
+            else:
+                activo = True
+                precio_base = 0.0
+            
+            if not activo:
                 return jsonify({"msg": "El especial seleccionado no está disponible"}), 400
             
-            precio_base = float(especial.precio) if especial.precio else 0.0
             precio = precio_base * cantidad
             
         elif data['tipo_pedido'] == 'personalizado':
@@ -107,23 +121,21 @@ def create_orden_completa():
             
         elif data['tipo_pedido'] == 'carrito':
             # Validación simplificada para carrito
-            # Solo verificar que viene el precio total
             if 'precio' not in data or data['precio'] <= 0:
                 return jsonify({"msg": "Precio total del carrito inválido"}), 400
             precio = data['precio']
             
-            # Verificar que viene información del carrito
             if 'pedido_json' not in data:
                 return jsonify({"msg": "Falta información del carrito (pedido_json)"}), 400
         
-        # Si viene precio en los datos, usar ese (para carrito ya viene el total)
+        # Si viene precio en los datos, usar ese
         if 'precio' in data and data['precio']:
             try:
                 precio = float(data['precio'])
             except:
-                pass  # Mantener el precio calculado
+                pass
         
-        # Preparar datos para crear la orden CON NUEVOS CAMPOS
+        # Preparar datos para crear la orden
         orden_data = {
             'nombre_usuario': data['nombre_usuario'].strip(),
             'telefono_usuario': data['telefono_usuario'].strip(),
@@ -136,10 +148,10 @@ def create_orden_completa():
             'precio': precio,
             'estado': 'pendiente',
             
-            # ===== NUEVOS CAMPOS DEL CARRITO =====
+            # Nuevos campos
             'metodo_pago': data.get('metodo_pago', 'efectivo'),
             'notas': data.get('notas'),
-            'info_pago': data.get('info_pago')  # Solo info básica para tarjeta
+            'info_pago': data.get('info_pago')
         }
         
         print(f"[CONTROLADOR] Creando orden tipo: {data['tipo_pedido']}")
@@ -153,7 +165,15 @@ def create_orden_completa():
         if not orden:
             return jsonify({"msg": "Error al obtener la orden creada"}), 500
         
-        print(f"[CONTROLADOR] Orden creada: ID={orden.id}, Código={orden.codigo_unico}")
+        # Obtener ID y código según el tipo de DB
+        if hasattr(orden, 'id'):
+            orden_id_val = orden.id
+            codigo_val = orden.codigo_unico
+        else:
+            orden_id_val = orden.get('_id')
+            codigo_val = orden.get('codigo_unico')
+        
+        print(f"[CONTROLADOR] Orden creada: ID={orden_id_val}, Código={codigo_val}")
         
         # Generar notificaciones automáticamente
         notificaciones_generadas = False
@@ -165,7 +185,6 @@ def create_orden_completa():
             print(f"⚠️ [CONTROLADOR] Error al generar notificaciones: {notify_error}")
             import traceback
             traceback.print_exc()
-            # No fallar la creación por error en notificaciones
         
         orden_dict = Orden.to_dict(orden)
         
@@ -492,10 +511,32 @@ def get_especiales_activos():
     """
     try:
         especiales = Especial.get_active_especiales()
-        especiales_dict = [Especial.to_dict(especial) for especial in especiales]
+        especiales_dict = []
+        
+        for especial in especiales:
+            if hasattr(especial, 'to_dict'):  # Es objeto SQL
+                especiales_dict.append(especial.to_dict())
+            elif isinstance(especial, dict):  # Es diccionario MongoDB
+                # Asegurar formato consistente
+                especial_dict = {
+                    'id': str(especial.get('_id')),
+                    'nombre': especial.get('nombre'),
+                    'ingredientes': especial.get('ingredientes'),
+                    'precio': float(especial.get('precio', 0)),
+                    'activo': especial.get('activo', True)
+                }
+                especiales_dict.append(especial_dict)
+            else:
+                # Usar método to_dict de la clase
+                especiales_dict.append(Especial.to_dict(especial))
+        
+        print(f"Enviando {len(especiales_dict)} especiales activos")
         return jsonify(especiales_dict), 200
+        
     except Exception as error:
         print(f"Error al obtener especiales activos: {error}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"msg": "Error al obtener los especiales"}), 500
     
 def get_users_by_role(role_id):

@@ -1,220 +1,295 @@
-from config import db
+# Models/Orden.py
+from config import DB_TYPE, db_sql, db_mongo
 from datetime import datetime
 import random
 import string
 import json
 
-class Orden(db.Model):
+# ============================================
+# MODELO PARA MySQL (SQLAlchemy)
+# ============================================
+class OrdenSQL(db_sql.Model):
     __tablename__ = 'ordenes'
     
-    id = db.Column(db.Integer, primary_key=True)
-    codigo_unico = db.Column(db.String(10), unique=True, nullable=False)
-    nombre_usuario = db.Column(db.String(100), nullable=False)
-    telefono_usuario = db.Column(db.String(20), nullable=False)
-    tipo_pedido = db.Column(db.String(20), nullable=False)  # 'especial', 'personalizado' o 'carrito'
-    especial_id = db.Column(db.Integer, db.ForeignKey('especiales.id'), nullable=True)    
-    direccion_texto = db.Column(db.Text, nullable=True)
-    direccion_id = db.Column(db.Integer, db.ForeignKey('direcciones.id'), nullable=True)
-    ingredientes_personalizados = db.Column(db.Text, nullable=True)
-    precio = db.Column(db.Numeric(10, 2), nullable=False)
+    id = db_sql.Column(db_sql.Integer, primary_key=True)
+    codigo_unico = db_sql.Column(db_sql.String(10), unique=True, nullable=False)
+    nombre_usuario = db_sql.Column(db_sql.String(100), nullable=False)
+    telefono_usuario = db_sql.Column(db_sql.String(20), nullable=False)
+    tipo_pedido = db_sql.Column(db_sql.String(20), nullable=False)
+    especial_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('especiales.id'), nullable=True)    
+    direccion_texto = db_sql.Column(db_sql.Text, nullable=True)
+    direccion_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('direcciones.id'), nullable=True)
+    ingredientes_personalizados = db_sql.Column(db_sql.Text, nullable=True)
+    precio = db_sql.Column(db_sql.Numeric(10, 2), nullable=False)
+    metodo_pago = db_sql.Column(db_sql.String(20), default='efectivo')
+    info_pago_json = db_sql.Column(db_sql.Text, nullable=True)
+    notas = db_sql.Column(db_sql.Text, nullable=True)
+    pedido_json = db_sql.Column(db_sql.Text, nullable=True)
+    estado = db_sql.Column(db_sql.String(20), default='pendiente')
+    fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow)
+    fecha_actualizacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)    
     
-    # ===== NUEVOS CAMPOS PARA CARRITO =====
-    metodo_pago = db.Column(db.String(20), default='efectivo')  # 'efectivo' o 'tarjeta'
-    info_pago_json = db.Column(db.Text, nullable=True)  # Ej: {"tipo": "visa", "ultimos_4": "1234"}
-    notas = db.Column(db.Text, nullable=True)  # Notas adicionales del pedido
-    # ======================================
+    def __repr__(self):
+        return f'<Orden {self.codigo_unico}>'
+
+# ============================================
+# CLASE PRINCIPAL - Usa el repositorio según DB_TYPE
+# ============================================
+class Orden:
+    """Clase que maneja órdenes en ambas bases de datos"""
     
-    pedido_json = db.Column(db.Text, nullable=True)  # Campo para datos estructurados del pedido
-    estado = db.Column(db.String(20), default='pendiente')  # pendiente, preparando, listo, entregado, cancelado
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    fecha_actualizacion = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)    
-    especial = db.relationship('Especial', backref='ordenes')
-    direccion = db.relationship('Direccion', backref='ordenes')
+    @classmethod
+    def _get_collection(cls):
+        """Obtener colección de MongoDB"""
+        return db_mongo.db.ordenes
     
     @classmethod
     def generar_codigo_unico(cls):
         """Generar código único de 6 caracteres alfanuméricos"""
-        while True:
-            codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-            if not cls.query.filter_by(codigo_unico=codigo).first():
-                return codigo
+        if DB_TYPE == 'mysql':
+            while True:
+                codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                if not OrdenSQL.query.filter_by(codigo_unico=codigo).first():
+                    return codigo
+        else:
+            while True:
+                codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                if not cls._get_collection().find_one({'codigo_unico': codigo}):
+                    return codigo
     
     @classmethod
     def create_orden(cls, orden_data):
-        """Crear nueva orden - VERSIÓN SIMPLIFICADA"""
-        # Generar código único
-        codigo_unico = cls.generar_codigo_unico()
-        
-        # Preparar datos para tarjeta (solo info básica, sin datos sensibles)
-        info_pago_json = None
-        if orden_data.get('metodo_pago') == 'tarjeta' and orden_data.get('info_pago'):
-            # Solo guardamos información no sensible
-            info_pago = orden_data.get('info_pago', {})
-            info_segura = {
-                'tipo': info_pago.get('tipo', 'tarjeta'),
-                'ultimos_4': info_pago.get('ultimos_4_digitos', '****'),
-                'titular': info_pago.get('titular', '')[:50]  # Solo nombre
-            }
-            info_pago_json = json.dumps(info_segura)
-        
-        orden = cls(
-            codigo_unico=codigo_unico,
-            nombre_usuario=orden_data.get('nombre_usuario', ''),
-            telefono_usuario=orden_data.get('telefono_usuario', ''),
-            tipo_pedido=orden_data.get('tipo_pedido', 'especial'),
-            especial_id=orden_data.get('especial_id'),
-            direccion_texto=orden_data.get('direccion_texto'),
-            direccion_id=orden_data.get('direccion_id'),
-            ingredientes_personalizados=orden_data.get('ingredientes_personalizados'),
-            precio=orden_data.get('precio', 0),
-            
-            # ===== NUEVOS CAMPOS =====
-            metodo_pago=orden_data.get('metodo_pago', 'efectivo'),
-            info_pago_json=info_pago_json,
-            notas=orden_data.get('notas'),
-            # ========================
-            
-            pedido_json=orden_data.get('pedido_json'),
-            estado=orden_data.get('estado', 'pendiente')
-        )
-        
-        db.session.add(orden)
+        """Crear nueva orden"""
         try:
-            db.session.commit()
-            return orden.id
+            codigo_unico = cls.generar_codigo_unico()
+            
+            info_pago_json = None
+            if orden_data.get('metodo_pago') == 'tarjeta' and orden_data.get('info_pago'):
+                info_pago = orden_data.get('info_pago', {})
+                info_segura = {
+                    'tipo': info_pago.get('tipo', 'tarjeta'),
+                    'ultimos_4': info_pago.get('ultimos_4_digitos', '****'),
+                    'titular': info_pago.get('titular', '')[:50]
+                }
+                info_pago_json = json.dumps(info_segura)
+            
+            if DB_TYPE == 'mysql':
+                orden = OrdenSQL(
+                    codigo_unico=codigo_unico,
+                    nombre_usuario=orden_data.get('nombre_usuario', ''),
+                    telefono_usuario=orden_data.get('telefono_usuario', ''),
+                    tipo_pedido=orden_data.get('tipo_pedido', 'especial'),
+                    especial_id=orden_data.get('especial_id'),
+                    direccion_texto=orden_data.get('direccion_texto'),
+                    direccion_id=orden_data.get('direccion_id'),
+                    ingredientes_personalizados=orden_data.get('ingredientes_personalizados'),
+                    precio=orden_data.get('precio', 0),
+                    metodo_pago=orden_data.get('metodo_pago', 'efectivo'),
+                    info_pago_json=info_pago_json,
+                    notas=orden_data.get('notas'),
+                    pedido_json=orden_data.get('pedido_json'),
+                    estado=orden_data.get('estado', 'pendiente')
+                )
+                
+                db_sql.session.add(orden)
+                db_sql.session.commit()
+                return orden.id
+                
+            else:
+                from bson.objectid import ObjectId
+                
+                orden_doc = {
+                    'codigo_unico': codigo_unico,
+                    'nombre_usuario': orden_data.get('nombre_usuario', ''),
+                    'telefono_usuario': orden_data.get('telefono_usuario', ''),
+                    'tipo_pedido': orden_data.get('tipo_pedido', 'especial'),
+                    'especial_id': str(orden_data.get('especial_id')) if orden_data.get('especial_id') else None,
+                    'direccion_texto': orden_data.get('direccion_texto'),
+                    'direccion_id': str(orden_data.get('direccion_id')) if orden_data.get('direccion_id') else None,
+                    'ingredientes_personalizados': orden_data.get('ingredientes_personalizados'),
+                    'precio': float(orden_data.get('precio', 0)),
+                    'metodo_pago': orden_data.get('metodo_pago', 'efectivo'),
+                    'info_pago_json': info_pago_json,
+                    'notas': orden_data.get('notas'),
+                    'pedido_json': orden_data.get('pedido_json'),
+                    'estado': orden_data.get('estado', 'pendiente'),
+                    'fecha_creacion': datetime.utcnow(),
+                    'fecha_actualizacion': datetime.utcnow()
+                }
+                
+                result = cls._get_collection().insert_one(orden_doc)
+                return str(result.inserted_id)
+                
         except Exception as e:
-            db.session.rollback()
             print(f"Error al crear orden: {str(e)}")
-            raise
+            if DB_TYPE == 'mysql':
+                db_sql.session.rollback()
+            raise e
     
     @classmethod
     def update_orden(cls, orden_id, update_data):
-        """Actualizar orden - VERSIÓN ACTUALIZADA"""
-        orden = cls.query.get(orden_id)
-        if not orden:
+        """Actualizar orden"""
+        try:
+            if DB_TYPE == 'mysql':
+                orden = OrdenSQL.query.get(orden_id)
+                if not orden:
+                    return False
+                
+                campos = [
+                    'nombre_usuario', 'telefono_usuario', 'estado', 'precio',
+                    'tipo_pedido', 'especial_id', 'ingredientes_personalizados',
+                    'direccion_texto', 'direccion_id', 'pedido_json',
+                    'metodo_pago', 'info_pago_json', 'notas'
+                ]
+                
+                for campo in campos:
+                    if campo in update_data:
+                        setattr(orden, campo, update_data[campo])
+                
+                orden.fecha_actualizacion = datetime.utcnow()
+                db_sql.session.commit()
+                return True
+                
+            else:
+                from bson.objectid import ObjectId
+                
+                if 'precio' in update_data:
+                    update_data['precio'] = float(update_data['precio'])
+                
+                update_data['fecha_actualizacion'] = datetime.utcnow()
+                
+                result = cls._get_collection().update_one(
+                    {'_id': ObjectId(orden_id)},
+                    {'$set': update_data}
+                )
+                return result.modified_count > 0
+                
+        except Exception as e:
+            print(f"Error en update_orden: {e}")
+            if DB_TYPE == 'mysql':
+                db_sql.session.rollback()
             return False
-        
-        # Campos actualizables (incluyendo nuevos)
-        campos_actualizables = [
-            'nombre_usuario', 'telefono_usuario', 'estado', 'precio',
-            'tipo_pedido', 'especial_id', 'ingredientes_personalizados',
-            'direccion_texto', 'direccion_id', 'pedido_json',
-            'metodo_pago', 'info_pago_json', 'notas'  # Nuevos campos
-        ]
-        
-        for campo in campos_actualizables:
-            if campo in update_data:
-                setattr(orden, campo, update_data[campo])
-        
-        orden.fecha_actualizacion = datetime.utcnow()
-        db.session.commit()
-        return True
-    
-    @classmethod
-    def to_dict(cls, orden):
-        """Convertir orden a diccionario - VERSIÓN ACTUALIZADA"""
-        from Models.Especiales import Especial
-        
-        especial_info = None
-        if orden.especial_id and orden.especial:
-            especial_info = {
-                'id': orden.especial.id,
-                'nombre': orden.especial.nombre,
-                'ingredientes': orden.especial.ingredientes,
-                'precio': float(orden.especial.precio) if orden.especial.precio else 0.0
-            }
-        
-        # Parsear info de pago
-        info_pago = None
-        if orden.info_pago_json:
-            try:
-                info_pago = json.loads(orden.info_pago_json)
-            except:
-                info_pago = {'error': 'Error al parsear datos de pago'}
-        
-        return {
-            'id': orden.id,
-            'codigo_unico': orden.codigo_unico,
-            'nombre_usuario': orden.nombre_usuario,
-            'telefono_usuario': orden.telefono_usuario,
-            'tipo_pedido': orden.tipo_pedido,
-            'especial': especial_info,
-            'direccion_texto': orden.direccion_texto,
-            'direccion_id': orden.direccion_id,
-            'ingredientes_personalizados': orden.ingredientes_personalizados,
-            'pedido_json': orden.pedido_json,
-            'precio': float(orden.precio) if orden.precio else 0.0,
-            
-            # ===== NUEVOS CAMPOS =====
-            'metodo_pago': orden.metodo_pago,
-            'info_pago': info_pago,
-            'notas': orden.notas,
-            # ========================
-            
-            'estado': orden.estado,
-            'fecha_creacion': orden.fecha_creacion.isoformat() if orden.fecha_creacion else None,
-            'fecha_actualizacion': orden.fecha_actualizacion.isoformat() if orden.fecha_actualizacion else None
-        }
     
     @classmethod
     def find_by_id(cls, orden_id):
         """Buscar orden por ID"""
-        return cls.query.get(orden_id)
+        try:
+            if DB_TYPE == 'mysql':
+                return OrdenSQL.query.get(orden_id)
+            else:
+                from bson.objectid import ObjectId
+                return cls._get_collection().find_one({'_id': ObjectId(orden_id)})
+        except:
+            return None
     
     @classmethod
     def find_by_codigo(cls, codigo):
         """Buscar orden por código único"""
-        return cls.query.filter_by(codigo_unico=codigo).first()
+        try:
+            if DB_TYPE == 'mysql':
+                return OrdenSQL.query.filter_by(codigo_unico=codigo).first()
+            else:
+                return cls._get_collection().find_one({'codigo_unico': codigo})
+        except:
+            return None
     
     @classmethod
     def get_all_ordenes(cls):
         """Obtener todas las órdenes"""
-        return cls.query.order_by(cls.fecha_creacion.desc()).all()
+        try:
+            if DB_TYPE == 'mysql':
+                return OrdenSQL.query.order_by(OrdenSQL.fecha_creacion.desc()).all()
+            else:
+                return list(cls._get_collection().find().sort('fecha_creacion', -1))
+        except:
+            return []
     
     @classmethod
     def get_ordenes_by_estado(cls, estado):
         """Obtener órdenes por estado"""
-        return cls.query.filter_by(estado=estado).order_by(cls.fecha_creacion.desc()).all()
+        try:
+            if DB_TYPE == 'mysql':
+                return OrdenSQL.query.filter_by(estado=estado).order_by(OrdenSQL.fecha_creacion.desc()).all()
+            else:
+                return list(cls._get_collection().find({'estado': estado}).sort('fecha_creacion', -1))
+        except:
+            return []
     
     @classmethod
     def delete_orden(cls, orden_id):
         """Eliminar orden"""
         try:
-            orden = cls.query.get(orden_id)
-            if not orden:
-                return False
-            
-            db.session.delete(orden)
-            db.session.commit()
-            return True
-            
-        except Exception as error:
-            print(f"Error al eliminar orden {orden_id}: {str(error)}")
-            db.session.rollback()
+            if DB_TYPE == 'mysql':
+                orden = OrdenSQL.query.get(orden_id)
+                if not orden:
+                    return False
+                
+                db_sql.session.delete(orden)
+                db_sql.session.commit()
+                return True
+                
+            else:
+                from bson.objectid import ObjectId
+                result = cls._get_collection().delete_one({'_id': ObjectId(orden_id)})
+                return result.deleted_count > 0
+                
+        except Exception as e:
+            print(f"Error en delete_orden: {e}")
+            if DB_TYPE == 'mysql':
+                db_sql.session.rollback()
             return False
     
     @classmethod
     def cambiar_estado(cls, orden_id, nuevo_estado):
         """Cambiar estado de una orden"""
-        orden = cls.query.get(orden_id)
-        if not orden:
+        try:
+            if DB_TYPE == 'mysql':
+                orden = OrdenSQL.query.get(orden_id)
+                if not orden:
+                    return False
+                
+                orden.estado = nuevo_estado
+                orden.fecha_actualizacion = datetime.utcnow()
+                db_sql.session.commit()
+                return True
+                
+            else:
+                from bson.objectid import ObjectId
+                result = cls._get_collection().update_one(
+                    {'_id': ObjectId(orden_id)},
+                    {'$set': {'estado': nuevo_estado, 'fecha_actualizacion': datetime.utcnow()}}
+                )
+                return result.modified_count > 0
+        except:
             return False
-        
-        orden.estado = nuevo_estado
-        orden.fecha_actualizacion = datetime.utcnow()
-        db.session.commit()
-        return True
     
     @classmethod
     def search_ordenes(cls, query):
         """Buscar órdenes por nombre, teléfono o código"""
-        if query:
-            return cls.query.filter(
-                (cls.nombre_usuario.ilike(f'%{query}%')) | 
-                (cls.telefono_usuario.ilike(f'%{query}%')) |
-                (cls.codigo_unico.ilike(f'%{query}%'))
-            ).order_by(cls.fecha_creacion.desc()).all()
-        return cls.query.order_by(cls.fecha_creacion.desc()).all()
+        try:
+            if DB_TYPE == 'mysql':
+                if query:
+                    return OrdenSQL.query.filter(
+                        (OrdenSQL.nombre_usuario.ilike(f'%{query}%')) | 
+                        (OrdenSQL.telefono_usuario.ilike(f'%{query}%')) |
+                        (OrdenSQL.codigo_unico.ilike(f'%{query}%'))
+                    ).order_by(OrdenSQL.fecha_creacion.desc()).all()
+                return OrdenSQL.query.order_by(OrdenSQL.fecha_creacion.desc()).all()
+                
+            else:
+                import re
+                if query:
+                    regex = re.compile(f'.*{query}.*', re.IGNORECASE)
+                    return list(cls._get_collection().find({
+                        '$or': [
+                            {'nombre_usuario': {'$regex': regex}},
+                            {'telefono_usuario': {'$regex': regex}},
+                            {'codigo_unico': {'$regex': regex}}
+                        ]
+                    }).sort('fecha_creacion', -1))
+                return list(cls._get_collection().find().sort('fecha_creacion', -1))
+        except:
+            return []
     
     @classmethod
     def calcular_precio_personalizado(cls, num_ingredientes):
@@ -225,3 +300,84 @@ class Orden(db.Model):
             return 35.0
         else:
             return 40.0
+    
+    @classmethod
+    def to_dict(cls, orden):
+        """Convertir orden a diccionario"""
+        if not orden:
+            return None
+        
+        if DB_TYPE == 'mysql':
+            from Models.Especiales import Especial
+            
+            especial_info = None
+            if orden.especial_id:
+                especial = Especial.find_by_id(orden.especial_id)
+                if especial:
+                    especial_info = Especial.to_dict(especial)
+            
+            info_pago = None
+            if orden.info_pago_json:
+                try:
+                    info_pago = json.loads(orden.info_pago_json)
+                except:
+                    info_pago = {'error': 'Error al parsear datos de pago'}
+            
+            return {
+                'id': orden.id,
+                'codigo_unico': orden.codigo_unico,
+                'nombre_usuario': orden.nombre_usuario,
+                'telefono_usuario': orden.telefono_usuario,
+                'tipo_pedido': orden.tipo_pedido,
+                'especial': especial_info,
+                'direccion_texto': orden.direccion_texto,
+                'direccion_id': orden.direccion_id,
+                'ingredientes_personalizados': orden.ingredientes_personalizados,
+                'pedido_json': orden.pedido_json,
+                'precio': float(orden.precio) if orden.precio else 0.0,
+                'metodo_pago': orden.metodo_pago,
+                'info_pago': info_pago,
+                'notas': orden.notas,
+                'estado': orden.estado,
+                'fecha_creacion': orden.fecha_creacion.isoformat() if orden.fecha_creacion else None,
+                'fecha_actualizacion': orden.fecha_actualizacion.isoformat() if orden.fecha_actualizacion else None
+            }
+            
+        else:
+            from bson.objectid import ObjectId
+            from Models.Especiales import Especial
+            
+            orden_dict = dict(orden)
+            orden_dict['id'] = str(orden_dict.pop('_id'))
+            
+            if 'especial_id' in orden_dict and orden_dict['especial_id']:
+                especial = Especial.find_by_id(orden_dict['especial_id'])
+                if especial:
+                    orden_dict['especial'] = Especial.to_dict(especial)
+                else:
+                    orden_dict['especial'] = None
+            
+            if 'precio' in orden_dict:
+                orden_dict['precio'] = float(orden_dict['precio'])
+            
+            if 'info_pago_json' in orden_dict and orden_dict['info_pago_json']:
+                try:
+                    orden_dict['info_pago'] = json.loads(orden_dict['info_pago_json'])
+                except:
+                    orden_dict['info_pago'] = None
+            else:
+                orden_dict['info_pago'] = None
+            
+            if 'fecha_creacion' in orden_dict and orden_dict['fecha_creacion']:
+                if isinstance(orden_dict['fecha_creacion'], datetime):
+                    orden_dict['fecha_creacion'] = orden_dict['fecha_creacion'].isoformat()
+            
+            if 'fecha_actualizacion' in orden_dict and orden_dict['fecha_actualizacion']:
+                if isinstance(orden_dict['fecha_actualizacion'], datetime):
+                    orden_dict['fecha_actualizacion'] = orden_dict['fecha_actualizacion'].isoformat()
+            
+            return orden_dict
+
+# Para compatibilidad con código existente
+if DB_TYPE == 'mysql':
+    OrdenSQL = Orden

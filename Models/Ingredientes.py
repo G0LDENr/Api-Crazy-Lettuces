@@ -1,123 +1,240 @@
-from config import db
+# Models/Ingrediente.py
+from config import DB_TYPE, db_sql, db_mongo
 from datetime import datetime
 
-class Ingrediente(db.Model):
+# ============================================
+# MODELO PARA MySQL (SQLAlchemy)
+# ============================================
+class IngredienteSQL(db_sql.Model):
     __tablename__ = 'ingredientes'
     
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False, unique=True)
-    categoria = db.Column(db.String(50), nullable=True)
-    activo = db.Column(db.Boolean, default=True)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    fecha_actualizacion = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id = db_sql.Column(db_sql.Integer, primary_key=True)
+    nombre = db_sql.Column(db_sql.String(100), nullable=False, unique=True)
+    categoria = db_sql.Column(db_sql.String(50), nullable=True)
+    activo = db_sql.Column(db_sql.Boolean, default=True)
+    fecha_creacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow)
+    fecha_actualizacion = db_sql.Column(db_sql.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<Ingrediente {self.nombre}>'
+
+# ============================================
+# CLASE PRINCIPAL - Usa el repositorio según DB_TYPE
+# ============================================
+class Ingrediente:
+    """Clase que maneja ingredientes en ambas bases de datos"""
+    
+    @classmethod
+    def _get_collection(cls):
+        """Obtener colección de MongoDB"""
+        return db_mongo.db.ingredientes
     
     @classmethod
     def find_by_id(cls, ingrediente_id):
         """Buscar ingrediente por ID"""
-        return cls.query.get(ingrediente_id)
+        try:
+            if DB_TYPE == 'mysql':
+                return IngredienteSQL.query.get(ingrediente_id)
+            else:
+                from bson.objectid import ObjectId
+                return cls._get_collection().find_one({'_id': ObjectId(ingrediente_id)})
+        except:
+            return None
     
     @classmethod
     def find_by_name(cls, nombre):
         """Buscar ingrediente por nombre"""
-        return cls.query.filter_by(nombre=nombre).first()
+        try:
+            if DB_TYPE == 'mysql':
+                return IngredienteSQL.query.filter_by(nombre=nombre).first()
+            else:
+                return cls._get_collection().find_one({'nombre': nombre})
+        except:
+            return None
     
     @classmethod
     def get_all_ingredientes(cls, only_active=True, categoria=None):
         """Obtener todos los ingredientes"""
-        query = cls.query
-        
-        if only_active:
-            query = query.filter_by(activo=True)
-        
-        if categoria:
-            query = query.filter_by(categoria=categoria)
-        
-        return query.order_by(cls.nombre.asc()).all()
+        try:
+            if DB_TYPE == 'mysql':
+                query = IngredienteSQL.query
+                
+                if only_active:
+                    query = query.filter_by(activo=True)
+                
+                if categoria:
+                    query = query.filter_by(categoria=categoria)
+                
+                return query.order_by(IngredienteSQL.nombre.asc()).all()
+                
+            else:
+                query = {}
+                if only_active:
+                    query['activo'] = True
+                if categoria:
+                    query['categoria'] = categoria
+                
+                return list(cls._get_collection().find(query).sort('nombre', 1))
+                
+        except Exception as e:
+            print(f"Error en get_all_ingredientes: {e}")
+            return []
     
     @classmethod
     def get_ingredientes_activos(cls):
         """Obtener solo ingredientes activos"""
-        return cls.query.filter_by(activo=True).order_by(cls.nombre.asc()).all()
+        return cls.get_all_ingredientes(only_active=True)
     
     @classmethod
     def create_ingrediente(cls, ingrediente_data):
         """Crear nuevo ingrediente"""
-        ingrediente = cls(
-            nombre=ingrediente_data['nombre'],
-            categoria=ingrediente_data.get('categoria'),
-            activo=ingrediente_data.get('activo', True)
-        )
-        
-        db.session.add(ingrediente)
-        db.session.commit()
-        return ingrediente.id
+        try:
+            if DB_TYPE == 'mysql':
+                ingrediente = IngredienteSQL(
+                    nombre=ingrediente_data['nombre'],
+                    categoria=ingrediente_data.get('categoria'),
+                    activo=ingrediente_data.get('activo', True)
+                )
+                
+                db_sql.session.add(ingrediente)
+                db_sql.session.commit()
+                return ingrediente.id
+                
+            else:
+                from bson.objectid import ObjectId
+                
+                ingrediente_doc = {
+                    'nombre': ingrediente_data['nombre'],
+                    'categoria': ingrediente_data.get('categoria'),
+                    'activo': ingrediente_data.get('activo', True),
+                    'fecha_creacion': datetime.utcnow(),
+                    'fecha_actualizacion': datetime.utcnow()
+                }
+                
+                result = cls._get_collection().insert_one(ingrediente_doc)
+                return str(result.inserted_id)
+                
+        except Exception as e:
+            print(f"Error en create_ingrediente: {e}")
+            if DB_TYPE == 'mysql':
+                db_sql.session.rollback()
+            raise e
     
     @classmethod
     def update_ingrediente(cls, ingrediente_id, update_data):
         """Actualizar ingrediente"""
-        ingrediente = cls.query.get(ingrediente_id)
-        if not ingrediente:
+        try:
+            if DB_TYPE == 'mysql':
+                ingrediente = IngredienteSQL.query.get(ingrediente_id)
+                if not ingrediente:
+                    return False
+                
+                if 'nombre' in update_data:
+                    ingrediente.nombre = update_data['nombre']
+                if 'categoria' in update_data:
+                    ingrediente.categoria = update_data['categoria']
+                if 'activo' in update_data:
+                    ingrediente.activo = update_data['activo']
+                
+                ingrediente.fecha_actualizacion = datetime.utcnow()
+                db_sql.session.commit()
+                
+                if 'activo' in update_data and update_data['activo'] == False:
+                    cls._enviar_notificaciones_desactivacion(ingrediente_id)
+                
+                return True
+                
+            else:
+                from bson.objectid import ObjectId
+                
+                update_data['fecha_actualizacion'] = datetime.utcnow()
+                
+                result = cls._get_collection().update_one(
+                    {'_id': ObjectId(ingrediente_id)},
+                    {'$set': update_data}
+                )
+                
+                if result.modified_count > 0 and 'activo' in update_data and update_data['activo'] == False:
+                    cls._enviar_notificaciones_desactivacion(ingrediente_id)
+                
+                return result.modified_count > 0
+                
+        except Exception as e:
+            print(f"Error en update_ingrediente: {e}")
+            if DB_TYPE == 'mysql':
+                db_sql.session.rollback()
             return False
-        
-        if 'nombre' in update_data:
-            ingrediente.nombre = update_data['nombre']
-        if 'categoria' in update_data:
-            ingrediente.categoria = update_data['categoria']
-        if 'activo' in update_data:
-            ingrediente.activo = update_data['activo']
-        
-        ingrediente.fecha_actualizacion = datetime.utcnow()
-        db.session.commit()
-        
-        # Si se está desactivando, enviar notificaciones
-        if 'activo' in update_data and update_data['activo'] == False:
-            cls._enviar_notificaciones_desactivacion(ingrediente_id)
-        
-        return True
     
     @classmethod
     def delete_ingrediente(cls, ingrediente_id):
         """Eliminar ingrediente (eliminación física)"""
         try:
-            ingrediente = cls.query.get(ingrediente_id)
-            if not ingrediente:
-                return False
-            
-            db.session.delete(ingrediente)
-            db.session.commit()
-            return True
-            
-        except Exception as error:
-            print(f"Error al eliminar ingrediente {ingrediente_id}: {str(error)}")
-            db.session.rollback()
+            if DB_TYPE == 'mysql':
+                ingrediente = IngredienteSQL.query.get(ingrediente_id)
+                if not ingrediente:
+                    return False
+                
+                db_sql.session.delete(ingrediente)
+                db_sql.session.commit()
+                return True
+                
+            else:
+                from bson.objectid import ObjectId
+                result = cls._get_collection().delete_one({'_id': ObjectId(ingrediente_id)})
+                return result.deleted_count > 0
+                
+        except Exception as e:
+            print(f"Error en delete_ingrediente: {e}")
+            if DB_TYPE == 'mysql':
+                db_sql.session.rollback()
             return False
     
     @classmethod
     def toggle_activo(cls, ingrediente_id):
         """Activar/desactivar ingrediente"""
-        ingrediente = cls.query.get(ingrediente_id)
-        if not ingrediente:
+        try:
+            if DB_TYPE == 'mysql':
+                ingrediente = IngredienteSQL.query.get(ingrediente_id)
+                if not ingrediente:
+                    return False
+                
+                estado_anterior = ingrediente.activo
+                ingrediente.activo = not ingrediente.activo
+                ingrediente.fecha_actualizacion = datetime.utcnow()
+                db_sql.session.commit()
+                
+                if estado_anterior == True and ingrediente.activo == False:
+                    cls._enviar_notificaciones_desactivacion(ingrediente_id)
+                
+                return True
+                
+            else:
+                from bson.objectid import ObjectId
+                ingrediente = cls.find_by_id(ingrediente_id)
+                if not ingrediente:
+                    return False
+                
+                estado_anterior = ingrediente.get('activo', True)
+                nuevo_estado = not estado_anterior
+                
+                result = cls._get_collection().update_one(
+                    {'_id': ObjectId(ingrediente_id)},
+                    {'$set': {'activo': nuevo_estado, 'fecha_actualizacion': datetime.utcnow()}}
+                )
+                
+                if result.modified_count > 0 and estado_anterior == True and nuevo_estado == False:
+                    cls._enviar_notificaciones_desactivacion(ingrediente_id)
+                
+                return result.modified_count > 0
+                
+        except Exception as e:
+            print(f"Error en toggle_activo: {e}")
             return False
-        
-        # Guardar estado anterior
-        estado_anterior = ingrediente.activo
-        
-        # Cambiar estado
-        ingrediente.activo = not ingrediente.activo
-        ingrediente.fecha_actualizacion = datetime.utcnow()
-        db.session.commit()
-        
-        # Si se está DESACTIVANDO (de True a False), enviar notificaciones
-        if estado_anterior == True and ingrediente.activo == False:
-            cls._enviar_notificaciones_desactivacion(ingrediente_id)
-        
-        return True
     
     @classmethod
     def _enviar_notificaciones_desactivacion(cls, ingrediente_id):
         """
         Enviar notificaciones cuando un ingrediente se desactiva
-        Método interno - se llama automáticamente desde toggle_activo y update_ingrediente
         """
         try:
             from Models.Notificaciones import Notificacion
@@ -128,93 +245,76 @@ class Ingrediente(db.Model):
             if not ingrediente:
                 return False
             
+            ingrediente_dict = cls.to_dict(ingrediente)
+            
             print(f"\n🔔 [NOTIFICACIONES] ========== INGREDIENTE DESACTIVADO ==========")
-            print(f"📦 Ingrediente: {ingrediente.nombre}")
-            print(f"🆔 ID: {ingrediente.id}")
+            print(f"📦 Ingrediente: {ingrediente_dict['nombre']}")
+            print(f"🆔 ID: {ingrediente_dict['id']}")
             
             # 1. Buscar especiales activos que contengan este ingrediente
             especiales_afectados = []
-            todos_especiales = Especial.query.filter_by(activo=True).all()
+            todos_especiales = Especial.get_all_especiales(only_active=True)
             
             print(f"🔍 Buscando especiales activos...")
             
             for especial in todos_especiales:
                 try:
-                    if especial.ingredientes and ingrediente.nombre:
-                        ingredientes_especial = especial.ingredientes.lower()
-                        ingrediente_nombre = ingrediente.nombre.lower()
+                    especial_dict = Especial.to_dict(especial)
+                    if especial_dict.get('ingredientes') and ingrediente_dict.get('nombre'):
+                        ingredientes_especial = especial_dict['ingredientes'].lower()
+                        ingrediente_nombre = ingrediente_dict['nombre'].lower()
                         
                         if ingrediente_nombre in ingredientes_especial:
                             especiales_afectados.append({
-                                'id': especial.id,
-                                'nombre': especial.nombre,
-                                'descripcion': especial.descripcion,
-                                'precio': float(especial.precio) if especial.precio else 0.0,
-                                'ingredientes': especial.ingredientes
+                                'id': especial_dict['id'],
+                                'nombre': especial_dict['nombre'],
+                                'ingredientes': especial_dict['ingredientes']
                             })
-                            print(f"   ✅ Especial afectado: {especial.nombre}")
+                            print(f"   ✅ Especial afectado: {especial_dict['nombre']}")
                 except Exception as e:
-                    print(f"   ⚠️ Error procesando especial {especial.id}: {e}")
                     continue
             
             print(f"📊 Total especiales afectados: {len(especiales_afectados)}")
             
-            # 2. Notificar a TODOS los administradores
-            admins = User.query.filter_by(rol=1).all()
+            # 2. Notificar a administradores
+            admins = User.get_users_by_role(1) if DB_TYPE == 'mysql' else []
             notificaciones_admin = 0
             
-            mensaje_admin = f"El ingrediente '{ingrediente.nombre}' ha sido marcado como INACTIVO.\n\n"
+            mensaje_admin = f"El ingrediente '{ingrediente_dict['nombre']}' ha sido marcado como INACTIVO.\n\n"
             
             if especiales_afectados:
                 mensaje_admin += f"📋 ESPECIALES AFECTADOS ({len(especiales_afectados)}):\n"
                 for i, especial in enumerate(especiales_afectados, 1):
-                    mensaje_admin += f"{i}. {especial['nombre']} - ${especial['precio']:.2f}\n"
-                    if especial['descripcion']:
-                        desc = especial['descripcion'][:80] + "..." if len(especial['descripcion']) > 80 else especial['descripcion']
-                        mensaje_admin += f"   Descripción: {desc}\n"
-                    mensaje_admin += "\n"
+                    mensaje_admin += f"{i}. {especial['nombre']}\n"
             else:
                 mensaje_admin += "📋 ESPECIALES AFECTADOS: 0\n"
-                mensaje_admin += "No se encontraron especiales activos que contengan este ingrediente.\n\n"
-            
-            mensaje_admin += "⚠️ Los especiales afectados NO estarán disponibles para pedidos.\n"
-            mensaje_admin += "📝 Acción sugerida: Revisar y actualizar los especiales afectados."
             
             for admin in admins:
+                admin_dict = User.to_dict(admin)
                 try:
-                    notificacion = Notificacion.crear_notificacion_admin(
-                        admin_id=admin.id,
+                    Notificacion.crear_notificacion_admin(
+                        admin_id=admin_dict['id'],
                         tipo='ingrediente_inactivo',
-                        titulo=f'🚨 INGREDIENTE INACTIVO: {ingrediente.nombre}',
+                        titulo=f'🚨 INGREDIENTE INACTIVO: {ingrediente_dict["nombre"]}',
                         mensaje=mensaje_admin,
                         datos_adicionales={
-                            'ingrediente_id': ingrediente_id,
-                            'ingrediente_nombre': ingrediente.nombre,
+                            'ingrediente_id': ingrediente_dict['id'],
+                            'ingrediente_nombre': ingrediente_dict['nombre'],
                             'especiales_afectados': especiales_afectados,
-                            'total_especiales_afectados': len(especiales_afectados),
-                            'accion': 'revisar_especiales',
-                            'timestamp': datetime.utcnow().isoformat()
+                            'total_especiales_afectados': len(especiales_afectados)
                         }
                     )
                     notificaciones_admin += 1
-                    print(f"   ✅ Notificación admin creada: ID {notificacion.id}")
-                    print(f"   👤 Admin ID: {admin.id}")
-                    print(f"   📝 Tipo: ingrediente_inactivo")
-                    print(f"   🏷️  User_type: admin")
-                    
-                except Exception as admin_error:
-                    print(f"   ❌ Error notificando admin {admin.id}: {admin_error}")
+                except:
+                    pass
             
-            # 3. ¡¡¡IMPORTANTE!!! Notificar a TODOS los clientes (SIEMPRE)
-            clientes = User.query.filter_by(rol=2).all()
+            # 3. Notificar a clientes
+            clientes = User.get_users_by_role(2) if DB_TYPE == 'mysql' else []
             notificaciones_cliente = 0
             
             if len(clientes) > 0:
-                print(f"\n👥 Enviando notificaciones a {len(clientes)} clientes...")
-                
-                # Mensaje para cliente
                 mensaje_cliente = f"ACTUALIZACIÓN IMPORTANTE\n\n"
-                mensaje_cliente += f"El ingrediente '{ingrediente.nombre}' ya no está disponible.\n\n"
+                mensaje_cliente += f"El ingrediente '{ingrediente_dict['nombre']}' ya no está disponible.\n\n"
                 
                 if especiales_afectados:
                     mensaje_cliente += "Esto afecta los siguientes especiales del día:\n"
@@ -223,45 +323,27 @@ class Ingrediente(db.Model):
                     
                     if len(especiales_afectados) > 3:
                         mensaje_cliente += f"• ... y {len(especiales_afectados) - 3} más\n"
-                    
-                    mensaje_cliente += "\n⚠️ Estos especiales no estarán disponibles hasta nuevo aviso.\n"
-                else:
-                    mensaje_cliente += "⚠️ Esto podría afectar algunos de nuestros especiales.\n"
-                
-                mensaje_cliente += "\nGracias por tu comprensión.\n"
-                mensaje_cliente += "\n📍 Restaurante: [Nombre del restaurante]"
-                mensaje_cliente += "\n📞 Teléfono: [Número de teléfono]"
                 
                 for cliente in clientes:
+                    cliente_dict = User.to_dict(cliente)
                     try:
-                        notificacion = Notificacion.crear_notificacion_cliente(
-                            cliente_id=cliente.id,
+                        Notificacion.crear_notificacion_cliente(
+                            cliente_id=cliente_dict['id'],
                             tipo='ingrediente_inactivo',
-                            titulo=f'⚠️ Actualización de Menú - {ingrediente.nombre}',
+                            titulo=f'⚠️ Actualización de Menú - {ingrediente_dict["nombre"]}',
                             mensaje=mensaje_cliente,
                             datos_adicionales={
-                                'ingrediente_id': ingrediente_id,
-                                'ingrediente_nombre': ingrediente.nombre,
-                                'especiales_afectados_count': len(especiales_afectados),
-                                'accion': 'informacion',
-                                'timestamp': datetime.utcnow().isoformat(),
-                                'cliente_nombre': cliente.nombre,
-                                'cliente_telefono': cliente.telefono
+                                'ingrediente_id': ingrediente_dict['id'],
+                                'ingrediente_nombre': ingrediente_dict['nombre'],
+                                'especiales_afectados_count': len(especiales_afectados)
                             }
                         )
                         notificaciones_cliente += 1
-                        
-                        if notificaciones_cliente % 50 == 0:
-                            print(f"   📨 Notificaciones enviadas a {notificaciones_cliente} clientes...")
-                            
-                    except Exception as cliente_error:
-                        print(f"   ❌ Error notificando cliente {cliente.id}: {cliente_error}")
-            else:
-                print(f"   ⚠️ No hay clientes registrados para notificar")
+                    except:
+                        pass
             
             print(f"\n📈 RESUMEN FINAL:")
-            print(f"   • Ingrediente: {ingrediente.nombre}")
-            print(f"   • Estado: {'INACTIVO' if not ingrediente.activo else 'ACTIVO'}")
+            print(f"   • Ingrediente: {ingrediente_dict['nombre']}")
             print(f"   • Especiales afectados: {len(especiales_afectados)}")
             print(f"   • Admins notificados: {notificaciones_admin}")
             print(f"   • Clientes notificados: {notificaciones_cliente}")
@@ -270,36 +352,56 @@ class Ingrediente(db.Model):
             return True
             
         except Exception as error:
-            print(f"❌ ERROR CRÍTICO en _enviar_notificaciones_desactivacion: {error}")
-            import traceback
-            traceback.print_exc()
+            print(f"❌ ERROR en _enviar_notificaciones_desactivacion: {error}")
             return False
     
     @classmethod
     def get_by_categoria(cls, categoria, only_active=True):
         """Obtener ingredientes por categoría"""
-        query = cls.query.filter_by(categoria=categoria)
-        
-        if only_active:
-            query = query.filter_by(activo=True)
-        
-        return query.order_by(cls.nombre.asc()).all()
+        return cls.get_all_ingredientes(only_active=only_active, categoria=categoria)
     
     @classmethod
     def get_categorias(cls):
         """Obtener lista de categorías únicas"""
-        categorias = cls.query.with_entities(cls.categoria).distinct().all()
-        return [cat[0] for cat in categorias if cat[0] is not None]
+        try:
+            if DB_TYPE == 'mysql':
+                categorias = IngredienteSQL.query.with_entities(IngredienteSQL.categoria).distinct().all()
+                return [cat[0] for cat in categorias if cat[0] is not None]
+            else:
+                pipeline = [
+                    {'$match': {'categoria': {'$ne': None}}},
+                    {'$group': {'_id': '$categoria'}}
+                ]
+                result = cls._get_collection().aggregate(pipeline)
+                return [r['_id'] for r in result]
+        except:
+            return []
     
     @classmethod
     def search_ingredientes(cls, query):
         """Buscar ingredientes por nombre o categoría"""
-        if query:
-            return cls.query.filter(
-                (cls.nombre.ilike(f'%{query}%')) | 
-                (cls.categoria.ilike(f'%{query}%'))
-            ).all()
-        return cls.query.all()
+        try:
+            if DB_TYPE == 'mysql':
+                if query:
+                    return IngredienteSQL.query.filter(
+                        (IngredienteSQL.nombre.ilike(f'%{query}%')) | 
+                        (IngredienteSQL.categoria.ilike(f'%{query}%'))
+                    ).all()
+                return IngredienteSQL.query.all()
+                
+            else:
+                import re
+                if query:
+                    regex = re.compile(f'.*{query}.*', re.IGNORECASE)
+                    return list(cls._get_collection().find({
+                        '$or': [
+                            {'nombre': {'$regex': regex}},
+                            {'categoria': {'$regex': regex}}
+                        ]
+                    }))
+                return list(cls._get_collection().find())
+        except:
+            return []
     
     @classmethod
     def bulk_crear_ingredientes(cls, ingredientes_list):
@@ -319,11 +421,33 @@ class Ingrediente(db.Model):
     @classmethod
     def to_dict(cls, ingrediente):
         """Convertir ingrediente a diccionario"""
-        return {
-            'id': ingrediente.id,
-            'nombre': ingrediente.nombre,
-            'categoria': ingrediente.categoria,
-            'activo': ingrediente.activo,
-            'fecha_creacion': ingrediente.fecha_creacion.isoformat() if ingrediente.fecha_creacion else None,
-            'fecha_actualizacion': ingrediente.fecha_actualizacion.isoformat() if ingrediente.fecha_actualizacion else None
-        }
+        if not ingrediente:
+            return None
+        
+        if DB_TYPE == 'mysql':
+            return {
+                'id': ingrediente.id,
+                'nombre': ingrediente.nombre,
+                'categoria': ingrediente.categoria,
+                'activo': ingrediente.activo,
+                'fecha_creacion': ingrediente.fecha_creacion.isoformat() if ingrediente.fecha_creacion else None,
+                'fecha_actualizacion': ingrediente.fecha_actualizacion.isoformat() if ingrediente.fecha_actualizacion else None
+            }
+        else:
+            from bson.objectid import ObjectId
+            ingrediente_dict = dict(ingrediente)
+            ingrediente_dict['id'] = str(ingrediente_dict.pop('_id'))
+            
+            if 'fecha_creacion' in ingrediente_dict and ingrediente_dict['fecha_creacion']:
+                if isinstance(ingrediente_dict['fecha_creacion'], datetime):
+                    ingrediente_dict['fecha_creacion'] = ingrediente_dict['fecha_creacion'].isoformat()
+            
+            if 'fecha_actualizacion' in ingrediente_dict and ingrediente_dict['fecha_actualizacion']:
+                if isinstance(ingrediente_dict['fecha_actualizacion'], datetime):
+                    ingrediente_dict['fecha_actualizacion'] = ingrediente_dict['fecha_actualizacion'].isoformat()
+            
+            return ingrediente_dict
+
+# Para compatibilidad con código existente
+if DB_TYPE == 'mysql':
+    IngredienteSQL = Ingrediente

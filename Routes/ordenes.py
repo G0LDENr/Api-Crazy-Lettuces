@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from Controllers.ordenesController import (
     get_all_ordenes,
-    create_orden_completa,  # ✅ Cambiado a la nueva función
+    create_orden_completa,
     delete_orden,
     update_orden,
     get_single_orden,

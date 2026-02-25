@@ -1,240 +1,395 @@
-from config import db
-from flask_bcrypt import Bcrypt
+# Models/User.py
+from config import DB_TYPE, db_sql, db_mongo
 from datetime import datetime
+import traceback
 
-bcrypt = Bcrypt()
+# NO instanciar Bcrypt aquí - lo haremos dentro de las funciones que lo necesiten
 
-# Sistema de roles (fácil de expandir)
-ROLES = {
-    1: 'admin',
-    2: 'client',
-}
-
-class User(db.Model):
+# ============================================
+# MODELO PARA MySQL (SQLAlchemy)
+# ============================================
+class UserSQL(db_sql.Model):
     __tablename__ = 'users'
     
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    correo = db.Column(db.String(100), unique=True, nullable=False)
-    contraseña = db.Column(db.String(255), nullable=False)
-    rol = db.Column(db.Integer, default=2)  # Usa números para los roles
-    telefono = db.Column(db.String(20), nullable=True)
-    sexo = db.Column(db.String(10), nullable=True)
-    fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
+    id = db_sql.Column(db_sql.Integer, primary_key=True)
+    nombre = db_sql.Column(db_sql.String(100), nullable=False)
+    correo = db_sql.Column(db_sql.String(100), unique=True, nullable=False)
+    contraseña = db_sql.Column(db_sql.String(255), nullable=False)
+    rol = db_sql.Column(db_sql.Integer, default=2)
+    telefono = db_sql.Column(db_sql.String(20), nullable=True)
+    sexo = db_sql.Column(db_sql.String(10), nullable=True)
+    fecha_registro = db_sql.Column(db_sql.DateTime, default=datetime.utcnow)
     
-    # Relación con direcciones (usando back_populates)
-    direcciones = db.relationship('Direccion', back_populates='usuario', lazy=True, cascade='all, delete-orphan')
+    # Relación con direcciones - Usar 'DireccionSQL' en lugar de 'Direccion'
+    direcciones = db_sql.relationship('DireccionSQL', back_populates='usuario', lazy=True, cascade='all, delete-orphan')
     
-    # Propiedad para obtener la dirección predeterminada
     @property
     def direccion_predeterminada(self):
         """Obtiene la dirección predeterminada del usuario"""
         from Models.Direccion import Direccion
         return Direccion.get_direccion_predeterminada(self.id)
     
-    # Propiedad para obtener el texto de la dirección predeterminada
     @property
     def direccion_texto(self):
         """Obtiene el texto de la dirección predeterminada"""
-        direccion = self.direccion_predeterminada
-        if direccion:
-            from Models.Direccion import Direccion
-            return Direccion.to_dict(direccion).get('direccion_completa')
-        return None
+        try:
+            direccion = self.direccion_predeterminada
+            if direccion:
+                from Models.Direccion import Direccion
+                direccion_dict = Direccion.to_dict(direccion)
+                return direccion_dict.get('direccion_completa')
+            return None
+        except Exception as e:
+            print(f"Error en direccion_texto: {e}")
+            return None
     
-    # Métodos para manejar roles
-    @classmethod
-    def get_roles(cls):
-        """Obtener diccionario de roles disponibles"""
-        return ROLES
+    def __repr__(self):
+        return f'<User {self.correo}>'
+
+# ============================================
+# REPOSITORIO ÚNICO - Maneja ambas bases de datos
+# ============================================
+class UserRepository:
+    """Repositorio que maneja ambas bases de datos según DB_TYPE"""
     
-    @classmethod
-    def add_role(cls, role_id, role_name):
-        """Agregar nuevo rol (para expansión futura)"""
-        global ROLES
-        ROLES[role_id] = role_name
+    def __init__(self):
+        from config import DB_TYPE
+        self.db_type = DB_TYPE
+        # Instanciar Bcrypt dentro del constructor
+        from flask_bcrypt import Bcrypt
+        self.bcrypt = Bcrypt()
+        print(f"🔌 UserRepository inicializado con DB_TYPE: {self.db_type}")
     
-    @classmethod
-    def get_role_name(cls, role_id):
-        """Obtener nombre del rol por ID"""
-        return ROLES.get(role_id, 'client')
+    # ============ MÉTODOS DE BÚSQUEDA ============
     
-    @classmethod
-    def get_role_id(cls, role_name):
-        """Obtener ID del rol por nombre"""
-        for role_id, name in ROLES.items():
-            if name == role_name:
-                return role_id
-        return 2  # Default client
-    
-    @classmethod
-    def is_valid_role(cls, role_id):
-        """Verificar si un rol es válido"""
-        return role_id in ROLES
-    
-    @classmethod
-    def find_by_credentials(cls, email, password):
+    def find_by_credentials(self, email, password):
         """Buscar usuario por email y verificar contraseña"""
-        user = cls.query.filter_by(correo=email.lower().strip()).first()
-        if user and bcrypt.check_password_hash(user.contraseña, password):
-            return user
-        return None
+        try:
+            email = email.lower().strip()
+            
+            if self.db_type == 'mysql':
+                user = UserSQL.query.filter_by(correo=email).first()
+                if user and self.bcrypt.check_password_hash(user.contraseña, password):
+                    return user
+                return None
+                
+            else:  # MongoDB
+                from bson.objectid import ObjectId
+                user = db_mongo.db.users.find_one({'correo': email})
+                if user and self.bcrypt.check_password_hash(user['contraseña'], password):
+                    return user
+                return None
+                
+        except Exception as e:
+            print(f"Error en find_by_credentials: {e}")
+            traceback.print_exc()
+            return None
     
-    @classmethod
-    def find_by_email(cls, email):
+    def find_by_email(self, email):
         """Buscar usuario por email"""
-        return cls.query.filter_by(correo=email.lower().strip()).first()
+        try:
+            email = email.lower().strip()
+            
+            if self.db_type == 'mysql':
+                return UserSQL.query.filter_by(correo=email).first()
+            else:  # MongoDB
+                return db_mongo.db.users.find_one({'correo': email})
+                
+        except Exception as e:
+            print(f"Error en find_by_email: {e}")
+            return None
     
-    @classmethod
-    def find_by_id(cls, user_id):
+    def find_by_id(self, user_id):
         """Buscar usuario por ID"""
-        return cls.query.get(user_id)
+        try:
+            if self.db_type == 'mysql':
+                return UserSQL.query.get(int(user_id))
+                
+            else:  # MongoDB
+                from bson.objectid import ObjectId
+                try:
+                    return db_mongo.db.users.find_one({'_id': ObjectId(str(user_id))})
+                except:
+                    return None
+                    
+        except Exception as e:
+            print(f"Error en find_by_id: {e}")
+            return None
     
-    @classmethod
-    def get_all_users(cls):
+    def get_all_users(self):
         """Obtener todos los usuarios"""
-        return cls.query.all()
+        try:
+            if self.db_type == 'mysql':
+                return UserSQL.query.all()
+            else:  # MongoDB
+                return list(db_mongo.db.users.find())
+        except Exception as e:
+            print(f"Error en get_all_users: {e}")
+            return []
     
-    @classmethod
-    def create_user(cls, user_data):
+    def search_users(self, query):
+        """Buscar usuarios por nombre o email"""
+        try:
+            if self.db_type == 'mysql':
+                return UserSQL.query.filter(
+                    (UserSQL.nombre.ilike(f'%{query}%')) | 
+                    (UserSQL.correo.ilike(f'%{query}%'))
+                ).all()
+                
+            else:  # MongoDB
+                import re
+                regex = re.compile(f'.*{query}.*', re.IGNORECASE)
+                return list(db_mongo.db.users.find({
+                    '$or': [
+                        {'nombre': {'$regex': regex}},
+                        {'correo': {'$regex': regex}}
+                    ]
+                }))
+                
+        except Exception as e:
+            print(f"Error en search_users: {e}")
+            return []
+    
+    def get_users_by_role(self, role_id):
+        """Obtener usuarios por rol"""
+        try:
+            if self.db_type == 'mysql':
+                return UserSQL.query.filter_by(rol=role_id).all()
+            else:  # MongoDB
+                return list(db_mongo.db.users.find({'rol': int(role_id)}))
+        except Exception as e:
+            print(f"Error en get_users_by_role: {e}")
+            return []
+    
+    # ============ MÉTODOS DE CREACIÓN/ACTUALIZACIÓN ============
+    
+    def create_user(self, user_data):
         """Crear nuevo usuario"""
-        # Validar rol
-        rol = user_data.get('rol', 2)
-        if not cls.is_valid_role(rol):
-            rol = 2  # Default client
-        
-        # Hashear contraseña
-        hashed_password = bcrypt.generate_password_hash(
-            user_data['contraseña']
-        ).decode('utf-8')
-        
-        user = cls(
-            nombre=user_data['nombre'],
-            correo=user_data['correo'],
-            contraseña=hashed_password,
-            rol=rol,
-            telefono=user_data.get('telefono', ''),
-            sexo=user_data.get('sexo', '')
-        )
-        
-        db.session.add(user)
-        db.session.commit()
-        return user.id
-    
-    @classmethod
-    def update_user(cls, user_id, update_data):
-        """Actualizar usuario"""
-        user = cls.query.get(user_id)
-        if not user:
-            return False
-        
-        if 'nombre' in update_data:
-            user.nombre = update_data['nombre']
-        if 'correo' in update_data:
-            user.correo = update_data['correo']
-        if 'contraseña' in update_data:
-            user.contraseña = bcrypt.generate_password_hash(
-                update_data['contraseña']
+        try:
+            # Hashear contraseña
+            hashed_password = self.bcrypt.generate_password_hash(
+                user_data['contraseña']
             ).decode('utf-8')
-        if 'rol' in update_data:
-            # Validar el nuevo rol
-            if cls.is_valid_role(update_data['rol']):
-                user.rol = update_data['rol']
-        if 'telefono' in update_data:
-            user.telefono = update_data['telefono']
-        if 'sexo' in update_data:
-            user.sexo = update_data['sexo']
-        
-        db.session.commit()
-        return True
+            user_data['contraseña'] = hashed_password
+            
+            if self.db_type == 'mysql':
+                user = UserSQL(
+                    nombre=user_data['nombre'],
+                    correo=user_data['correo'].lower().strip(),
+                    contraseña=user_data['contraseña'],
+                    rol=user_data.get('rol', 2),
+                    telefono=user_data.get('telefono', ''),
+                    sexo=user_data.get('sexo', ''),
+                    fecha_registro=user_data.get('fecha_registro', datetime.utcnow())
+                )
+                db_sql.session.add(user)
+                db_sql.session.commit()
+                return user.id
+                
+            else:  # MongoDB
+                from bson.objectid import ObjectId
+                user_data['correo'] = user_data['correo'].lower().strip()
+                user_data['fecha_registro'] = datetime.utcnow()
+                result = db_mongo.db.users.insert_one(user_data)
+                return str(result.inserted_id)
+                
+        except Exception as e:
+            print(f"Error en create_user: {e}")
+            if self.db_type == 'mysql':
+                db_sql.session.rollback()
+            traceback.print_exc()
+            raise e
     
-    @classmethod
-    def delete_user(cls, user_id):
+    def update_user(self, user_id, update_data):
+        """Actualizar usuario"""
+        try:
+            if self.db_type == 'mysql':
+                user = UserSQL.query.get(int(user_id))
+                if not user:
+                    return False
+                
+                if 'nombre' in update_data:
+                    user.nombre = update_data['nombre']
+                if 'correo' in update_data:
+                    user.correo = update_data['correo'].lower().strip()
+                if 'contraseña' in update_data:
+                    user.contraseña = self.bcrypt.generate_password_hash(
+                        update_data['contraseña']
+                    ).decode('utf-8')
+                if 'rol' in update_data:
+                    user.rol = update_data['rol']
+                if 'telefono' in update_data:
+                    user.telefono = update_data['telefono']
+                if 'sexo' in update_data:
+                    user.sexo = update_data['sexo']
+                
+                db_sql.session.commit()
+                return True
+                
+            else:  # MongoDB
+                from bson.objectid import ObjectId
+                if 'contraseña' in update_data:
+                    update_data['contraseña'] = self.bcrypt.generate_password_hash(
+                        update_data['contraseña']
+                    ).decode('utf-8')
+                
+                if 'correo' in update_data:
+                    update_data['correo'] = update_data['correo'].lower().strip()
+                
+                result = db_mongo.db.users.update_one(
+                    {'_id': ObjectId(str(user_id))},
+                    {'$set': update_data}
+                )
+                return result.modified_count > 0
+                
+        except Exception as e:
+            print(f"Error en update_user: {e}")
+            if self.db_type == 'mysql':
+                db_sql.session.rollback()
+            return False
+    
+    def delete_user(self, user_id):
         """Eliminar usuario"""
         try:
-            print(f"🔍 DEBUG MODELO - Iniciando eliminación del usuario ID: {user_id}")
-            
-            user = cls.query.get(user_id)
-            print(f"🔍 DEBUG MODELO - Usuario encontrado: {user is not None}")
-            
-            if not user:
-                print(f"❌ DEBUG MODELO - Usuario {user_id} no encontrado en la base de datos")
-                return False
-            
-            print(f"🔍 DEBUG MODELO - Datos del usuario a eliminar:")
-            print(f"   ID: {user.id}")
-            print(f"   Nombre: {user.nombre}")
-            print(f"   Email: {user.correo}")
-            print(f"   Rol: {user.rol}")
-            print(f"   Direcciones: {len(user.direcciones)}")
-            
-            # Las direcciones se eliminarán automáticamente por cascade='all, delete-orphan'
-            
-            # Intentar eliminar el usuario
-            db.session.delete(user)
-            db.session.commit()
-            
-            print(f"✅ DEBUG MODELO - Usuario {user_id} eliminado exitosamente de la base de datos")
-            return True
-            
-        except Exception as error:
-            print(f"💥 DEBUG MODELO - Error al eliminar usuario {user_id}: {str(error)}")
-            print(f"💥 DEBUG MODELO - Tipo de error: {type(error).__name__}")
-            db.session.rollback()
+            if self.db_type == 'mysql':
+                user = UserSQL.query.get(int(user_id))
+                if not user:
+                    return False
+                db_sql.session.delete(user)
+                db_sql.session.commit()
+                return True
+                
+            else:  # MongoDB
+                from bson.objectid import ObjectId
+                result = db_mongo.db.users.delete_one({'_id': ObjectId(str(user_id))})
+                return result.deleted_count > 0
+                
+        except Exception as e:
+            print(f"Error en delete_user: {e}")
+            if self.db_type == 'mysql':
+                db_sql.session.rollback()
             return False
     
-    @classmethod
-    def search_users(cls, query):
-        """Buscar usuarios por nombre o email"""
-        if query:
-            return cls.query.filter(
-                (cls.nombre.ilike(f'%{query}%')) | 
-                (cls.correo.ilike(f'%{query}%'))
-            ).all()
-        return cls.query.all()
+    # ============ MÉTODOS DE UTILIDAD ============
     
-    @classmethod
-    def get_users_by_role(cls, role_id):
-        """Obtener usuarios por rol"""
-        if not cls.is_valid_role(role_id):
-            return []
-        return cls.query.filter_by(rol=role_id).all()
-    
-    @classmethod
-    def to_dict(cls, user, include_direcciones=False):
-        """Convertir objeto usuario a diccionario para JSON"""
-        if not user:
+    def to_dict(self, user, include_direcciones=False):
+        """Convertir usuario a diccionario según el tipo de DB"""
+        try:
+            if self.db_type == 'mysql':
+                if not user:
+                    return None
+                
+                # Obtener dirección predeterminada
+                direccion = None
+                try:
+                    if hasattr(user, 'direccion_texto'):
+                        direccion = user.direccion_texto
+                except Exception as e:
+                    print(f"⚠️ Error al obtener direccion_texto: {e}")
+                
+                user_dict = {
+                    'id': user.id,
+                    'nombre': user.nombre,
+                    'correo': user.correo,
+                    'rol': user.rol,
+                    'rol_texto': self.get_role_name(user.rol),
+                    'telefono': user.telefono or '',
+                    'sexo': user.sexo or '',
+                    'fecha_registro': user.fecha_registro.strftime('%Y-%m-%d %H:%M:%S') if user.fecha_registro else None,
+                    'direccion': direccion
+                }
+                
+                if include_direcciones:
+                    try:
+                        from Models.Direccion import Direccion
+                        direcciones_list = []
+                        for d in user.direcciones:
+                            d_dict = Direccion.to_dict(d)
+                            if d_dict:
+                                direcciones_list.append(d_dict)
+                        user_dict['direcciones'] = direcciones_list
+                        user_dict['total_direcciones'] = len(direcciones_list)
+                        
+                        # Buscar dirección predeterminada
+                        pred = Direccion.get_direccion_predeterminada(user.id)
+                        if pred:
+                            user_dict['direccion_predeterminada'] = Direccion.to_dict(pred)
+                        else:
+                            user_dict['direccion_predeterminada'] = None
+                    except Exception as e:
+                        print(f"⚠️ Error al obtener direcciones: {e}")
+                        user_dict['direcciones'] = []
+                        user_dict['total_direcciones'] = 0
+                        user_dict['direccion_predeterminada'] = None
+                
+                return user_dict
+                
+            else:  # MongoDB
+                if not user:
+                    return None
+                
+                from bson.objectid import ObjectId
+                user_dict = dict(user)
+                user_dict['id'] = str(user_dict.pop('_id'))
+                user_dict['rol_texto'] = self.get_role_name(user_dict.get('rol', 2))
+                
+                # Intentar obtener dirección para MongoDB
+                try:
+                    from Models.Direccion import Direccion
+                    direccion_pred = Direccion.get_direccion_predeterminada(user_dict['id'])
+                    if direccion_pred:
+                        direccion_dict = Direccion.to_dict(direccion_pred)
+                        user_dict['direccion'] = direccion_dict.get('direccion_completa')
+                    else:
+                        user_dict['direccion'] = None
+                except Exception as e:
+                    print(f"⚠️ Error obteniendo dirección en MongoDB: {e}")
+                    user_dict['direccion'] = None
+                
+                if 'fecha_registro' in user_dict and user_dict['fecha_registro']:
+                    if isinstance(user_dict['fecha_registro'], datetime):
+                        user_dict['fecha_registro'] = user_dict['fecha_registro'].strftime('%Y-%m-%d %H:%M:%S')
+                
+                # Incluir direcciones si se solicita (para MongoDB)
+                if include_direcciones:
+                    try:
+                        from Models.Direccion import Direccion
+                        direcciones = list(db_mongo.db.direcciones.find({'user_id': user_dict['id']}))
+                        direcciones_list = []
+                        for dir_doc in direcciones:
+                            dir_dict = Direccion.to_dict(dir_doc)
+                            if dir_dict:
+                                direcciones_list.append(dir_dict)
+                        user_dict['direcciones'] = direcciones_list
+                        user_dict['total_direcciones'] = len(direcciones_list)
+                        
+                        # Buscar dirección predeterminada
+                        pred = db_mongo.db.direcciones.find_one({'user_id': user_dict['id'], 'predeterminada': True})
+                        if pred:
+                            user_dict['direccion_predeterminada'] = Direccion.to_dict(pred)
+                        else:
+                            user_dict['direccion_predeterminada'] = None
+                    except Exception as e:
+                        print(f"⚠️ Error al obtener direcciones: {e}")
+                        user_dict['direcciones'] = []
+                        user_dict['total_direcciones'] = 0
+                        user_dict['direccion_predeterminada'] = None
+                
+                return user_dict
+                
+        except Exception as e:
+            print(f"Error en to_dict: {e}")
             return None
-        
-        user_dict = {
-            'id': user.id,
-            'nombre': user.nombre,
-            'correo': user.correo,
-            'telefono': getattr(user, 'telefono', ''),
-            'sexo': getattr(user, 'sexo', ''),
-            'direccion': user.direccion_texto,  # Dirección predeterminada como texto
-            'rol': user.rol,
-            'rol_texto': cls.get_role_name(user.rol),
-            'fecha_registro': user.fecha_registro.strftime('%Y-%m-%d %H:%M:%S') if user.fecha_registro else None
-        }
-        
-        # Incluir todas las direcciones si se solicita
-        if include_direcciones:
-            try:
-                from Models.Direccion import Direccion
-                user_dict['direcciones'] = []
-                for direccion in user.direcciones:
-                    user_dict['direcciones'].append(Direccion.to_dict(direccion))
-                user_dict['total_direcciones'] = len(user.direcciones)
-                
-                # Incluir dirección predeterminada como objeto completo
-                direccion_pred = user.direccion_predeterminada
-                user_dict['direccion_predeterminada'] = Direccion.to_dict(direccion_pred) if direccion_pred else None
-                
-            except Exception as e:
-                print(f"⚠️ Error al obtener direcciones del usuario: {e}")
-                user_dict['direcciones'] = []
-                user_dict['total_direcciones'] = 0
-                user_dict['direccion_predeterminada'] = None
-        
-        return user_dict
+    
+    def get_role_name(self, role_id):
+        """Obtener nombre del rol por ID"""
+        from config import ROLES
+        return ROLES.get(role_id, 'client')
+    
+    def is_valid_role(self, role_id):
+        """Verificar si un rol es válido"""
+        from config import ROLES
+        return role_id in ROLES
+
+# Para facilitar la importación en otros archivos
+User = UserSQL  # Alias para compatibilidad

@@ -1,7 +1,7 @@
 from Models.Notificaciones import Notificacion
 from Models.Ordenes import Orden
 from Models.Especiales import Especial
-from Models.User import User
+from Models.User import UserRepository
 from flask import jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
@@ -9,83 +9,116 @@ import json
 import config
 from config import db
 
+# Instancia del repositorio de usuarios
+user_repo = UserRepository()
+
 def notificar_nuevo_pedido(orden_id):
-    """Función para notificar nuevo pedido - VERSIÓN PARA CARRITO"""
+    """Función para notificar nuevo pedido - VERSIÓN PARA CARRITO (COMPATIBLE CON AMBAS DBs)"""
     try:
-        print(f"[NOTIFICACIONES] Iniciando notificación para orden {orden_id}")
-        orden = Orden.query.get(orden_id)
+        print(f"\n{'='*60}")
+        print(f"🔔 [NOTIFICACIONES] notificar_nuevo_pedido - INICIANDO")
+        print(f"📦 Orden ID recibido: {orden_id}")
+        print(f"{'='*60}")
+        
+        # Buscar la orden usando el método del modelo (compatible con ambas DBs)
+        from Models.Ordenes import Orden
+        orden = Orden.find_by_id(orden_id)
+        
         if not orden:
-            print(f"[NOTIFICACIONES] Orden {orden_id} no encontrada")
+            print(f"❌ [NOTIFICACIONES] Orden {orden_id} NO encontrada en la base de datos")
             return False
         
-        print(f"[NOTIFICACIONES] Orden encontrada: {orden.codigo_unico}")
-        print(f"Tipo pedido: {orden.tipo_pedido}")
-        print(f"Método pago: {orden.metodo_pago}")
+        # Convertir a diccionario según el tipo
+        if hasattr(orden, 'to_dict'):
+            orden_dict = orden.to_dict()
+        else:
+            from bson.objectid import ObjectId
+            orden_dict = dict(orden)
+            if '_id' in orden_dict:
+                orden_dict['id'] = str(orden_dict.pop('_id'))
+        
+        print(f"✅ [NOTIFICACIONES] Orden encontrada:")
+        print(f"   - ID: {orden_dict.get('id')}")
+        print(f"   - Código: {orden_dict.get('codigo_unico')}")
+        print(f"   - Cliente: {orden_dict.get('nombre_usuario')}")
+        print(f"   - Teléfono: {orden_dict.get('telefono_usuario')}")
+        print(f"   - Tipo pedido: {orden_dict.get('tipo_pedido')}")
+        print(f"   - Método pago: {orden_dict.get('metodo_pago', 'efectivo')}")
         
         # 1. Obtener detalles del pedido según tipo
         detalles_pedido = ""
         producto_nombre = ""
         items_info = []
         
-        if orden.tipo_pedido == 'especial':
-            print(f"Pedido ESPECIAL detectado")
-            if orden.especial_id:
-                especial = Especial.query.get(orden.especial_id)
+        if orden_dict.get('tipo_pedido') == 'especial':
+            print(f"   📋 Pedido ESPECIAL detectado")
+            if orden_dict.get('especial_id'):
+                from Models.Especiales import Especial
+                especial = Especial.find_by_id(orden_dict['especial_id'])
                 if especial:
-                    producto_nombre = especial.nombre
-                    detalles_pedido = f"{especial.nombre}"
+                    if hasattr(especial, 'to_dict'):
+                        especial_dict = especial.to_dict()
+                    else:
+                        especial_dict = dict(especial)
+                    producto_nombre = especial_dict.get('nombre')
+                    detalles_pedido = f"{especial_dict.get('nombre')}"
+                    print(f"      Especial: {producto_nombre}")
                 else:
                     detalles_pedido = "Producto Especial"
             else:
                 detalles_pedido = "Producto Especial"
                 
-        elif orden.tipo_pedido == 'personalizado':
-            print(f"Pedido PERSONALIZADO detectado")
+        elif orden_dict.get('tipo_pedido') == 'personalizado':
+            print(f"   📋 Pedido PERSONALIZADO detectado")
             producto_nombre = "Pedido Personalizado"
-            if orden.ingredientes_personalizados:
-                ingredientes = orden.ingredientes_personalizados.split(',')
+            if orden_dict.get('ingredientes_personalizados'):
+                ingredientes = orden_dict['ingredientes_personalizados'].split(',')
                 primeros_ingredientes = ingredientes[:3]
                 detalles_pedido = f"Personalizado: {', '.join(primeros_ingredientes).strip()}"
                 if len(ingredientes) > 3:
                     detalles_pedido += " y más..."
+                print(f"      Ingredientes: {len(ingredientes)} seleccionados")
             else:
                 detalles_pedido = "Pedido Personalizado"
         
-        elif orden.tipo_pedido == 'carrito':
-            print(f"Pedido CARRITO detectado")
+        elif orden_dict.get('tipo_pedido') == 'carrito':
+            print(f"   📋 Pedido CARRITO detectado")
             producto_nombre = "Pedido del Carrito"
             
-            # Intentar obtener items del pedido_json
-            if orden.pedido_json:
+            if orden_dict.get('pedido_json'):
                 try:
-                    pedido_data = json.loads(orden.pedido_json)
+                    pedido_data = json.loads(orden_dict['pedido_json'])
                     if isinstance(pedido_data, dict) and 'items' in pedido_data:
                         items = pedido_data['items']
-                        for item in items[:3]:  # Mostrar solo primeros 3 items
+                        total_items = len(items)
+                        print(f"      Total items en carrito: {total_items}")
+                        
+                        for item in items[:3]:
                             items_info.append(f"{item.get('nombre', 'Producto')} x{item.get('cantidad', 1)}")
                         
                         if items_info:
                             detalles_pedido = ", ".join(items_info)
-                            if len(items) > 3:
-                                detalles_pedido += f" y {len(items) - 3} más"
+                            if total_items > 3:
+                                detalles_pedido += f" y {total_items - 3} más"
                         else:
                             detalles_pedido = "Varios productos del carrito"
                     else:
                         detalles_pedido = "Compra del carrito"
-                except:
+                except Exception as e:
+                    print(f"      Error parseando pedido_json: {e}")
                     detalles_pedido = "Pedido del carrito"
             else:
                 detalles_pedido = "Pedido del carrito"
         
-        print(f"Detalles del pedido: {detalles_pedido}")
+        print(f"   📝 Detalles del pedido: {detalles_pedido}")
         
-        # 2. Información de pago para la notificación
+        # 2. Información de pago
         info_pago_texto = ""
-        if orden.metodo_pago == 'tarjeta':
+        if orden_dict.get('metodo_pago') == 'tarjeta':
             info_pago_texto = "💳 Pago con tarjeta"
-            if orden.info_pago_json:
+            if orden_dict.get('info_pago_json'):
                 try:
-                    info_pago = json.loads(orden.info_pago_json)
+                    info_pago = json.loads(orden_dict['info_pago_json'])
                     if info_pago.get('ultimos_4'):
                         info_pago_texto += f" (****{info_pago['ultimos_4']})"
                 except:
@@ -93,128 +126,188 @@ def notificar_nuevo_pedido(orden_id):
         else:
             info_pago_texto = "Pago en efectivo"
         
+        print(f"   💰 Información pago: {info_pago_texto}")
+        
         # 3. MENSAJES PARA ADMINISTRADORES
-        mensaje_admin = f"NUEVO PEDIDO #{orden.codigo_unico}\n"
-        mensaje_admin += f"Cliente: {orden.nombre_usuario}\n"
-        mensaje_admin += f"Tel: {orden.telefono_usuario}\n"
+        codigo_pedido = orden_dict.get('codigo_unico', '')
+        nombre_cliente = orden_dict.get('nombre_usuario', '')
+        telefono_cliente = orden_dict.get('telefono_usuario', '')
+        precio = float(orden_dict.get('precio', 0))
+        
+        mensaje_admin = f"NUEVO PEDIDO #{codigo_pedido}\n"
+        mensaje_admin += f"Cliente: {nombre_cliente}\n"
+        mensaje_admin += f"Tel: {telefono_cliente}\n"
         mensaje_admin += f"Pedido: {detalles_pedido}\n"
         mensaje_admin += f"Método pago: {info_pago_texto}\n"
-        mensaje_admin += f"Total: ${float(orden.precio):.2f}"
+        mensaje_admin += f"Total: ${precio:.2f}"
         
-        if orden.notas:
-            mensaje_admin += f"\nNotas: {orden.notas[:100]}..."
+        if orden_dict.get('notas'):
+            mensaje_admin += f"\nNotas: {orden_dict['notas'][:100]}..."
         
-        titulo_admin = f"Pedido #{orden.codigo_unico}"
+        titulo_admin = f"Pedido #{codigo_pedido}"
+        
+        print(f"\n📧 Mensaje para admin:")
+        print(f"   Título: {titulo_admin}")
+        print(f"   Mensaje: {mensaje_admin[:100]}...")
         
         # 4. MENSAJES PARA CLIENTES
-        mensaje_cliente = f"Tu pedido #{orden.codigo_unico} ha sido recibido.\n"
-        mensaje_cliente += f"Total: ${float(orden.precio):.2f}\n"
+        mensaje_cliente = f"Tu pedido #{codigo_pedido} ha sido recibido.\n"
+        mensaje_cliente += f"Total: ${precio:.2f}\n"
         mensaje_cliente += f"Método pago: {info_pago_texto}\n"
         mensaje_cliente += "Te notificaremos cuando esté en proceso."
         
-        titulo_cliente = f"Pedido recibido #{orden.codigo_unico}"
+        titulo_cliente = f"Pedido recibido #{codigo_pedido}"
         
-        # 5. Datos completos para mostrar al hacer clic
+        print(f"\n📧 Mensaje para cliente:")
+        print(f"   Título: {titulo_cliente}")
+        print(f"   Mensaje: {mensaje_cliente[:100]}...")
+        
+        # 5. Datos completos
         datos_completos = {
-            'orden_id': orden.id,
-            'codigo_pedido': orden.codigo_unico,
-            'cliente_nombre': orden.nombre_usuario,
-            'telefono_cliente': orden.telefono_usuario,
-            'tipo_pedido': orden.tipo_pedido,
+            'orden_id': orden_dict.get('id'),
+            'codigo_pedido': codigo_pedido,
+            'cliente_nombre': nombre_cliente,
+            'telefono_cliente': telefono_cliente,
+            'tipo_pedido': orden_dict.get('tipo_pedido'),
             'producto_nombre': producto_nombre,
             'detalles_completos': detalles_pedido,
-            'ingredientes_completos': orden.ingredientes_personalizados if orden.tipo_pedido == 'personalizado' else None,
-            'precio': float(orden.precio) if orden.precio else 0.0,
-            'direccion_completa': orden.direccion_texto,
-            'metodo_pago': orden.metodo_pago,
-            'info_pago': orden.info_pago_json,
-            'notas': orden.notas,
-            'estado': orden.estado,
-            'fecha_pedido': orden.fecha_creacion.isoformat() if orden.fecha_creacion else None,
+            'ingredientes_completos': orden_dict.get('ingredientes_personalizados'),
+            'precio': precio,
+            'direccion_completa': orden_dict.get('direccion_texto'),
+            'metodo_pago': orden_dict.get('metodo_pago'),
+            'info_pago': orden_dict.get('info_pago_json'),
+            'notas': orden_dict.get('notas'),
+            'estado': orden_dict.get('estado', 'pendiente'),
+            'fecha_pedido': datetime.utcnow().isoformat(),
             'timestamp': datetime.utcnow().isoformat()
         }
         
         # Agregar items del carrito si existen
-        if orden.tipo_pedido == 'carrito' and orden.pedido_json:
+        if orden_dict.get('tipo_pedido') == 'carrito' and orden_dict.get('pedido_json'):
             try:
-                pedido_data = json.loads(orden.pedido_json)
+                pedido_data = json.loads(orden_dict['pedido_json'])
                 datos_completos['items_carrito'] = pedido_data.get('items', [])
                 datos_completos['total_items'] = len(pedido_data.get('items', []))
             except:
                 pass
         
-        # 6. Notificar a TODOS los administradores
-        from Models.User import User
-        admins = User.query.filter_by(rol=1).all()
+        # 6. Notificar a TODOS los administradores usando el repositorio
+        from Models.User import UserRepository
+        user_repo = UserRepository()
+        
+        admins = user_repo.get_users_by_role(1)
+        print(f"\n👥 Administradores encontrados: {len(admins)}")
+        
         notificaciones_creadas = 0
         
-        print(f"Administradores encontrados: {len(admins)}")
+        if len(admins) == 0:
+            print(f"⚠️ No hay administradores registrados en el sistema")
         
         for admin in admins:
             try:
-                print(f"Creando notificación para admin: {admin.nombre}")
+                admin_dict = user_repo.to_dict(admin)
+                admin_id = admin_dict.get('id')
+                admin_nombre = admin_dict.get('nombre', 'Admin')
                 
+                print(f"\n   → Creando notificación para admin: {admin_nombre} (ID: {admin_id})")
+                
+                from Models.Notificaciones import Notificacion
                 notificacion = Notificacion.crear_notificacion(
-                    user_id=admin.id,
+                    user_id=admin_id,
                     user_type='admin',
                     tipo='nuevo_pedido',
                     titulo=titulo_admin,
                     mensaje=mensaje_admin,
                     datos_adicionales=datos_completos,
-                    orden_id=orden.id
+                    orden_id=orden_dict.get('id')
                 )
                 
                 if notificacion:
                     notificaciones_creadas += 1
-                    print(f"Notificación creada para admin {admin.nombre}")
+                    if hasattr(notificacion, 'id'):
+                        notif_id = notificacion.id
+                    else:
+                        notif_id = notificacion.get('id')
+                    print(f"      ✅ Notificación creada para admin {admin_nombre} - ID: {notif_id}")
                     
             except Exception as admin_error:
-                print(f"Error con admin {admin.id}: {admin_error}")
+                print(f"      ❌ Error con admin {admin_nombre}: {admin_error}")
+                import traceback
+                traceback.print_exc()
+        
+        print(f"\n📊 Notificaciones a admin creadas: {notificaciones_creadas}")
         
         # 7. Notificación para el cliente si está registrado
         try:
-            cliente = User.query.filter_by(telefono=orden.telefono_usuario).first()
+            print(f"\n🔍 Buscando cliente con teléfono: {telefono_cliente}")
+            
+            # Buscar cliente por teléfono usando el repositorio si tiene el método
+            cliente = None
+            if telefono_cliente:
+                if hasattr(user_repo, 'find_by_phone'):
+                    cliente = user_repo.find_by_phone(telefono_cliente)
+                else:
+                    # Fallback a consulta directa (solo funciona en MySQL)
+                    from Models.User import UserSQL
+                    cliente = UserSQL.query.filter_by(telefono=telefono_cliente).first()
+            
             if cliente:
-                print(f"Cliente registrado encontrado: {cliente.nombre}")
+                cliente_dict = user_repo.to_dict(cliente) if hasattr(user_repo, 'to_dict') else {'id': cliente.id, 'nombre': cliente.nombre}
+                print(f"✅ Cliente registrado encontrado: {cliente_dict.get('nombre')} (ID: {cliente_dict.get('id')})")
                 
+                from Models.Notificaciones import Notificacion
                 notificacion_cliente = Notificacion.crear_notificacion(
-                    user_id=cliente.id,
+                    user_id=cliente_dict.get('id'),
                     user_type='cliente',
                     tipo='confirmacion_pedido',
                     titulo=titulo_cliente,
                     mensaje=mensaje_cliente,
                     datos_adicionales=datos_completos,
-                    orden_id=orden.id
+                    orden_id=orden_dict.get('id')
                 )
                 
                 if notificacion_cliente:
-                    print(f"Notificación creada para el cliente")
+                    if hasattr(notificacion_cliente, 'id'):
+                        notif_id = notificacion_cliente.id
+                    else:
+                        notif_id = notificacion_cliente.get('id')
+                    print(f"      ✅ Notificación creada para el cliente - ID: {notif_id}")
+                else:
+                    print(f"      ⚠️ No se pudo crear notificación para cliente")
             else:
-                print(f"Cliente no registrado, solo notificaciones a admin")
+                print(f"⚠️ Cliente no registrado con teléfono {telefono_cliente}, solo notificaciones a admin")
         except Exception as cliente_error:
-            print(f"⚠️ Error creando notificación para cliente: {cliente_error}")
+            print(f"❌ Error creando notificación para cliente: {cliente_error}")
+            import traceback
+            traceback.print_exc()
         
-        print(f"[NOTIFICACIONES] Proceso completado: {notificaciones_creadas} notificaciones creadas")
+        print(f"\n✅ [NOTIFICACIONES] Proceso completado: {notificaciones_creadas} notificaciones a admin")
+        print(f"{'='*60}\n")
+        
         return True
         
     except Exception as error:
-        print(f"[NOTIFICACIONES] Error crítico: {error}")
+        print(f"❌ [NOTIFICACIONES] Error crítico: {error}")
         import traceback
         traceback.print_exc()
+        print(f"{'='*60}\n")
         return False
 
 def notificar_cambio_estado_pedido(orden_id, nuevo_estado):
     """Función para notificar cambio de estado de pedido"""
     try:
         print(f"DEBUG: Ejecutando notificar_cambio_estado_pedido para orden {orden_id}, estado: {nuevo_estado}")
-        orden = Orden.query.get(orden_id)
+        
+        # Usar find_by_id en lugar de query.get
+        orden = Orden.find_by_id(orden_id)
         if not orden:
             print(f"ERROR: Orden {orden_id} no encontrada para notificación de estado")
             return False
         
-        print(f"DEBUG: Notificando cambio de estado del pedido {orden.codigo_unico} a {nuevo_estado}")
+        codigo = orden.codigo_unico if hasattr(orden, 'codigo_unico') else orden.get('codigo_unico')
+        print(f"DEBUG: Notificando cambio de estado del pedido {codigo} a {nuevo_estado}")
         
-        # 1. Crear notificaciones usando el método del modelo
+        # Crear notificaciones usando el método del modelo
         notificaciones_creadas = Notificacion.notificar_cambio_estado(orden, nuevo_estado)
         
         print(f"DEBUG: Notificaciones de cambio de estado creadas exitosamente")
@@ -230,66 +323,84 @@ def notificar_pedido_cancelado(orden_id, motivo=None):
     """Notificar cuando un pedido es cancelado"""
     try:
         print(f"DEBUG: Ejecutando notificar_pedido_cancelado para orden {orden_id}")
-        orden = Orden.query.get(orden_id)
+        
+        # Usar find_by_id en lugar de query.get
+        orden = Orden.find_by_id(orden_id)
         if not orden:
             print(f"ERROR: Orden {orden_id} no encontrada para notificación de cancelación")
             return False
         
-        print(f"DEBUG: Notificando cancelación del pedido {orden.codigo_unico}")
+        # Convertir a diccionario
+        if hasattr(orden, 'to_dict'):
+            orden_dict = orden.to_dict()
+        else:
+            orden_dict = dict(orden)
         
-        mensaje_admin = f"Pedido {orden.codigo_unico} cancelado"
+        codigo = orden_dict.get('codigo_unico')
+        print(f"DEBUG: Notificando cancelación del pedido {codigo}")
+        
+        mensaje_admin = f"Pedido {codigo} cancelado"
         if motivo:
             mensaje_admin += f"\nMotivo: {motivo}"
         
-        # 1. Notificación para TODOS los administradores
-        admins = User.query.filter_by(rol=1).all()
+        # Notificar a administradores usando el repositorio
+        from Models.User import UserRepository
+        user_repo = UserRepository()
+        admins = user_repo.get_users_by_role(1)
+        
         for admin in admins:
             try:
+                admin_dict = user_repo.to_dict(admin)
                 Notificacion.crear_notificacion(
-                    user_id=admin.id,
+                    user_id=admin_dict['id'],
                     user_type='admin',
                     tipo='pedido_cancelado',
                     titulo='Pedido Cancelado',
                     mensaje=mensaje_admin,
                     datos_adicionales={
-                        'orden_id': orden.id,
-                        'codigo_pedido': orden.codigo_unico,
-                        'cliente': orden.nombre_usuario,
-                        'telefono_cliente': orden.telefono_usuario,
+                        'orden_id': orden_dict.get('id'),
+                        'codigo_pedido': codigo,
+                        'cliente': orden_dict.get('nombre_usuario'),
+                        'telefono_cliente': orden_dict.get('telefono_usuario'),
                         'motivo': motivo,
-                        'direccion': orden.direccion_texto,
-                        'precio': float(orden.precio) if orden.precio else 0.0
+                        'direccion': orden_dict.get('direccion_texto'),
+                        'precio': float(orden_dict.get('precio', 0))
                     },
-                    orden_id=orden.id
+                    orden_id=orden_dict.get('id')
                 )
             except Exception as admin_error:
-                print(f"ERROR al crear notificación de cancelación para admin {admin.id}: {admin_error}")
+                print(f"ERROR al crear notificación de cancelación para admin: {admin_error}")
         
-        # 2. Notificación para el cliente
-        usuario_cliente = User.query.filter_by(telefono=orden.telefono_usuario).first()
-        if usuario_cliente:
-            try:
-                mensaje_cliente = f"Tu pedido {orden.codigo_unico} ha sido cancelado"
-                if motivo:
-                    mensaje_cliente += f"\nMotivo: {motivo}"
-                
-                Notificacion.crear_notificacion_cliente(
-                    cliente_id=usuario_cliente.id,
-                    tipo='pedido_cancelado',
-                    titulo='Pedido Cancelado',
-                    mensaje=mensaje_cliente,
-                    datos_adicionales={
-                        'orden_id': orden.id,
-                        'codigo_pedido': orden.codigo_unico,
-                        'motivo': motivo,
-                        'direccion': orden.direccion_texto
-                    },
-                    orden_id=orden.id
-                )
-            except Exception as cliente_error:
-                print(f"ERROR al crear notificación de cancelación para cliente: {cliente_error}")
-        else:
-            print(f"DEBUG: No se encontró usuario cliente con teléfono {orden.telefono_usuario}")
+        # Notificación para el cliente
+        telefono_cliente = orden_dict.get('telefono_usuario')
+        if telefono_cliente:
+            # Buscar cliente por teléfono
+            from Models.User import UserSQL
+            usuario_cliente = UserSQL.query.filter_by(telefono=telefono_cliente).first()
+            
+            if usuario_cliente:
+                try:
+                    mensaje_cliente = f"Tu pedido {codigo} ha sido cancelado"
+                    if motivo:
+                        mensaje_cliente += f"\nMotivo: {motivo}"
+                    
+                    Notificacion.crear_notificacion_cliente(
+                        cliente_id=usuario_cliente.id,
+                        tipo='pedido_cancelado',
+                        titulo='Pedido Cancelado',
+                        mensaje=mensaje_cliente,
+                        datos_adicionales={
+                            'orden_id': orden_dict.get('id'),
+                            'codigo_pedido': codigo,
+                            'motivo': motivo,
+                            'direccion': orden_dict.get('direccion_texto')
+                        },
+                        orden_id=orden_dict.get('id')
+                    )
+                except Exception as cliente_error:
+                    print(f"ERROR al crear notificación de cancelación para cliente: {cliente_error}")
+            else:
+                print(f"DEBUG: No se encontró usuario cliente con teléfono {telefono_cliente}")
         
         print(f"DEBUG: Notificaciones de cancelación creadas exitosamente")
         return True
@@ -418,9 +529,10 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
                     })
                     
                     # Buscar usuario por teléfono
+                    from Models.User import UserSQL
                     usuario_cliente = None
                     if orden.telefono_usuario:
-                        usuario_cliente = User.query.filter_by(telefono=orden.telefono_usuario).first()
+                        usuario_cliente = UserSQL.query.filter_by(telefono=orden.telefono_usuario).first()
                     
                     # Si encontramos usuario, crear notificación
                     if usuario_cliente:
@@ -442,7 +554,7 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
                             notif_cliente = Notificacion.crear_notificacion(
                                 user_id=user_id_cliente,
                                 user_type='cliente',
-                                tipo=tipo_notificacion,  # ¡USAR EL TIPO CORRECTO!
+                                tipo=tipo_notificacion,
                                 titulo=titulo_base_cliente,
                                 mensaje=mensaje_cliente,
                                 datos_adicionales={
@@ -485,8 +597,8 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
                 Especial.ingredientes.contains(ingrediente_nombre)
             ).all()
         
-        # Notificar a TODOS los administradores
-        admins = User.query.filter_by(rol=1).all()
+        # Notificar a TODOS los administradores usando el repositorio
+        admins = user_repo.get_users_by_role(1)
         notificaciones_admin = 0
         
         if es_inactivo:
@@ -502,8 +614,6 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
                 mensaje_admin += "\n\nESPECIALES AFECTADOS:"
                 for i, especial in enumerate(especiales_afectados[:10], 1):
                     mensaje_admin += f"\n{i}. {especial.nombre}"
-                    if especial.descripcion:
-                        mensaje_admin += f" - {especial.descripcion[:50]}..."
         else:
             mensaje_admin = f"⚠️ INGREDIENTE NO DISPONIBLE: '{ingrediente_nombre}' ({ingrediente_categoria})"
             if motivo:
@@ -525,10 +635,11 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
         
         for admin in admins:
             try:
+                admin_dict = user_repo.to_dict(admin)
                 Notificacion.crear_notificacion(
-                    user_id=admin.id,
+                    user_id=admin_dict['id'],
                     user_type='admin',
-                    tipo=tipo_notificacion,  # ¡USAR EL TIPO CORRECTO!
+                    tipo=tipo_notificacion,
                     titulo=titulo_base_admin,
                     mensaje=mensaje_admin,
                     datos_adicionales={
@@ -548,9 +659,9 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
                     }
                 )
                 notificaciones_admin += 1
-                print(f"Notificación {tipo_notificacion} enviada al admin ID: {admin.id}")
+                print(f"Notificación {tipo_notificacion} enviada al admin ID: {admin_dict['id']}")
             except Exception as admin_error:
-                print(f"Error notificando admin {admin.id}: {admin_error}")
+                print(f"Error notificando admin: {admin_error}")
         
         print(f"\n RESUMEN FINAL:")
         print(f"   • Ingrediente: {ingrediente_nombre}")
@@ -596,7 +707,7 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
 
 @jwt_required()
 def obtener_notificaciones_usuario():
-    """Obtener notificaciones del usuario actual - CORREGIDO"""
+    """Obtener notificaciones del usuario actual usando UserRepository"""
     try:
         # Obtener usuario del token JWT
         user_id = get_jwt_identity()
@@ -604,23 +715,22 @@ def obtener_notificaciones_usuario():
         print(f"\n[API DEBUG] ========== OBTENER NOTIFICACIONES ==========")
         print(f"User ID del token: {user_id}")
         
-        # Obtener información COMPLETA del usuario
-        usuario = User.query.get(user_id)
+        # Obtener información del usuario usando el repositorio
+        usuario = user_repo.find_by_id(user_id)
         if not usuario:
             print(f"Usuario con ID {user_id} NO encontrado en la base de datos!")
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
-        print(f"Usuario encontrado:")
-        print(f"   - ID: {usuario.id}")
-        print(f"   - Nombre: {usuario.nombre}")
-        print(f"   - Teléfono: '{usuario.telefono}'")
-        print(f"   - Rol: {usuario.rol} ({'Admin' if usuario.rol == 1 else 'Cliente'})")
-        print(f"   - Email: {usuario.correo}")
+        usuario_dict = user_repo.to_dict(usuario)
         
-        # ¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡!
-        # CORRECCIÓN CRÍTICA: Determinar user_type por ROL, no por parámetro
-        # ¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡!
-        user_type = 'admin' if usuario.rol == 1 else 'cliente'
+        print(f"Usuario encontrado:")
+        print(f"   - ID: {usuario_dict.get('id')}")
+        print(f"   - Nombre: {usuario_dict.get('nombre')}")
+        print(f"   - Teléfono: '{usuario_dict.get('telefono')}'")
+        print(f"   - Rol: {usuario_dict.get('rol')} ({'Admin' if usuario_dict.get('rol') == 1 else 'Cliente'})")
+        
+        # Determinar user_type por ROL
+        user_type = 'admin' if usuario_dict.get('rol') == 1 else 'cliente'
         print(f"User_type determinado por rol: {user_type}")
         
         # Obtener parámetros
@@ -628,106 +738,35 @@ def obtener_notificaciones_usuario():
         por_pagina = request.args.get('per_page', 20, type=int)
         
         print(f"Parámetros de consulta:")
-        print(f"   - user_type (ignorado, usando rol): {user_type}")
         print(f"   - página: {pagina}")
         print(f"   - por página: {por_pagina}")
         
-        # Buscar notificaciones DIRECTAMENTE con user_id y user_type según rol
-        print(f"\nBuscando notificaciones con user_id={user_id}, user_type={user_type}")
-        
-        notificaciones_directas = Notificacion.query.filter_by(
+        # Buscar notificaciones
+        resultado = Notificacion.obtener_notificaciones_usuario_query(
             user_id=user_id,
-            user_type=user_type  # ← Usar el user_type determinado por rol
-        ).all()
+            user_type=user_type,
+            pagina=pagina,
+            por_pagina=por_pagina
+        )
         
-        print(f"Notificaciones directas encontradas: {len(notificaciones_directas)}")
-        
-        for notif in notificaciones_directas[:5]:  # Mostrar primeras 5
-            print(f"   - ID: {notif.id}, Tipo: '{notif.tipo}', Título: '{notif.titulo[:50]}...'")
-        
-        # Buscar notificaciones con user_id=None por teléfono (solo para clientes)
-        if user_type == 'cliente':
-            telefono_usuario = usuario.telefono
-            print(f"\nBuscando notificaciones sin user_id por teléfono: '{telefono_usuario}'")
-            
-            notificaciones_sin_usuario = Notificacion.query.filter(
-                Notificacion.user_id.is_(None),
-                Notificacion.user_type == 'cliente'
-            ).all()
-            
-            print(f"Notificaciones sin user_id encontradas: {len(notificaciones_sin_usuario)}")
-            
-            # Verificar cada una
-            coincidencias_telefono = 0
-            for notif in notificaciones_sin_usuario:
-                if notif.datos_adicionales:
-                    tel_notif = notif.datos_adicionales.get('telefono_cliente') or notif.datos_adicionales.get('telefono')
-                    if tel_notif:
-                        tel_notif_str = str(tel_notif)
-                        telefono_usuario_str = str(telefono_usuario)
-                        
-                        # Comparar teléfonos
-                        if tel_notif_str == telefono_usuario_str:
-                            print(f"¡COINCIDE EXACTO! Actualizando user_id a {user_id}")
-                            notif.user_id = user_id
-                            coincidencias_telefono += 1
-                        else:
-                            # Comparar últimos 8 dígitos
-                            tel_notif_limpio = ''.join(filter(str.isdigit, tel_notif_str))
-                            telefono_usuario_limpio = ''.join(filter(str.isdigit, telefono_usuario_str))
-                            
-                            if (len(tel_notif_limpio) >= 8 and len(telefono_usuario_limpio) >= 8 and
-                                tel_notif_limpio[-8:] == telefono_usuario_limpio[-8:]):
-                                print(f"¡COINCIDE (últimos 8 dígitos)! Actualizando user_id a {user_id}")
-                                notif.user_id = user_id
-                                coincidencias_telefono += 1
-            
-            if coincidencias_telefono > 0:
-                db.session.commit()
-                print(f"Se actualizaron {coincidencias_telefono} notificaciones con user_id={user_id}")
-        
-        # Obtener notificaciones FINALES
-        offset = (pagina - 1) * por_pagina
-        notificaciones_finales = Notificacion.query.filter_by(
-            user_id=user_id,
-            user_type=user_type
-        ).order_by(Notificacion.fecha_creacion.desc()).offset(offset).limit(por_pagina).all()
-        
-        total_final = Notificacion.query.filter_by(
-            user_id=user_id, 
-            user_type=user_type
-        ).count()
-        
-        print(f"\nRESULTADO FINAL:")
-        print(f"   - Total notificaciones: {total_final}")
-        print(f"   - Mostrando: {len(notificaciones_finales)}")
-        
-        # Debug: Mostrar todos los tipos de notificaciones encontradas
-        tipos_encontrados = {}
-        for notif in notificaciones_finales:
-            tipo = notif.tipo
-            tipos_encontrados[tipo] = tipos_encontrados.get(tipo, 0) + 1
-            
-        print(f"Tipos de notificaciones encontradas:")
-        for tipo, cantidad in tipos_encontrados.items():
-            print(f"   - {tipo}: {cantidad}")
+        print(f"Notificaciones encontradas: {resultado['total']}")
         
         # Convertir a diccionario
         notificaciones_dict = []
-        for notif in notificaciones_finales:
+        for notif in resultado['notificaciones']:
             notif_dict = Notificacion.to_dict(notif)
             notificaciones_dict.append(notif_dict)
         
+        print(f"RESULTADO FINAL:")
+        print(f"   - Total notificaciones: {resultado['total']}")
+        print(f"   - Mostrando: {len(notificaciones_dict)}")
         print(f"[API DEBUG] ========== FIN ==========\n")
         
         return jsonify({
             'notificaciones': notificaciones_dict,
-            'total_notificaciones': total_final,
-            'pagina_actual': pagina,
-            'total_paginas': (total_final + por_pagina - 1) // por_pagina,
-            'por_pagina': por_pagina,
-            'user_type_utilizado': user_type,
-            'tipos_notificaciones': tipos_encontrados
+            'total': resultado['total'],
+            'pagina_actual': resultado['pagina_actual'],
+            'total_paginas': resultado['total_paginas']
         }), 200
         
     except Exception as error:
@@ -741,13 +780,13 @@ def obtener_notificaciones_no_leidas():
     """Obtener notificaciones no leídas del usuario"""
     try:
         user_id = get_jwt_identity()
-        usuario = User.query.get(user_id)
+        usuario = user_repo.find_by_id(user_id)
         
         if not usuario:
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
-        # Determinar user_type por rol
-        user_type = 'admin' if usuario.rol == 1 else 'cliente'
+        usuario_dict = user_repo.to_dict(usuario)
+        user_type = 'admin' if usuario_dict.get('rol') == 1 else 'cliente'
         
         notificaciones = Notificacion.obtener_notificaciones_no_leidas(user_id, user_type)
         notificaciones_dict = [Notificacion.to_dict(notif) for notif in notificaciones]
@@ -789,13 +828,13 @@ def marcar_todas_como_leidas():
     """Marcar todas las notificaciones del usuario como leídas"""
     try:
         user_id = get_jwt_identity()
-        usuario = User.query.get(user_id)
+        usuario = user_repo.find_by_id(user_id)
         
         if not usuario:
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
-        # Determinar user_type por rol
-        user_type = 'admin' if usuario.rol == 1 else 'cliente'
+        usuario_dict = user_repo.to_dict(usuario)
+        user_type = 'admin' if usuario_dict.get('rol') == 1 else 'cliente'
         
         cantidad = Notificacion.marcar_todas_como_leidas(user_id, user_type)
         
@@ -835,13 +874,13 @@ def eliminar_todas_leidas():
     """Eliminar todas las notificaciones leídas del usuario"""
     try:
         user_id = get_jwt_identity()
-        usuario = User.query.get(user_id)
+        usuario = user_repo.find_by_id(user_id)
         
         if not usuario:
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
-        # Determinar user_type por rol
-        user_type = 'admin' if usuario.rol == 1 else 'cliente'
+        usuario_dict = user_repo.to_dict(usuario)
+        user_type = 'admin' if usuario_dict.get('rol') == 1 else 'cliente'
         
         cantidad = Notificacion.eliminar_todas_leidas(user_id, user_type)
         
@@ -861,11 +900,15 @@ def enviar_mensaje():
         if not data:
             return jsonify({"msg": "No se proporcionaron datos"}), 400
         
-        # Verificar que el usuario es admin
+        # Verificar que el usuario es admin usando el repositorio
         user_id = get_jwt_identity()
-        usuario = User.query.get(user_id)
+        usuario = user_repo.find_by_id(user_id)
         
-        if not usuario or usuario.rol != 1:
+        if not usuario:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        usuario_dict = user_repo.to_dict(usuario)
+        if usuario_dict.get('rol') != 1:
             return jsonify({"msg": "Solo los administradores pueden enviar mensajes"}), 403
         
         destinatario_tipo = data.get('destinatario_tipo', 'todos')
@@ -876,67 +919,74 @@ def enviar_mensaje():
         if not mensaje or not mensaje.strip():
             return jsonify({"msg": "El mensaje es requerido"}), 400
         
-        datos_adicionales = {'remitente': usuario.nombre}
+        datos_adicionales = {'remitente': usuario_dict.get('nombre')}
         
         notificaciones_creadas = []
         
         if destinatario_tipo == 'todos':
             # Enviar a todos los clientes
-            clientes = User.query.filter_by(rol=2).all()
+            clientes = user_repo.get_users_by_role(2)
             for cliente in clientes:
+                cliente_dict = user_repo.to_dict(cliente)
                 notificacion = Notificacion.crear_notificacion_cliente(
-                    cliente_id=cliente.id,
+                    cliente_id=cliente_dict['id'],
                     tipo='mensaje_admin',
                     titulo=titulo,
                     mensaje=mensaje,
                     datos_adicionales=datos_adicionales
                 )
-                notificaciones_creadas.append(notificacion.id)
+                notificaciones_creadas.append(notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id'))
                 
         elif destinatario_tipo == 'cliente' and destinatario_id:
             # Enviar a un cliente específico
-            cliente = User.query.get(destinatario_id)
+            cliente = user_repo.find_by_id(destinatario_id)
             if not cliente:
                 return jsonify({"msg": "Cliente no encontrado"}), 404
             
+            cliente_dict = user_repo.to_dict(cliente)
             notificacion = Notificacion.crear_notificacion_cliente(
-                cliente_id=cliente.id,
+                cliente_id=cliente_dict['id'],
                 tipo='mensaje_admin',
                 titulo=titulo,
                 mensaje=mensaje,
                 datos_adicionales=datos_adicionales
             )
-            notificaciones_creadas.append(notificacion.id)
+            notificaciones_creadas.append(notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id'))
             
         elif destinatario_tipo == 'admin' and destinatario_id:
             # Enviar a otro administrador
-            admin = User.query.get(destinatario_id)
-            if not admin or admin.rol != 1:
+            admin = user_repo.find_by_id(destinatario_id)
+            if not admin:
                 return jsonify({"msg": "Administrador no encontrado"}), 404
             
+            admin_dict = user_repo.to_dict(admin)
+            if admin_dict.get('rol') != 1:
+                return jsonify({"msg": "El usuario seleccionado no es administrador"}), 400
+            
             notificacion = Notificacion.crear_notificacion(
-                user_id=admin.id,
+                user_id=admin_dict['id'],
                 user_type='admin',
                 tipo='mensaje_admin',
                 titulo=titulo,
                 mensaje=mensaje,
                 datos_adicionales=datos_adicionales
             )
-            notificaciones_creadas.append(notificacion.id)
+            notificaciones_creadas.append(notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id'))
             
         elif destinatario_tipo == 'todos_admins':
             # Enviar a todos los administradores
-            admins = User.query.filter_by(rol=1).all()
+            admins = user_repo.get_users_by_role(1)
             for admin in admins:
+                admin_dict = user_repo.to_dict(admin)
                 notificacion = Notificacion.crear_notificacion(
-                    user_id=admin.id,
+                    user_id=admin_dict['id'],
                     user_type='admin',
                     tipo='mensaje_admin',
                     titulo=titulo,
                     mensaje=mensaje,
                     datos_adicionales=datos_adicionales
                 )
-                notificaciones_creadas.append(notificacion.id)
+                notificaciones_creadas.append(notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id'))
         
         return jsonify({
             "msg": f"Mensaje enviado correctamente a {len(notificaciones_creadas)} usuarios",
@@ -955,7 +1005,7 @@ def obtener_analiticas():
     try:
         # Verificar que el usuario es admin
         user_id = get_jwt_identity()
-        usuario = User.query.get(user_id)
+        usuario = user_repo.find_by_id(user_id)
         
         if not usuario or usuario.rol != 1:
             return jsonify({"msg": "Solo los administradores pueden ver analíticas"}), 403
@@ -975,24 +1025,29 @@ def obtener_usuarios_para_mensaje():
     try:
         # Verificar que el usuario es admin
         user_id = get_jwt_identity()
-        usuario = User.query.get(user_id)
+        usuario = user_repo.find_by_id(user_id)
         
-        if not usuario or usuario.rol != 1:
+        if not usuario:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        usuario_dict = user_repo.to_dict(usuario)
+        if usuario_dict.get('rol') != 1:
             return jsonify({"msg": "Solo los administradores pueden ver esta lista"}), 403
         
         # Obtener todos los usuarios
-        usuarios = User.query.all()
-        usuarios_dict = [
-            {
-                'id': user.id,
-                'nombre': user.nombre,
-                'email': user.correo,
-                'telefono': user.telefono,
-                'rol': user.rol,
-                'rol_nombre': 'Administrador' if user.rol == 1 else 'Cliente'
-            }
-            for user in usuarios
-        ]
+        usuarios = user_repo.get_all_users()
+        
+        usuarios_dict = []
+        for user in usuarios:
+            user_dict = user_repo.to_dict(user)
+            usuarios_dict.append({
+                'id': user_dict.get('id'),
+                'nombre': user_dict.get('nombre'),
+                'email': user_dict.get('correo'),
+                'telefono': user_dict.get('telefono'),
+                'rol': user_dict.get('rol'),
+                'rol_nombre': 'Administrador' if user_dict.get('rol') == 1 else 'Cliente'
+            })
         
         return jsonify(usuarios_dict), 200
         
@@ -1006,15 +1061,20 @@ def obtener_notificaciones_por_orden(orden_id):
     try:
         # Verificar permisos
         user_id = get_jwt_identity()
-        usuario = User.query.get(user_id)
-        orden = Orden.query.get(orden_id)
+        usuario = user_repo.find_by_id(user_id)
         
+        if not usuario:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        usuario_dict = user_repo.to_dict(usuario)
+        
+        orden = Orden.query.get(orden_id)
         if not orden:
             return jsonify({"msg": "Orden no encontrada"}), 404
         
         # Solo el admin o el dueño de la orden pueden ver sus notificaciones
-        es_admin = usuario and usuario.rol == 1
-        es_dueño = orden.telefono_usuario == usuario.telefono if usuario else False
+        es_admin = usuario_dict.get('rol') == 1
+        es_dueño = orden.telefono_usuario == usuario_dict.get('telefono') if usuario_dict.get('telefono') else False
         
         if not es_admin and not es_dueño:
             return jsonify({"msg": "No tienes permisos para ver estas notificaciones"}), 403
@@ -1039,28 +1099,30 @@ def obtener_contador_notificaciones():
     """Obtener contador de notificaciones no leídas"""
     try:
         user_id = get_jwt_identity()
-        usuario = User.query.get(user_id)
+        usuario = user_repo.find_by_id(user_id)
         
         if not usuario:
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
-        # Determinar user_type por rol
-        user_type = 'admin' if usuario.rol == 1 else 'cliente'
+        usuario_dict = user_repo.to_dict(usuario)
+        user_type = 'admin' if usuario_dict.get('rol') == 1 else 'cliente'
         
         notificaciones = Notificacion.obtener_notificaciones_no_leidas(user_id, user_type)
         
+        notificaciones_recientes = []
+        for n in notificaciones[:5]:
+            n_dict = Notificacion.to_dict(n)
+            notificaciones_recientes.append({
+                'id': n_dict.get('id'),
+                'titulo': n_dict.get('titulo'),
+                'mensaje': n_dict.get('mensaje')[:100] + '...' if len(n_dict.get('mensaje', '')) > 100 else n_dict.get('mensaje'),
+                'tipo': n_dict.get('tipo'),
+                'fecha_creacion': n_dict.get('fecha_creacion')
+            })
+        
         return jsonify({
             'total_no_leidas': len(notificaciones),
-            'notificaciones_recientes': [
-                {
-                    'id': n.id,
-                    'titulo': n.titulo,
-                    'mensaje': n.mensaje[:100] + '...' if len(n.mensaje) > 100 else n.mensaje,
-                    'tipo': n.tipo,
-                    'fecha_creacion': n.fecha_creacion.isoformat() if n.fecha_creacion else None
-                }
-                for n in notificaciones[:5]
-            ]
+            'notificaciones_recientes': notificaciones_recientes
         }), 200
         
     except Exception as error:
