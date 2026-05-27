@@ -21,11 +21,24 @@ class NotificacionSQL(db_sql.Model):
     fecha_leida = db_sql.Column(db_sql.DateTime, nullable=True)
     orden_id = db_sql.Column(db_sql.Integer, db_sql.ForeignKey('ordenes.id'), nullable=True)
     
+    def __init__(self, user_id, user_type, tipo, titulo, mensaje, datos_adicionales=None, orden_id=None, fecha_creacion=None):
+        self.user_id = user_id
+        self.user_type = user_type
+        self.tipo = tipo
+        self.titulo = titulo
+        self.mensaje = mensaje
+        self.datos_adicionales = datos_adicionales or {}
+        self.orden_id = orden_id
+        # CORREGIDO: aceptar fecha_creacion como parámetro
+        if fecha_creacion:
+            self.fecha_creacion = fecha_creacion
+    
     def __repr__(self):
         return f'<Notificacion {self.id} - {self.titulo}>'
 
+
 # ============================================
-# CLASE PRINCIPAL - Usa el repositorio según DB_TYPE
+# CLASE PRINCIPAL
 # ============================================
 class Notificacion:
     """Clase que maneja notificaciones en ambas bases de datos"""
@@ -35,16 +48,37 @@ class Notificacion:
         """Obtener colección de MongoDB"""
         return db_mongo.db.notificaciones
     
+    # ============ MÉTODO AGREGADO ============
+    @classmethod
+    def find_by_id(cls, notificacion_id):
+        """Buscar una notificación por ID"""
+        try:
+            print(f"\n🔵 [MODELO] find_by_id - Buscando notificación ID: {notificacion_id}")
+            
+            if DB_TYPE == 'mysql':
+                notificacion = NotificacionSQL.query.get(notificacion_id)
+                if notificacion:
+                    print(f"✅ Notificación encontrada en MySQL - ID: {notificacion.id}")
+                else:
+                    print(f"❌ Notificación no encontrada en MySQL")
+                return notificacion
+                
+            else:
+                from bson.objectid import ObjectId
+                notificacion = cls._get_collection().find_one({'_id': ObjectId(notificacion_id)})
+                if notificacion:
+                    print(f"✅ Notificación encontrada en MongoDB")
+                else:
+                    print(f"❌ Notificación no encontrada en MongoDB")
+                return notificacion
+                
+        except Exception as e:
+            print(f"❌ Error en find_by_id: {e}")
+            return None
+    
     @classmethod
     def crear_notificacion(cls, user_id, user_type, tipo, titulo, mensaje, datos_adicionales=None, orden_id=None):
-        """Crear una nueva notificación"""
         try:
-            print(f"\n[MODELO] Creando notificación:")
-            print(f"   - user_id: {user_id}")
-            print(f"   - user_type: {user_type}")
-            print(f"   - tipo: {tipo}")
-            print(f"   - titulo: {titulo}")
-            
             if DB_TYPE == 'mysql':
                 notificacion = NotificacionSQL(
                     user_id=user_id,
@@ -52,48 +86,37 @@ class Notificacion:
                     tipo=tipo,
                     titulo=titulo,
                     mensaje=mensaje,
-                    datos_adicionales=datos_adicionales or {},
-                    orden_id=orden_id
+                    datos_adicionales=json.dumps(datos_adicionales) if datos_adicionales else None,
+                    orden_id=orden_id,
+                    fecha_creacion=datetime.utcnow()  # CORREGIDO: pasar fecha_creacion correctamente
                 )
-                
                 db_sql.session.add(notificacion)
                 db_sql.session.commit()
-                
-                print(f"[MODELO] Notificación creada - ID: {notificacion.id}")
                 return notificacion
-                
             else:
-                from bson.objectid import ObjectId
-                
                 notificacion_doc = {
-                    'user_id': str(user_id) if user_id else None,
+                    'user_id': user_id,
                     'user_type': user_type,
                     'tipo': tipo,
                     'titulo': titulo,
                     'mensaje': mensaje,
-                    'leida': False,
                     'datos_adicionales': datos_adicionales or {},
+                    'orden_id': orden_id,
                     'fecha_creacion': datetime.utcnow(),
-                    'fecha_leida': None,
-                    'orden_id': str(orden_id) if orden_id else None
+                    'leida': False
                 }
-                
                 result = cls._get_collection().insert_one(notificacion_doc)
-                notificacion_doc['id'] = str(result.inserted_id)
-                
-                print(f"[MODELO] Notificación creada - ID: {notificacion_doc['id']}")
+                notificacion_doc['_id'] = result.inserted_id
                 return notificacion_doc
-                
         except Exception as e:
-            print(f"Error en crear_notificacion: {e}")
-            if DB_TYPE == 'mysql':
-                db_sql.session.rollback()
-            raise e
+            print(f"Error creando notificación: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
     
     @classmethod
     def crear_notificacion_admin(cls, admin_id, tipo, titulo, mensaje, datos_adicionales=None, orden_id=None):
         """Crear notificación para un administrador específico"""
-        print(f"\n[MODELO] Creando notificación para ADMIN ID: {admin_id}")
         return cls.crear_notificacion(
             user_id=admin_id,
             user_type='admin',
@@ -107,7 +130,6 @@ class Notificacion:
     @classmethod
     def crear_notificacion_cliente(cls, cliente_id, tipo, titulo, mensaje, datos_adicionales=None, orden_id=None):
         """Crear notificación para un cliente específico"""
-        print(f"\n👤 [MODELO] Creando notificación para CLIENTE ID: {cliente_id}")
         return cls.crear_notificacion(
             user_id=cliente_id,
             user_type='cliente',
@@ -117,185 +139,6 @@ class Notificacion:
             datos_adicionales=datos_adicionales,
             orden_id=orden_id
         )
-    
-    @classmethod
-    def crear_notificacion_todos_usuarios(cls, tipo, titulo, mensaje, datos_adicionales=None):
-        """Crear notificación para todos los clientes"""
-        from Models.User import User
-        clientes = User.get_users_by_role(2)
-        
-        notificaciones = []
-        for cliente in clientes:
-            cliente_dict = User.to_dict(cliente)
-            notificacion = cls.crear_notificacion(
-                user_id=cliente_dict['id'],
-                user_type='cliente',
-                tipo=tipo,
-                titulo=titulo,
-                mensaje=mensaje,
-                datos_adicionales=datos_adicionales
-            )
-            notificaciones.append(notificacion)
-        
-        return notificaciones
-    
-    @classmethod
-    def notificar_nuevo_pedido(cls, orden):
-        """Crear notificaciones cuando se hace un nuevo pedido"""
-        from Models.User import User
-        
-        orden_dict = orden.to_dict() if hasattr(orden, 'to_dict') else orden
-        
-        print(f"\n[MODELO] NOTIFICAR NUEVO PEDIDO - Orden {orden_dict.get('id')}")
-        
-        # Extraer ingredientes
-        ingredientes_desc = "Sin detalles"
-        if orden_dict.get('tipo_pedido') == 'especial' and orden_dict.get('especial'):
-            especial = orden_dict['especial']
-            ingredientes_desc = f"Especial '{especial.get('nombre')}': {especial.get('ingredientes', '')}"
-        elif orden_dict.get('ingredientes_personalizados'):
-            ingredientes_desc = f"Personalizado: {orden_dict['ingredientes_personalizados']}"
-        
-        # Datos comunes
-        datos_comunes = {
-            'orden_id': orden_dict.get('id'),
-            'codigo_pedido': orden_dict.get('codigo_unico'),
-            'cliente_nombre': orden_dict.get('nombre_usuario'),
-            'telefono_cliente': orden_dict.get('telefono_usuario'),
-            'precio': float(orden_dict.get('precio', 0)),
-            'tipo_pedido': orden_dict.get('tipo_pedido'),
-            'ingredientes': ingredientes_desc,
-            'fecha_pedido': orden_dict.get('fecha_creacion')
-        }
-        
-        notificaciones_creadas = []
-        
-        # 1. Notificaciones para administradores
-        admins = User.get_users_by_role(1)
-        print(f"\n👥 Administradores encontrados: {len(admins)}")
-        
-        for admin in admins:
-            admin_dict = User.to_dict(admin)
-            
-            mensaje_admin = f"Nuevo pedido de {orden_dict.get('nombre_usuario')}\n"
-            mensaje_admin += f"Pedido: {ingredientes_desc}\n"
-            
-            titulo_admin = f"Pedido #{orden_dict.get('codigo_unico')}"
-            
-            notif_admin = cls.crear_notificacion_admin(
-                admin_id=admin_dict['id'],
-                tipo='nuevo_pedido',
-                titulo=titulo_admin,
-                mensaje=mensaje_admin,
-                datos_adicionales=datos_comunes,
-                orden_id=orden_dict.get('id')
-            )
-            notificaciones_creadas.append(notif_admin)
-        
-        # 2. Notificación para el cliente
-        clientes = User.get_users_by_role(2)
-        usuario_cliente = None
-        for cliente in clientes:
-            cliente_dict = User.to_dict(cliente)
-            if cliente_dict.get('telefono') == orden_dict.get('telefono_usuario'):
-                usuario_cliente = cliente_dict
-                break
-        
-        if usuario_cliente:
-            mensaje_cliente = f"¡Hola {orden_dict.get('nombre_usuario')}!\n"
-            mensaje_cliente += f"Tu pedido ({ingredientes_desc}) ha sido recibido.\n"
-            mensaje_cliente += f"Código: {orden_dict.get('codigo_unico')}"
-            
-            notif_cliente = cls.crear_notificacion_cliente(
-                cliente_id=usuario_cliente['id'],
-                tipo='estado_pedido',
-                titulo="Pedido recibido",
-                mensaje=mensaje_cliente,
-                datos_adicionales=datos_comunes,
-                orden_id=orden_dict.get('id')
-            )
-            notificaciones_creadas.append(notif_cliente)
-        
-        return notificaciones_creadas
-    
-    @classmethod
-    def notificar_cambio_estado(cls, orden, nuevo_estado):
-        """Crear notificaciones cuando cambia el estado de un pedido"""
-        from Models.User import User
-        
-        orden_dict = orden.to_dict() if hasattr(orden, 'to_dict') else orden
-        
-        estados_espanol = {
-            'pendiente': 'Pendiente',
-            'preparando': 'En Preparación',
-            'listo': 'Listo para Recoger',
-            'entregado': 'Entregado',
-            'cancelado': 'Cancelado'
-        }
-        
-        titulo_estado = estados_espanol.get(nuevo_estado, nuevo_estado)
-        
-        # Extraer ingredientes
-        ingredientes_desc = "Sin detalles"
-        if orden_dict.get('tipo_pedido') == 'especial' and orden_dict.get('especial'):
-            especial = orden_dict['especial']
-            ingredientes_desc = f"Especial '{especial.get('nombre')}': {especial.get('ingredientes', '')}"
-        elif orden_dict.get('ingredientes_personalizados'):
-            ingredientes_desc = f"Personalizado: {orden_dict['ingredientes_personalizados']}"
-        
-        datos_comunes = {
-            'orden_id': orden_dict.get('id'),
-            'codigo_pedido': orden_dict.get('codigo_unico'),
-            'cliente_nombre': orden_dict.get('nombre_usuario'),
-            'telefono_cliente': orden_dict.get('telefono_usuario'),
-            'estado_anterior': orden_dict.get('estado'),
-            'estado_nuevo': nuevo_estado,
-            'ingredientes': ingredientes_desc
-        }
-        
-        notificaciones_creadas = []
-        
-        # 1. Notificaciones para administradores
-        admins = User.get_users_by_role(1)
-        for admin in admins:
-            admin_dict = User.to_dict(admin)
-            
-            mensaje_admin = f"Pedido {orden_dict.get('codigo_unico')} cambió a '{titulo_estado}'"
-            
-            notif_admin = cls.crear_notificacion_admin(
-                admin_id=admin_dict['id'],
-                tipo='estado_cambiado',
-                titulo=f"Estado: {titulo_estado}",
-                mensaje=mensaje_admin,
-                datos_adicionales=datos_comunes,
-                orden_id=orden_dict.get('id')
-            )
-            notificaciones_creadas.append(notif_admin)
-        
-        # 2. Notificación para el cliente
-        clientes = User.get_users_by_role(2)
-        usuario_cliente = None
-        for cliente in clientes:
-            cliente_dict = User.to_dict(cliente)
-            if cliente_dict.get('telefono') == orden_dict.get('telefono_usuario'):
-                usuario_cliente = cliente_dict
-                break
-        
-        if usuario_cliente:
-            mensaje_cliente = f"Hola {orden_dict.get('nombre_usuario')},\n"
-            mensaje_cliente += f"Tu pedido cambió a: {titulo_estado}"
-            
-            notif_cliente = cls.crear_notificacion_cliente(
-                cliente_id=usuario_cliente['id'],
-                tipo='estado_pedido',
-                titulo=f"Actualización: {titulo_estado}",
-                mensaje=mensaje_cliente,
-                datos_adicionales=datos_comunes,
-                orden_id=orden_dict.get('id')
-            )
-            notificaciones_creadas.append(notif_cliente)
-        
-        return notificaciones_creadas
     
     @classmethod
     def obtener_notificaciones_usuario_query(cls, user_id, user_type, pagina=1, por_pagina=20):
@@ -359,13 +202,17 @@ class Notificacion:
     def marcar_como_leida(cls, notificacion_id):
         """Marcar una notificación como leída"""
         try:
+            print(f"\n🔵 [MODELO] marcar_como_leida - ID: {notificacion_id}")
+            
             if DB_TYPE == 'mysql':
                 notificacion = NotificacionSQL.query.get(notificacion_id)
                 if notificacion and not notificacion.leida:
                     notificacion.leida = True
                     notificacion.fecha_leida = datetime.utcnow()
                     db_sql.session.commit()
+                    print(f"✅ Notificación marcada como leída")
                     return True
+                print(f"Notificación no encontrada o ya leída")
                 return False
                 
             else:
@@ -374,8 +221,12 @@ class Notificacion:
                     {'_id': ObjectId(notificacion_id), 'leida': False},
                     {'$set': {'leida': True, 'fecha_leida': datetime.utcnow()}}
                 )
+                print(f"Resultado: modified_count={result.modified_count}")
                 return result.modified_count > 0
-        except:
+        except Exception as e:
+            print(f"❌ Error en marcar_como_leida: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     @classmethod
@@ -444,6 +295,53 @@ class Notificacion:
                 return result.deleted_count
         except:
             return 0
+    
+    @classmethod
+    def notificar_cambio_estado(cls, orden, nuevo_estado):
+        """Crear notificaciones cuando cambia el estado de un pedido"""
+        try:
+            from Models.User import user_repo
+            orden_dict = orden.to_dict() if hasattr(orden, 'to_dict') else orden
+            
+            # Obtener todos los administradores
+            admins = user_repo.get_users_by_role(1)
+            
+            notificaciones_creadas = []
+            
+            # Notificar a todos los administradores
+            for admin in admins:
+                admin_dict = user_repo.to_dict(admin)
+                notif = cls.crear_notificacion_admin(
+                    admin_id=admin_dict['id'],
+                    tipo='cambio_estado',
+                    titulo=f'Pedido {orden_dict.get("codigo_unico")}',
+                    mensaje=f'El pedido cambió a estado: {nuevo_estado}',
+                    datos_adicionales={'orden_id': orden_dict.get('id')},
+                    orden_id=orden_dict.get('id')
+                )
+                if notif:
+                    notificaciones_creadas.append(notif)
+            
+            # Notificar al cliente si está registrado
+            cliente = user_repo.find_by_phone(orden_dict.get('telefono_usuario'))
+            if cliente:
+                cliente_dict = user_repo.to_dict(cliente)
+                notif = cls.crear_notificacion_cliente(
+                    cliente_id=cliente_dict['id'],
+                    tipo='cambio_estado',
+                    titulo=f'Tu pedido {orden_dict.get("codigo_unico")}',
+                    mensaje=f'Tu pedido cambió a estado: {nuevo_estado}',
+                    datos_adicionales={'orden_id': orden_dict.get('id')},
+                    orden_id=orden_dict.get('id')
+                )
+                if notif:
+                    notificaciones_creadas.append(notif)
+            
+            return notificaciones_creadas
+            
+        except Exception as e:
+            print(f"Error en notificar_cambio_estado: {e}")
+            return []
     
     @classmethod
     def obtener_analiticas(cls, dias=30):
@@ -557,7 +455,3 @@ class Notificacion:
             return f"Hace {minutos} minuto{'s' if minutos > 1 else ''}"
         else:
             return "Hace unos segundos"
-
-# Para compatibilidad con código existente
-if DB_TYPE == 'mysql':
-    NotificacionSQL = Notificacion

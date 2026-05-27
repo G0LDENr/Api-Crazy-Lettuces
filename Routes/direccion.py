@@ -87,7 +87,8 @@ def search_direcciones_route():
     query = request.args.get('query', '')
     return search_direcciones(query)
 
-@direccion_bp.route('/user/<int:user_id>', methods=['GET'])
+# CAMBIO: <int:user_id> a <string:user_id> para soportar MongoDB
+@direccion_bp.route('/user/<string:user_id>', methods=['GET'])
 @jwt_required()
 def get_direcciones_usuario_route(user_id):
     """
@@ -98,7 +99,7 @@ def get_direcciones_usuario_route(user_id):
     parameters:
       - name: user_id
         in: path
-        type: integer
+        type: string
         required: true
     responses:
       200:
@@ -106,7 +107,8 @@ def get_direcciones_usuario_route(user_id):
     """
     return get_direcciones_by_user(user_id)
 
-@direccion_bp.route('/user/<int:user_id>/predeterminada', methods=['GET'])
+# CAMBIO: <int:user_id> a <string:user_id> para soportar MongoDB
+@direccion_bp.route('/user/<string:user_id>/predeterminada', methods=['GET'])
 @jwt_required()
 def get_direccion_predeterminada_route(user_id):
     """
@@ -117,7 +119,7 @@ def get_direccion_predeterminada_route(user_id):
     parameters:
       - name: user_id
         in: path
-        type: integer
+        type: string
         required: true
     responses:
       200:
@@ -127,7 +129,8 @@ def get_direccion_predeterminada_route(user_id):
     """
     return get_direccion_predeterminada(user_id)
 
-@direccion_bp.route('/<int:direccion_id>/predeterminada', methods=['PUT'])
+# CAMBIO: <int:direccion_id> a <string:direccion_id> para soportar MongoDB
+@direccion_bp.route('/<string:direccion_id>/predeterminada', methods=['PUT'])
 @jwt_required()
 def set_direccion_predeterminada_route(direccion_id):
     """
@@ -138,7 +141,7 @@ def set_direccion_predeterminada_route(direccion_id):
     parameters:
       - name: direccion_id
         in: path
-        type: integer
+        type: string
         required: true
       - name: body
         in: body
@@ -149,8 +152,8 @@ def set_direccion_predeterminada_route(direccion_id):
             - user_id
           properties:
             user_id:
-              type: integer
-              example: 1
+              type: string
+              example: "1"
     responses:
       200:
         description: Dirección establecida como predeterminada
@@ -163,7 +166,8 @@ def set_direccion_predeterminada_route(direccion_id):
     
     return set_direccion_predeterminada(data['user_id'], direccion_id)
 
-@direccion_bp.route('/<int:direccion_id>', methods=['GET'])
+# CAMBIO: <int:direccion_id> a <string:direccion_id> para soportar MongoDB
+@direccion_bp.route('/<string:direccion_id>', methods=['GET'])
 @jwt_required()
 def get_direccion(direccion_id):
     """
@@ -174,7 +178,7 @@ def get_direccion(direccion_id):
     parameters:
       - name: direccion_id
         in: path
-        type: integer
+        type: string
         required: true
     responses:
       200:
@@ -208,8 +212,8 @@ def add_direccion():
             - codigo_postal
           properties:
             user_id:
-              type: integer
-              example: 1
+              type: string
+              example: "1"
             calle:
               type: string
               example: "Av. Principal"
@@ -257,7 +261,8 @@ def add_direccion():
     
     return create_direccion(data)
 
-@direccion_bp.route('/<int:direccion_id>', methods=['PUT'])
+# CAMBIO: <int:direccion_id> a <string:direccion_id> para soportar MongoDB
+@direccion_bp.route('/<string:direccion_id>', methods=['PUT'])
 @jwt_required()
 def direccion_update(direccion_id):
     """
@@ -268,7 +273,7 @@ def direccion_update(direccion_id):
     parameters:
       - name: direccion_id
         in: path
-        type: integer
+        type: string
         required: true
       - name: body
         in: body
@@ -323,7 +328,8 @@ def direccion_update(direccion_id):
     
     return update_direccion(direccion_id, data)
 
-@direccion_bp.route('/<int:direccion_id>', methods=['DELETE'])
+# CAMBIO: <int:direccion_id> a <string:direccion_id> para soportar MongoDB
+@direccion_bp.route('/<string:direccion_id>', methods=['DELETE'])
 @jwt_required()
 def direccion_delete(direccion_id):
     """
@@ -334,7 +340,7 @@ def direccion_delete(direccion_id):
     parameters:
       - name: direccion_id
         in: path
-        type: integer
+        type: string
         required: true
     responses:
       200:
@@ -360,10 +366,16 @@ def get_my_direcciones():
         description: No autorizado
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        # CAMBIO: NO convertir a int, mantener el string para MongoDB
+        current_user_id = get_jwt_identity()
+        print(f"Usuario autenticado ID: {current_user_id} (tipo: {type(current_user_id)})")
+        
+        from Controllers.direccionController import get_direcciones_by_user
         return get_direcciones_by_user(current_user_id)
     except Exception as e:
         print(f"Error en /me/direcciones endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"msg": "Error al obtener direcciones"}), 500
 
 @direccion_bp.route('/me/predeterminada', methods=['GET'])
@@ -383,7 +395,8 @@ def get_my_predeterminada():
         description: No autorizado
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        # CAMBIO: NO convertir a int, mantener el string para MongoDB
+        current_user_id = get_jwt_identity()
         return get_direccion_predeterminada(current_user_id)
     except Exception as e:
         print(f"Error en /me/predeterminada endpoint: {e}")
@@ -450,7 +463,10 @@ def add_my_direccion():
         description: No autorizado
     """
     try:
-        current_user_id = int(get_jwt_identity())
+        # CAMBIO: NO convertir a int, mantener el string para MongoDB
+        current_user_id = get_jwt_identity()
+        print(f"Usuario autenticado ID: {current_user_id} (tipo: {type(current_user_id)})")
+        
         data = request.get_json()
         
         if not data:
@@ -459,7 +475,10 @@ def add_my_direccion():
         # Agregar user_id automáticamente
         data['user_id'] = current_user_id
         
+        from Controllers.direccionController import create_direccion
         return create_direccion(data)
     except Exception as e:
         print(f"Error en /me/add_direccion endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"msg": "Error al crear dirección"}), 500

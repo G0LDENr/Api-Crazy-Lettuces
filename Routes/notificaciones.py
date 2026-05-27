@@ -1,3 +1,4 @@
+# Routes/notificaciones.py
 from flask import Blueprint, request, jsonify
 from Controllers.notificacionesController import (
     obtener_notificaciones_usuario,
@@ -14,11 +15,12 @@ from Controllers.notificacionesController import (
     notificar_nuevo_pedido,
     notificar_cambio_estado_pedido,
     notificar_pedido_cancelado,
-    notificar_ingrediente_no_disponible
+    notificar_suplemento_no_disponible
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from Models.User import User
 from Models.Notificaciones import Notificacion
+from Models.Suplementos import Suplemento  # Importar Suplemento
 
 notificaciones_bp = Blueprint('notificaciones_bp', __name__)
 
@@ -574,8 +576,8 @@ def notificar_cambio_estado_pedido_route(orden_id):
           properties:
             nuevo_estado:
               type: string
-              example: "preparando"
-              enum: [pendiente, preparando, listo, entregado, cancelado]
+              example: "en_preparacion"
+              enum: [pendiente, confirmada, pagada, en_preparacion, enviada, entregada, cancelada, reembolsada]
               description: Nuevo estado del pedido
     responses:
       200:
@@ -633,7 +635,7 @@ def notificar_pedido_cancelado_route(orden_id):
           properties:
             motivo:
               type: string
-              example: "Falta de ingredientes"
+              example: "Falta de stock del suplemento"
               description: Motivo de la cancelación
     responses:
       200:
@@ -660,11 +662,11 @@ def notificar_pedido_cancelado_route(orden_id):
         "msg": "Notificación de pedido cancelado enviada"
     }), 200
 
-@notificaciones_bp.route('/ingrediente/<int:ingrediente_id>/no-disponible', methods=['POST'])
+@notificaciones_bp.route('/suplemento/<int:suplemento_id>/no-disponible', methods=['POST'])
 @jwt_required()
-def notificar_ingrediente_no_disponible_route(ingrediente_id):
+def notificar_suplemento_no_disponible_route(suplemento_id):
     """
-    Notificar que un ingrediente no está disponible
+    Notificar que un suplemento no está disponible
     ---
     tags:
       - Notificaciones
@@ -673,11 +675,11 @@ def notificar_ingrediente_no_disponible_route(ingrediente_id):
     produces:
       - application/json
     parameters:
-      - name: ingrediente_id
+      - name: suplemento_id
         in: path
         type: integer
         required: true
-        description: ID del ingrediente no disponible
+        description: ID del suplemento no disponible
       - name: body
         in: body
         required: false
@@ -714,7 +716,7 @@ def notificar_ingrediente_no_disponible_route(ingrediente_id):
             data:
               type: object
               properties:
-                ingrediente:
+                suplemento:
                   type: object
                   properties:
                     id:
@@ -761,7 +763,7 @@ def notificar_ingrediente_no_disponible_route(ingrediente_id):
       403:
         description: Solo administradores pueden enviar estas notificaciones
       404:
-        description: Ingrediente no encontrado
+        description: Suplemento no encontrado
       500:
         description: Error del servidor
     """
@@ -782,30 +784,37 @@ def notificar_ingrediente_no_disponible_route(ingrediente_id):
         notificar_clientes = data.get('notificar_clientes', True)
         notificar_admins = data.get('notificar_admins', True)
         
-        # Obtener información del ingrediente para validación
-        from Models.Ingredientes import Ingrediente
-        ingrediente = Ingrediente.find_by_id(ingrediente_id)
+        # Obtener información del suplemento para validación
+        suplemento = Suplemento.find_by_id(suplemento_id)
         
-        if not ingrediente:
+        if not suplemento:
             return jsonify({
                 "success": False,
-                "msg": f"Ingrediente con ID {ingrediente_id} no encontrado"
+                "msg": f"Suplemento con ID {suplemento_id} no encontrado"
             }), 404
+        
+        # Obtener nombre del suplemento según tipo de BD
+        if hasattr(suplemento, 'nombre'):
+            suplemento_nombre = suplemento.nombre
+            suplemento_categoria = suplemento.categoria if hasattr(suplemento, 'categoria') else 'general'
+        else:
+            suplemento_nombre = suplemento.get('nombre')
+            suplemento_categoria = suplemento.get('categoria', 'general')
         
         # Si no se deben notificar clientes, solo notificar admins
         if not notificar_clientes:
             # Solo notificar a admins
             admins = User.query.filter_by(rol=1).all()
             for admin in admins:
-                notificacion = Notificacion.crear_notificacion(
+                Notificacion.crear_notificacion(
                     user_id=admin.id,
                     user_type='admin',
-                    tipo='ingrediente_no_disponible',
-                    titulo=f'📋 Ingrediente marcado como no disponible',
-                    mensaje=f"El ingrediente '{ingrediente.nombre}' ha sido marcado como no disponible {fecha}.\nMotivo: {motivo or 'No especificado'}",
+                    tipo='suplemento_no_disponible',
+                    titulo=f'📋 Suplemento marcado como no disponible',
+                    mensaje=f"El suplemento '{suplemento_nombre}' ha sido marcado como no disponible {fecha}.\nMotivo: {motivo or 'No especificado'}",
                     datos_adicionales={
-                        'ingrediente_id': ingrediente_id,
-                        'ingrediente_nombre': ingrediente.nombre,
+                        'suplemento_id': suplemento_id,
+                        'suplemento_nombre': suplemento_nombre,
                         'fecha_afectada': fecha,
                         'motivo': motivo,
                         'solo_informacion': True,
@@ -815,12 +824,12 @@ def notificar_ingrediente_no_disponible_route(ingrediente_id):
             
             return jsonify({
                 "success": True,
-                "msg": f"Ingrediente '{ingrediente.nombre}' marcado como no disponible (solo información interna)",
+                "msg": f"Suplemento '{suplemento_nombre}' marcado como no disponible (solo información interna)",
                 "data": {
-                    "ingrediente": {
-                        "id": ingrediente.id,
-                        "nombre": ingrediente.nombre,
-                        "categoria": ingrediente.categoria
+                    "suplemento": {
+                        "id": suplemento_id,
+                        "nombre": suplemento_nombre,
+                        "categoria": suplemento_categoria
                     },
                     "fecha": fecha,
                     "motivo": motivo,
@@ -829,7 +838,7 @@ def notificar_ingrediente_no_disponible_route(ingrediente_id):
             }), 200
         
         # Ejecutar notificación completa
-        resultado = notificar_ingrediente_no_disponible(ingrediente_id, fecha, motivo)
+        resultado = notificar_suplemento_no_disponible(suplemento_id, fecha, motivo)
         
         if resultado.get('success'):
             return jsonify({
@@ -845,10 +854,35 @@ def notificar_ingrediente_no_disponible_route(ingrediente_id):
             }), 500
             
     except Exception as error:
-        print(f"❌ Error en notificar_ingrediente_no_disponible_route: {error}")
+        print(f"❌ Error en notificar_suplemento_no_disponible_route: {error}")
         import traceback
         traceback.print_exc()
         return jsonify({
             "success": False,
             "msg": f"Error del servidor: {str(error)}"
         }), 500
+    
+@notificaciones_bp.route('/<string:notificacion_id>', methods=['DELETE'])
+@jwt_required()
+def delete_notificacion(notificacion_id):
+    """
+    Eliminar una notificación
+    ---
+    tags:
+      - Notificaciones
+    security:
+      - Bearer: []
+    parameters:
+      - name: notificacion_id
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: Notificación eliminada
+      403:
+        description: No autorizado
+      404:
+        description: Notificación no encontrada
+    """
+    return eliminar_notificacion(notificacion_id)

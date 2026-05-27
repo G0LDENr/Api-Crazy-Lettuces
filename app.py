@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, jsonify
 from config import db_sql, db_mongo, migrate, DB_TYPE, set_db_type
 from dotenv import load_dotenv
@@ -7,6 +6,9 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flasgger import Swagger
 import sys
+
+# IMPORTAR EL SERVICIO DE BACKUPS
+from Services.BackupService import backup_service
 
 load_dotenv()
 
@@ -104,18 +106,26 @@ else:  # MongoDB
     except Exception as e:
         print(f"Error conectando a MongoDB: {e}")
 
+# ============================================
+# INICIALIZAR SERVICIOS
+# ============================================
+# Inicializar el servicio de backups con la aplicación
+backup_service.init_app(app)
+print("Servicio de backups inicializado")
+
 # Configuración CORS
 CORS(app, 
     origins=["http://localhost:3000", "http://localhost:3001", 
             "http://127.0.0.1:3000", "http://127.0.0.1:3001"],
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "X-Backup-Code", "X-User-Id"],
+    expose_headers=["X-Backup-Code", "X-User-Id"],
     supports_credentials=True
 )
 
 # Configurar Swagger
 app.config['SWAGGER'] = {
-    'title': 'API Crazy Lettuces',
+    'title': 'API Diet Lettuces',
     'uiversion': 3,
     'specs_route': '/docs/',
     'specs': [{
@@ -136,23 +146,34 @@ app.config['SWAGGER'] = {
 
 swagger = Swagger(app)
 
+from Controllers.analisisController import analizar_suplementos
+
+# Registrar la ruta para el análisis con Spark
+app.add_url_rule('/suplementos/analisis', 
+                 view_func=analizar_suplementos, 
+                 methods=['GET'])
+
 # Importar rutas
 from Routes.user import user_bp
-from Routes.especiales import especiales_bp
+from Routes.suplementos import suplementos_bp
 from Routes.ordenes import orden_bp
 from Routes.notificaciones import notificaciones_bp
 from Routes.backup import backup_bp
-from Routes.ingredientes import ingredientes_bp
 from Routes.direccion import direccion_bp
+from Routes.tarjetas import tarjeta_bp
+from Routes.dietas import dieta_bp
+from Routes.diagramas import diagrama_bp
 
 # Registrar blueprints
 app.register_blueprint(user_bp, url_prefix='/user')
-app.register_blueprint(especiales_bp, url_prefix='/especiales')
+app.register_blueprint(suplementos_bp, url_prefix='/suplementos')
 app.register_blueprint(orden_bp, url_prefix='/ordenes')
 app.register_blueprint(notificaciones_bp, url_prefix='/notificaciones')
 app.register_blueprint(backup_bp, url_prefix='/backups')
-app.register_blueprint(ingredientes_bp, url_prefix='/ingredientes')
 app.register_blueprint(direccion_bp, url_prefix='/direcciones')
+app.register_blueprint(tarjeta_bp, url_prefix='/tarjetas')
+app.register_blueprint(dieta_bp, url_prefix='/dietas')
+app.register_blueprint(diagrama_bp, url_prefix='/diagramas')
 
 # Rutas de utilidad
 @app.route('/db-info', methods=['GET'])
@@ -202,6 +223,7 @@ if __name__ == '__main__':
     print(f"Documentación: http://localhost:5000/docs")
     print(f"Health check: http://localhost:5000/health")
     print(f"ℹDB Info: http://localhost:5000/db-info")
+    print(f"Backup Service: Inicializado")
     print("="*50 + "\n")
     
     app.run(debug=True, host='0.0.0.0', port=5000)

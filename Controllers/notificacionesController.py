@@ -1,34 +1,59 @@
+# Controllers/notificacionesController.py
 from Models.Notificaciones import Notificacion
 from Models.Ordenes import Orden
-from Models.Especiales import Especial
+from Models.Suplementos import Suplemento
 from Models.User import UserRepository
 from flask import jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 import json
-import config
-from config import db
+import traceback
+from config import db_sql
 
 # Instancia del repositorio de usuarios
 user_repo = UserRepository()
 
 def notificar_nuevo_pedido(orden_id):
-    """Función para notificar nuevo pedido - VERSIÓN PARA CARRITO (COMPATIBLE CON AMBAS DBs)"""
+    """Función para notificar nuevo pedido - VERSIÓN COMPLETA CON LOGS"""
     try:
         print(f"\n{'='*60}")
         print(f"🔔 [NOTIFICACIONES] notificar_nuevo_pedido - INICIANDO")
-        print(f"📦 Orden ID recibido: {orden_id}")
+        print(f"📦 Orden ID recibido: {orden_id} (tipo: {type(orden_id)})")
         print(f"{'='*60}")
         
-        # Buscar la orden usando el método del modelo (compatible con ambas DBs)
+        # Buscar la orden usando el método del modelo
         from Models.Ordenes import Orden
-        orden = Orden.find_by_id(orden_id)
+        
+        orden = None
+        try:
+            orden = Orden.find_by_id(orden_id)
+            if orden:
+                print(f"✅ Orden encontrada con ID original")
+        except Exception as e:
+            print(f"⚠️ Error buscando con ID original: {e}")
+        
+        if not orden and isinstance(orden_id, str) and len(orden_id) == 24:
+            try:
+                from bson.objectid import ObjectId
+                orden = Orden.find_by_id(ObjectId(orden_id))
+                if orden:
+                    print(f"✅ Orden encontrada como ObjectId")
+            except:
+                pass
+        
+        if not orden and str(orden_id).isdigit():
+            try:
+                orden = Orden.find_by_id(int(orden_id))
+                if orden:
+                    print(f"✅ Orden encontrada como entero")
+            except:
+                pass
         
         if not orden:
-            print(f"❌ [NOTIFICACIONES] Orden {orden_id} NO encontrada en la base de datos")
+            print(f"❌ [NOTIFICACIONES] Orden {orden_id} NO encontrada")
             return False
         
-        # Convertir a diccionario según el tipo
+        # Convertir orden a diccionario
         if hasattr(orden, 'to_dict'):
             orden_dict = orden.to_dict()
         else:
@@ -37,59 +62,50 @@ def notificar_nuevo_pedido(orden_id):
             if '_id' in orden_dict:
                 orden_dict['id'] = str(orden_dict.pop('_id'))
         
+        if not orden_dict.get('info_pago_json') and orden_dict.get('info_pago'):
+            orden_dict['info_pago_json'] = json.dumps(orden_dict['info_pago'])
+        
         print(f"✅ [NOTIFICACIONES] Orden encontrada:")
         print(f"   - ID: {orden_dict.get('id')}")
         print(f"   - Código: {orden_dict.get('codigo_unico')}")
         print(f"   - Cliente: {orden_dict.get('nombre_usuario')}")
         print(f"   - Teléfono: {orden_dict.get('telefono_usuario')}")
-        print(f"   - Tipo pedido: {orden_dict.get('tipo_pedido')}")
-        print(f"   - Método pago: {orden_dict.get('metodo_pago', 'efectivo')}")
         
         # 1. Obtener detalles del pedido según tipo
         detalles_pedido = ""
         producto_nombre = ""
         items_info = []
         
-        if orden_dict.get('tipo_pedido') == 'especial':
-            print(f"   📋 Pedido ESPECIAL detectado")
-            if orden_dict.get('especial_id'):
-                from Models.Especiales import Especial
-                especial = Especial.find_by_id(orden_dict['especial_id'])
-                if especial:
-                    if hasattr(especial, 'to_dict'):
-                        especial_dict = especial.to_dict()
+        if orden_dict.get('tipo_pedido') == 'suplemento':
+            print(f"   📋 Pedido SUPLEMENTO detectado")
+            suplemento_id = orden_dict.get('suplemento_id')
+            cantidad = orden_dict.get('cantidad', 1)
+            
+            if suplemento_id:
+                from Models.Suplementos import Suplemento
+                suplemento = Suplemento.find_by_id(suplemento_id)
+                if suplemento:
+                    if hasattr(suplemento, 'to_dict'):
+                        suplemento_dict = suplemento.to_dict()
                     else:
-                        especial_dict = dict(especial)
-                    producto_nombre = especial_dict.get('nombre')
-                    detalles_pedido = f"{especial_dict.get('nombre')}"
-                    print(f"      Especial: {producto_nombre}")
+                        suplemento_dict = dict(suplemento)
+                    producto_nombre = suplemento_dict.get('nombre')
+                    detalles_pedido = f"{producto_nombre} x{cantidad}"
+                    print(f"      Suplemento: {producto_nombre} x{cantidad}")
                 else:
-                    detalles_pedido = "Producto Especial"
+                    detalles_pedido = "Producto Suplemento"
             else:
-                detalles_pedido = "Producto Especial"
+                detalles_pedido = "Producto Suplemento"
                 
-        elif orden_dict.get('tipo_pedido') == 'personalizado':
-            print(f"   📋 Pedido PERSONALIZADO detectado")
-            producto_nombre = "Pedido Personalizado"
-            if orden_dict.get('ingredientes_personalizados'):
-                ingredientes = orden_dict['ingredientes_personalizados'].split(',')
-                primeros_ingredientes = ingredientes[:3]
-                detalles_pedido = f"Personalizado: {', '.join(primeros_ingredientes).strip()}"
-                if len(ingredientes) > 3:
-                    detalles_pedido += " y más..."
-                print(f"      Ingredientes: {len(ingredientes)} seleccionados")
-            else:
-                detalles_pedido = "Pedido Personalizado"
-        
         elif orden_dict.get('tipo_pedido') == 'carrito':
             print(f"   📋 Pedido CARRITO detectado")
             producto_nombre = "Pedido del Carrito"
             
             if orden_dict.get('pedido_json'):
                 try:
-                    pedido_data = json.loads(orden_dict['pedido_json'])
-                    if isinstance(pedido_data, dict) and 'items' in pedido_data:
-                        items = pedido_data['items']
+                    pedido_data = json.loads(orden_dict['pedido_json']) if isinstance(orden_dict['pedido_json'], str) else orden_dict['pedido_json']
+                    if isinstance(pedido_data, list):
+                        items = pedido_data
                         total_items = len(items)
                         print(f"      Total items en carrito: {total_items}")
                         
@@ -118,9 +134,9 @@ def notificar_nuevo_pedido(orden_id):
             info_pago_texto = "💳 Pago con tarjeta"
             if orden_dict.get('info_pago_json'):
                 try:
-                    info_pago = json.loads(orden_dict['info_pago_json'])
-                    if info_pago.get('ultimos_4'):
-                        info_pago_texto += f" (****{info_pago['ultimos_4']})"
+                    info_pago = json.loads(orden_dict['info_pago_json']) if isinstance(orden_dict['info_pago_json'], str) else orden_dict['info_pago_json']
+                    if info_pago.get('ultimos_4_digitos'):
+                        info_pago_texto += f" (****{info_pago['ultimos_4_digitos']})"
                 except:
                     pass
         else:
@@ -132,14 +148,14 @@ def notificar_nuevo_pedido(orden_id):
         codigo_pedido = orden_dict.get('codigo_unico', '')
         nombre_cliente = orden_dict.get('nombre_usuario', '')
         telefono_cliente = orden_dict.get('telefono_usuario', '')
-        precio = float(orden_dict.get('precio', 0))
+        precio_total = float(orden_dict.get('precio_total', 0))
         
         mensaje_admin = f"NUEVO PEDIDO #{codigo_pedido}\n"
         mensaje_admin += f"Cliente: {nombre_cliente}\n"
         mensaje_admin += f"Tel: {telefono_cliente}\n"
         mensaje_admin += f"Pedido: {detalles_pedido}\n"
         mensaje_admin += f"Método pago: {info_pago_texto}\n"
-        mensaje_admin += f"Total: ${precio:.2f}"
+        mensaje_admin += f"Total: ${precio_total:.2f}"
         
         if orden_dict.get('notas'):
             mensaje_admin += f"\nNotas: {orden_dict['notas'][:100]}..."
@@ -150,48 +166,7 @@ def notificar_nuevo_pedido(orden_id):
         print(f"   Título: {titulo_admin}")
         print(f"   Mensaje: {mensaje_admin[:100]}...")
         
-        # 4. MENSAJES PARA CLIENTES
-        mensaje_cliente = f"Tu pedido #{codigo_pedido} ha sido recibido.\n"
-        mensaje_cliente += f"Total: ${precio:.2f}\n"
-        mensaje_cliente += f"Método pago: {info_pago_texto}\n"
-        mensaje_cliente += "Te notificaremos cuando esté en proceso."
-        
-        titulo_cliente = f"Pedido recibido #{codigo_pedido}"
-        
-        print(f"\n📧 Mensaje para cliente:")
-        print(f"   Título: {titulo_cliente}")
-        print(f"   Mensaje: {mensaje_cliente[:100]}...")
-        
-        # 5. Datos completos
-        datos_completos = {
-            'orden_id': orden_dict.get('id'),
-            'codigo_pedido': codigo_pedido,
-            'cliente_nombre': nombre_cliente,
-            'telefono_cliente': telefono_cliente,
-            'tipo_pedido': orden_dict.get('tipo_pedido'),
-            'producto_nombre': producto_nombre,
-            'detalles_completos': detalles_pedido,
-            'ingredientes_completos': orden_dict.get('ingredientes_personalizados'),
-            'precio': precio,
-            'direccion_completa': orden_dict.get('direccion_texto'),
-            'metodo_pago': orden_dict.get('metodo_pago'),
-            'info_pago': orden_dict.get('info_pago_json'),
-            'notas': orden_dict.get('notas'),
-            'estado': orden_dict.get('estado', 'pendiente'),
-            'fecha_pedido': datetime.utcnow().isoformat(),
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        
-        # Agregar items del carrito si existen
-        if orden_dict.get('tipo_pedido') == 'carrito' and orden_dict.get('pedido_json'):
-            try:
-                pedido_data = json.loads(orden_dict['pedido_json'])
-                datos_completos['items_carrito'] = pedido_data.get('items', [])
-                datos_completos['total_items'] = len(pedido_data.get('items', []))
-            except:
-                pass
-        
-        # 6. Notificar a TODOS los administradores usando el repositorio
+        # 4. Notificar a TODOS los administradores
         from Models.User import UserRepository
         user_repo = UserRepository()
         
@@ -218,7 +193,16 @@ def notificar_nuevo_pedido(orden_id):
                     tipo='nuevo_pedido',
                     titulo=titulo_admin,
                     mensaje=mensaje_admin,
-                    datos_adicionales=datos_completos,
+                    datos_adicionales={
+                        'orden_id': orden_dict.get('id'),
+                        'codigo_pedido': codigo_pedido,
+                        'cliente_nombre': nombre_cliente,
+                        'telefono_cliente': telefono_cliente,
+                        'detalles_pedido': detalles_pedido,
+                        'precio_total': precio_total,
+                        'metodo_pago': orden_dict.get('metodo_pago'),
+                        'direccion': orden_dict.get('direccion_texto')
+                    },
                     orden_id=orden_dict.get('id')
                 )
                 
@@ -232,28 +216,28 @@ def notificar_nuevo_pedido(orden_id):
                     
             except Exception as admin_error:
                 print(f"      ❌ Error con admin {admin_nombre}: {admin_error}")
-                import traceback
                 traceback.print_exc()
         
         print(f"\n📊 Notificaciones a admin creadas: {notificaciones_creadas}")
         
-        # 7. Notificación para el cliente si está registrado
+        # 5. Notificación para el cliente si está registrado
         try:
             print(f"\n🔍 Buscando cliente con teléfono: {telefono_cliente}")
             
-            # Buscar cliente por teléfono usando el repositorio si tiene el método
             cliente = None
             if telefono_cliente:
-                if hasattr(user_repo, 'find_by_phone'):
-                    cliente = user_repo.find_by_phone(telefono_cliente)
-                else:
-                    # Fallback a consulta directa (solo funciona en MySQL)
-                    from Models.User import UserSQL
-                    cliente = UserSQL.query.filter_by(telefono=telefono_cliente).first()
+                cliente = user_repo.find_by_phone(telefono_cliente)
             
             if cliente:
-                cliente_dict = user_repo.to_dict(cliente) if hasattr(user_repo, 'to_dict') else {'id': cliente.id, 'nombre': cliente.nombre}
+                cliente_dict = user_repo.to_dict(cliente)
                 print(f"✅ Cliente registrado encontrado: {cliente_dict.get('nombre')} (ID: {cliente_dict.get('id')})")
+                
+                mensaje_cliente = f"Tu pedido #{codigo_pedido} ha sido recibido.\n"
+                mensaje_cliente += f"Total: ${precio_total:.2f}\n"
+                mensaje_cliente += f"Método pago: {info_pago_texto}\n"
+                mensaje_cliente += "Te notificaremos cuando esté en proceso."
+                
+                titulo_cliente = f"Pedido recibido #{codigo_pedido}"
                 
                 from Models.Notificaciones import Notificacion
                 notificacion_cliente = Notificacion.crear_notificacion(
@@ -262,7 +246,11 @@ def notificar_nuevo_pedido(orden_id):
                     tipo='confirmacion_pedido',
                     titulo=titulo_cliente,
                     mensaje=mensaje_cliente,
-                    datos_adicionales=datos_completos,
+                    datos_adicionales={
+                        'orden_id': orden_dict.get('id'),
+                        'codigo_pedido': codigo_pedido,
+                        'precio_total': precio_total
+                    },
                     orden_id=orden_dict.get('id')
                 )
                 
@@ -275,10 +263,9 @@ def notificar_nuevo_pedido(orden_id):
                 else:
                     print(f"      ⚠️ No se pudo crear notificación para cliente")
             else:
-                print(f"⚠️ Cliente no registrado con teléfono {telefono_cliente}, solo notificaciones a admin")
+                print(f"⚠️ Cliente no registrado con teléfono {telefono_cliente}")
         except Exception as cliente_error:
             print(f"❌ Error creando notificación para cliente: {cliente_error}")
-            import traceback
             traceback.print_exc()
         
         print(f"\n✅ [NOTIFICACIONES] Proceso completado: {notificaciones_creadas} notificaciones a admin")
@@ -288,7 +275,6 @@ def notificar_nuevo_pedido(orden_id):
         
     except Exception as error:
         print(f"❌ [NOTIFICACIONES] Error crítico: {error}")
-        import traceback
         traceback.print_exc()
         print(f"{'='*60}\n")
         return False
@@ -298,16 +284,22 @@ def notificar_cambio_estado_pedido(orden_id, nuevo_estado):
     try:
         print(f"DEBUG: Ejecutando notificar_cambio_estado_pedido para orden {orden_id}, estado: {nuevo_estado}")
         
-        # Usar find_by_id en lugar de query.get
         orden = Orden.find_by_id(orden_id)
         if not orden:
             print(f"ERROR: Orden {orden_id} no encontrada para notificación de estado")
             return False
         
-        codigo = orden.codigo_unico if hasattr(orden, 'codigo_unico') else orden.get('codigo_unico')
+        if hasattr(orden, 'to_dict'):
+            orden_dict = orden.to_dict()
+        else:
+            from bson.objectid import ObjectId
+            orden_dict = dict(orden)
+            if '_id' in orden_dict:
+                orden_dict['id'] = str(orden_dict.pop('_id'))
+        
+        codigo = orden_dict.get('codigo_unico')
         print(f"DEBUG: Notificando cambio de estado del pedido {codigo} a {nuevo_estado}")
         
-        # Crear notificaciones usando el método del modelo
         notificaciones_creadas = Notificacion.notificar_cambio_estado(orden, nuevo_estado)
         
         print(f"DEBUG: Notificaciones de cambio de estado creadas exitosamente")
@@ -315,7 +307,6 @@ def notificar_cambio_estado_pedido(orden_id, nuevo_estado):
         
     except Exception as error:
         print(f"ERROR al notificar cambio de estado: {error}")
-        import traceback
         traceback.print_exc()
         return False
 
@@ -324,17 +315,18 @@ def notificar_pedido_cancelado(orden_id, motivo=None):
     try:
         print(f"DEBUG: Ejecutando notificar_pedido_cancelado para orden {orden_id}")
         
-        # Usar find_by_id en lugar de query.get
         orden = Orden.find_by_id(orden_id)
         if not orden:
             print(f"ERROR: Orden {orden_id} no encontrada para notificación de cancelación")
             return False
         
-        # Convertir a diccionario
         if hasattr(orden, 'to_dict'):
             orden_dict = orden.to_dict()
         else:
+            from bson.objectid import ObjectId
             orden_dict = dict(orden)
+            if '_id' in orden_dict:
+                orden_dict['id'] = str(orden_dict.pop('_id'))
         
         codigo = orden_dict.get('codigo_unico')
         print(f"DEBUG: Notificando cancelación del pedido {codigo}")
@@ -343,7 +335,6 @@ def notificar_pedido_cancelado(orden_id, motivo=None):
         if motivo:
             mensaje_admin += f"\nMotivo: {motivo}"
         
-        # Notificar a administradores usando el repositorio
         from Models.User import UserRepository
         user_repo = UserRepository()
         admins = user_repo.get_users_by_role(1)
@@ -364,28 +355,29 @@ def notificar_pedido_cancelado(orden_id, motivo=None):
                         'telefono_cliente': orden_dict.get('telefono_usuario'),
                         'motivo': motivo,
                         'direccion': orden_dict.get('direccion_texto'),
-                        'precio': float(orden_dict.get('precio', 0))
+                        'precio_total': float(orden_dict.get('precio_total', 0)),
+                        'cantidad': orden_dict.get('cantidad', 1),
+                        'suplemento_id': orden_dict.get('suplemento_id')
                     },
                     orden_id=orden_dict.get('id')
                 )
             except Exception as admin_error:
                 print(f"ERROR al crear notificación de cancelación para admin: {admin_error}")
         
-        # Notificación para el cliente
         telefono_cliente = orden_dict.get('telefono_usuario')
         if telefono_cliente:
-            # Buscar cliente por teléfono
-            from Models.User import UserSQL
-            usuario_cliente = UserSQL.query.filter_by(telefono=telefono_cliente).first()
+            cliente = user_repo.find_by_phone(telefono_cliente)
             
-            if usuario_cliente:
+            if cliente:
                 try:
+                    cliente_dict = user_repo.to_dict(cliente)
                     mensaje_cliente = f"Tu pedido {codigo} ha sido cancelado"
                     if motivo:
                         mensaje_cliente += f"\nMotivo: {motivo}"
                     
-                    Notificacion.crear_notificacion_cliente(
-                        cliente_id=usuario_cliente.id,
+                    Notificacion.crear_notificacion(
+                        user_id=cliente_dict['id'],
+                        user_type='cliente',
                         tipo='pedido_cancelado',
                         titulo='Pedido Cancelado',
                         mensaje=mensaje_cliente,
@@ -407,148 +399,140 @@ def notificar_pedido_cancelado(orden_id, motivo=None):
         
     except Exception as error:
         print(f"ERROR al notificar pedido cancelado: {error}")
-        import traceback
         traceback.print_exc()
         return False
 
-def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None, es_inactivo=False):
-    """
-    Notificar a los usuarios que tienen pedidos con un ingrediente no disponible
-    o inactivo
-    
-    Args:
-        ingrediente_id: ID del ingrediente
-        fecha: Fecha específica de no disponibilidad (si es temporal)
-        motivo: Razón de la no disponibilidad
-        es_inactivo: True si es inactivación permanente, False si es temporal
-    """
+def notificar_suplemento_no_disponible(suplemento_id, fecha=None, motivo=None, es_inactivo=False):
+    """Notificar a los usuarios que tienen pedidos con un suplemento no disponible o inactivo"""
     try:
-        tipo_notificacion = 'ingrediente_inactivo' if es_inactivo else 'ingrediente_no_disponible'
+        tipo_notificacion = 'suplemento_inactivo' if es_inactivo else 'suplemento_no_disponible'
         
-        print(f"[NOTIFICACIONES] ========== {'INGREDIENTE INACTIVO' if es_inactivo else 'INGREDIENTE NO DISPONIBLE'} ==========")
-        print(f"Ingrediente ID: {ingrediente_id}")
+        print(f"[NOTIFICACIONES] ========== {'SUPLEMENTO INACTIVO' if es_inactivo else 'SUPLEMENTO NO DISPONIBLE'} ==========")
+        print(f"Suplemento ID: {suplemento_id}")
         print(f"Fecha afectada: {fecha}")
         print(f"Motivo: {motivo}")
         print(f"Tipo notificación: {tipo_notificacion}")
         print(f"Es inactivo (permanente): {es_inactivo}")
         
-        # Obtener el ingrediente
-        from Models.Ingredientes import Ingrediente
-        ingrediente = Ingrediente.find_by_id(ingrediente_id)
+        # Obtener el suplemento
+        suplemento = Suplemento.find_by_id(suplemento_id)
         
-        if not ingrediente:
-            print(f"ERROR: Ingrediente {ingrediente_id} no encontrado")
-            return {'success': False, 'error': 'Ingrediente no encontrado'}
+        if not suplemento:
+            print(f"ERROR: Suplemento {suplemento_id} no encontrado")
+            return {'success': False, 'error': 'Suplemento no encontrado'}
         
-        ingrediente_nombre = ingrediente.nombre
-        ingrediente_categoria = ingrediente.categoria
+        suplemento_nombre = suplemento.nombre if hasattr(suplemento, 'nombre') else suplemento.get('nombre')
+        suplemento_categoria = suplemento.categoria if hasattr(suplemento, 'categoria') else suplemento.get('categoria')
         
         if es_inactivo:
             fecha_descripcion = "permanentemente"
-            titulo_base_cliente = f'Ingrediente Desactivado: {ingrediente_nombre}'
-            titulo_base_admin = f'INGREDIENTE INACTIVO: {ingrediente_nombre}'
-            mensaje_cliente_base = f"El ingrediente '{ingrediente_nombre}' ha sido marcado como INACTIVO y ya no estará disponible."
+            titulo_base_cliente = f'Suplemento Desactivado: {suplemento_nombre}'
+            titulo_base_admin = f'SUPLEMENTO INACTIVO: {suplemento_nombre}'
         else:
             fecha_descripcion = fecha if fecha else "hoy"
-            titulo_base_cliente = f'⚠️ Ingrediente no disponible - Pedido'
-            titulo_base_admin = f'⚠️ INGREDIENTE NO DISPONIBLE: {ingrediente_nombre}'
-            mensaje_cliente_base = f"El ingrediente '{ingrediente_nombre}' no está disponible {fecha_descripcion}."
+            titulo_base_cliente = f'⚠️ Suplemento no disponible'
+            titulo_base_admin = f'⚠️ SUPLEMENTO NO DISPONIBLE: {suplemento_nombre}'
         
-        print(f"Ingrediente encontrado: {ingrediente_nombre} ({ingrediente_categoria})")
+        print(f"Suplemento encontrado: {suplemento_nombre} ({suplemento_categoria})")
         
-        # Buscar órdenes PENDIENTES o EN PROCESO que contengan este ingrediente
+        # Buscar órdenes PENDIENTES o EN PROCESO que contengan este suplemento
         from Models.Ordenes import Orden
         
-        # Estados de órdenes que pueden ser afectadas
-        estados_activos = ['pendiente', 'recibido', 'en_preparacion', 'en_proceso', 'preparando']
+        estados_activos = ['pendiente', 'confirmada', 'pagada', 'en_preparacion']
+        todas_ordenes = Orden.get_all_ordenes()
         
-        todas_ordenes = Orden.query.filter(
-            Orden.estado.in_(estados_activos)
-        ).all()
-        
-        print(f"Total órdenes en estado activo: {len(todas_ordenes)}")
+        print(f"Total órdenes: {len(todas_ordenes)}")
         
         usuarios_notificados = set()
         ordenes_afectadas = []
         
         for orden in todas_ordenes:
             try:
-                contiene_ingrediente = False
+                if hasattr(orden, 'estado'):
+                    estado_orden = orden.estado
+                    suplemento_id_orden = orden.suplemento_id
+                    tipo_pedido = orden.tipo_pedido
+                    pedido_json = orden.pedido_json
+                else:
+                    estado_orden = orden.get('estado')
+                    suplemento_id_orden = orden.get('suplemento_id')
+                    tipo_pedido = orden.get('tipo_pedido')
+                    pedido_json = orden.get('pedido_json')
+                
+                if estado_orden not in estados_activos:
+                    continue
+                
+                contiene_suplemento = False
                 detalles_pedido = ""
                 
-                # Verificar en pedido_json (estructurado)
-                if orden.pedido_json:
+                if suplemento_id_orden and str(suplemento_id_orden) == str(suplemento_id):
+                    contiene_suplemento = True
+                    if hasattr(orden, 'cantidad'):
+                        cantidad = orden.cantidad
+                    else:
+                        cantidad = orden.get('cantidad', 1)
+                    detalles_pedido = f"Pedido directo x{cantidad}"
+                
+                if not contiene_suplemento and pedido_json and tipo_pedido == 'carrito':
                     try:
-                        pedido_data = json.loads(orden.pedido_json)
+                        pedido_data = json.loads(pedido_json) if isinstance(pedido_json, str) else pedido_json
                         
-                        if isinstance(pedido_data, dict):
-                            items = pedido_data.get('items', [])
-                            for item in items:
-                                nombre_item = item.get('nombre', '').lower()
-                                if ingrediente_nombre.lower() in nombre_item.lower():
-                                    contiene_ingrediente = True
-                                    cantidad = item.get('cantidad', 1)
-                                    detalles_pedido = f"Contiene: {nombre_item} x{cantidad}"
-                                    break
-                        
-                        elif isinstance(pedido_data, list):
+                        if isinstance(pedido_data, list):
                             for item in pedido_data:
-                                if isinstance(item, dict):
-                                    nombre_item = item.get('nombre', '').lower()
-                                    if ingrediente_nombre.lower() in nombre_item.lower():
-                                        contiene_ingrediente = True
-                                        cantidad = item.get('cantidad', 1)
-                                        detalles_pedido = f"Contiene: {nombre_item} x{cantidad}"
-                                        break
+                                item_id = item.get('suplemento_id')
+                                if item_id and str(item_id) == str(suplemento_id):
+                                    contiene_suplemento = True
+                                    item_cantidad = item.get('cantidad', 1)
+                                    detalles_pedido = f"Carrito: {item.get('nombre', 'Suplemento')} x{item_cantidad}"
+                                    break
+                    except json.JSONDecodeError:
+                        pass
+                
+                if contiene_suplemento:
+                    if hasattr(orden, 'codigo_unico'):
+                        codigo = orden.codigo_unico
+                        cliente_nombre = orden.nombre_usuario
+                        cliente_telefono = orden.telefono_usuario
+                        direccion = orden.direccion_texto
+                        estado = orden.estado
+                    else:
+                        codigo = orden.get('codigo_unico')
+                        cliente_nombre = orden.get('nombre_usuario')
+                        cliente_telefono = orden.get('telefono_usuario')
+                        direccion = orden.get('direccion_texto')
+                        estado = orden.get('estado')
                     
-                    except json.JSONDecodeError as e:
-                        print(f"⚠️ Error parseando JSON de orden {orden.id}: {e}")
-                
-                # Verificar en campo pedido (texto plano) si no se encontró en JSON
-                if not contiene_ingrediente and orden.pedido:
-                    if ingrediente_nombre.lower() in orden.pedido.lower():
-                        contiene_ingrediente = True
-                        detalles_pedido = f"Pedido: {orden.pedido[:50]}..."
-                
-                # Verificar en tipo de pedido personalizado
-                if not contiene_ingrediente and orden.tipo_pedido == 'personalizado':
-                    if orden.ingredientes_personalizados and ingrediente_nombre.lower() in orden.ingredientes_personalizados.lower():
-                        contiene_ingrediente = True
-                        detalles_pedido = f"Ingredientes: {orden.ingredientes_personalizados[:50]}..."
-                
-                if contiene_ingrediente:
-                    print(f"📌 Orden afectada: #{orden.codigo_unico} - Cliente: {orden.nombre_usuario}")
+                    print(f"📌 Orden afectada: #{codigo} - Cliente: {cliente_nombre}")
                     ordenes_afectadas.append({
-                        'id': orden.id,
-                        'codigo': orden.codigo_unico,
-                        'cliente': orden.nombre_usuario,
-                        'telefono': orden.telefono_usuario,
+                        'id': str(getattr(orden, 'id', orden.get('id'))),
+                        'codigo': codigo,
+                        'cliente': cliente_nombre,
+                        'telefono': cliente_telefono,
                         'detalles': detalles_pedido,
-                        'estado': orden.estado,
-                        'direccion': orden.direccion_texto
+                        'estado': estado,
+                        'direccion': direccion
                     })
                     
-                    # Buscar usuario por teléfono
-                    from Models.User import UserSQL
+                    from Models.User import UserRepository
+                    user_repo = UserRepository()
                     usuario_cliente = None
-                    if orden.telefono_usuario:
-                        usuario_cliente = UserSQL.query.filter_by(telefono=orden.telefono_usuario).first()
+                    if cliente_telefono:
+                        usuario_cliente = user_repo.find_by_phone(cliente_telefono)
                     
-                    # Si encontramos usuario, crear notificación
                     if usuario_cliente:
-                        user_id_cliente = usuario_cliente.id
+                        cliente_dict = user_repo.to_dict(usuario_cliente)
+                        user_id_cliente = cliente_dict.get('id')
                         
-                        # Mensaje personalizado para el cliente
                         if es_inactivo:
-                            mensaje_cliente = f"El ingrediente '{ingrediente_nombre}' ha sido marcado como INACTIVO y ya no estará disponible."
+                            mensaje_cliente = f"El suplemento '{suplemento_nombre}' ha sido marcado como INACTIVO y ya no estará disponible."
                             if motivo:
                                 mensaje_cliente += f" Motivo: {motivo}"
-                            mensaje_cliente += f" Esto afecta tu pedido #{orden.codigo_unico}. Por favor contáctanos si necesitas realizar cambios."
+                            mensaje_cliente += f" Esto afecta tu pedido #{codigo}. Por favor contáctanos si necesitas realizar cambios."
                         else:
-                            mensaje_cliente = f"El ingrediente '{ingrediente_nombre}' no está disponible {fecha_descripcion}."
+                            mensaje_cliente = f"El suplemento '{suplemento_nombre}' no está disponible {fecha_descripcion}."
                             if motivo:
                                 mensaje_cliente += f" Motivo: {motivo}"
-                            mensaje_cliente += f" Esto afecta tu pedido #{orden.codigo_unico}. Por favor contáctanos para realizar ajustes."
+                            mensaje_cliente += f" Esto afecta tu pedido #{codigo}. Por favor contáctanos para realizar ajustes."
                         
                         try:
                             notif_cliente = Notificacion.crear_notificacion(
@@ -558,21 +542,21 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
                                 titulo=titulo_base_cliente,
                                 mensaje=mensaje_cliente,
                                 datos_adicionales={
-                                    'orden_id': orden.id,
-                                    'codigo_pedido': orden.codigo_unico,
-                                    'ingrediente_no_disponible': ingrediente_nombre,
-                                    'ingrediente_id': ingrediente_id,
+                                    'orden_id': str(getattr(orden, 'id', orden.get('id'))),
+                                    'codigo_pedido': codigo,
+                                    'suplemento_no_disponible': suplemento_nombre,
+                                    'suplemento_id': suplemento_id,
                                     'fecha_afectada': fecha_descripcion,
                                     'motivo': motivo,
-                                    'estado_orden': orden.estado,
-                                    'cliente_telefono': orden.telefono_usuario,
-                                    'cliente_nombre': orden.nombre_usuario,
+                                    'estado_orden': estado,
+                                    'cliente_telefono': cliente_telefono,
+                                    'cliente_nombre': cliente_nombre,
                                     'es_inactivo': es_inactivo,
                                     'detalles_pedido': detalles_pedido,
-                                    'direccion': orden.direccion_texto,
-                                    'precio_orden': float(orden.precio) if orden.precio else 0.0
+                                    'direccion': direccion,
+                                    'precio_orden': float(orden.precio_total if hasattr(orden, 'precio_total') else orden.get('precio_total', 0))
                                 },
-                                orden_id=orden.id
+                                orden_id=str(getattr(orden, 'id', orden.get('id')))
                             )
                             
                             usuarios_notificados.add(user_id_cliente)
@@ -581,46 +565,24 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
                         except Exception as cliente_error:
                             print(f"Error notificando cliente {user_id_cliente}: {cliente_error}")
                     else:
-                        print(f"⚠️ Usuario no encontrado para teléfono: {orden.telefono_usuario}")
+                        print(f"⚠️ Usuario no encontrado para teléfono: {cliente_telefono}")
             
             except Exception as orden_error:
-                print(f"Error procesando orden {orden.id}: {orden_error}")
-                import traceback
-                traceback.print_exc()
+                print(f"Error procesando orden: {orden_error}")
                 continue
         
-        # Buscar cuántos especiales están afectados (solo para inactivos)
-        from Models.Especiales import Especial
-        especiales_afectados = []
-        if es_inactivo:
-            especiales_afectados = Especial.query.filter(
-                Especial.ingredientes.contains(ingrediente_nombre)
-            ).all()
-        
-        # Notificar a TODOS los administradores usando el repositorio
+        from Models.User import UserRepository
+        user_repo = UserRepository()
         admins = user_repo.get_users_by_role(1)
         notificaciones_admin = 0
         
-        if es_inactivo:
-            mensaje_admin = f"INGREDIENTE MARCADO COMO INACTIVO: '{ingrediente_nombre}' ({ingrediente_categoria})"
-            if motivo:
-                mensaje_admin += f"\nMOTIVO: {motivo}"
-            mensaje_admin += f"\n\nIMPACTO:"
-            mensaje_admin += f"\n• Órdenes afectadas: {len(ordenes_afectadas)}"
-            mensaje_admin += f"\n• Especiales afectados: {len(especiales_afectados)}"
-            mensaje_admin += f"\n• Clientes notificados: {len(usuarios_notificados)}"
-            
-            if especiales_afectados:
-                mensaje_admin += "\n\nESPECIALES AFECTADOS:"
-                for i, especial in enumerate(especiales_afectados[:10], 1):
-                    mensaje_admin += f"\n{i}. {especial.nombre}"
-        else:
-            mensaje_admin = f"⚠️ INGREDIENTE NO DISPONIBLE: '{ingrediente_nombre}' ({ingrediente_categoria})"
-            if motivo:
-                mensaje_admin += f"\nMOTIVO: {motivo}"
-            mensaje_admin += f"\n\nIMPACTO:"
-            mensaje_admin += f"\n• Órdenes afectadas: {len(ordenes_afectadas)}"
-            mensaje_admin += f"\n• Clientes notificados: {len(usuarios_notificados)}"
+        mensaje_admin = f"{'SUPLEMENTO MARCADO COMO INACTIVO' if es_inactivo else 'SUPLEMENTO NO DISPONIBLE'}: '{suplemento_nombre}' ({suplemento_categoria})"
+        if motivo:
+            mensaje_admin += f"\nMOTIVO: {motivo}"
+        mensaje_admin += f"\n\nIMPACTO:"
+        mensaje_admin += f"\n• Órdenes afectadas: {len(ordenes_afectadas)}"
+        mensaje_admin += f"\n• Clientes notificados: {len(usuarios_notificados)}"
+        if not es_inactivo:
             mensaje_admin += f"\n• Fecha: {fecha_descripcion}"
         
         if ordenes_afectadas:
@@ -643,17 +605,15 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
                     titulo=titulo_base_admin,
                     mensaje=mensaje_admin,
                     datos_adicionales={
-                        'ingrediente_id': ingrediente_id,
-                        'ingrediente_nombre': ingrediente_nombre,
-                        'ingrediente_categoria': ingrediente_categoria,
+                        'suplemento_id': suplemento_id,
+                        'suplemento_nombre': suplemento_nombre,
+                        'suplemento_categoria': suplemento_categoria,
                         'fecha_afectada': fecha_descripcion,
                         'motivo': motivo,
                         'es_inactivo': es_inactivo,
                         'ordenes_afectadas': [o['id'] for o in ordenes_afectadas],
                         'ordenes_detalles': ordenes_afectadas,
                         'total_afectadas': len(ordenes_afectadas),
-                        'especiales_afectados': len(especiales_afectados) if es_inactivo else 0,
-                        'especiales_lista': [esp.nombre for esp in especiales_afectados] if es_inactivo else [],
                         'usuarios_notificados': list(usuarios_notificados),
                         'timestamp': datetime.utcnow().isoformat()
                     }
@@ -663,23 +623,21 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
             except Exception as admin_error:
                 print(f"Error notificando admin: {admin_error}")
         
-        print(f"\n RESUMEN FINAL:")
-        print(f"   • Ingrediente: {ingrediente_nombre}")
+        print(f"\n📊 RESUMEN FINAL:")
+        print(f"   • Suplemento: {suplemento_nombre}")
         print(f"   • Tipo: {'INACTIVO (permanente)' if es_inactivo else 'NO DISPONIBLE (temporal)'}")
         print(f"   • Fecha: {fecha_descripcion}")
         print(f"   • Órdenes afectadas: {len(ordenes_afectadas)}")
         print(f"   • Clientes notificados: {len(usuarios_notificados)}")
         print(f"   • Admins notificados: {notificaciones_admin}")
-        if es_inactivo:
-            print(f"   • Especiales afectados: {len(especiales_afectados)}")
         print(f"[NOTIFICACIONES] ========== FIN ==========\n")
         
         resultado = {
             'success': True,
-            'ingrediente': {
-                'id': ingrediente_id,
-                'nombre': ingrediente_nombre,
-                'categoria': ingrediente_categoria
+            'suplemento': {
+                'id': suplemento_id,
+                'nombre': suplemento_nombre,
+                'categoria': suplemento_categoria
             },
             'tipo_notificacion': tipo_notificacion,
             'es_inactivo': es_inactivo,
@@ -693,55 +651,37 @@ def notificar_ingrediente_no_disponible(ingrediente_id, fecha=None, motivo=None,
             'timestamp': datetime.utcnow().isoformat()
         }
         
-        if es_inactivo:
-            resultado['especiales_afectados'] = len(especiales_afectados)
-            resultado['especiales_lista'] = [esp.nombre for esp in especiales_afectados]
-        
         return resultado
         
     except Exception as error:
-        print(f"ERROR CRÍTICO en notificar_ingrediente_no_disponible: {error}")
-        import traceback
+        print(f"ERROR CRÍTICO en notificar_suplemento_no_disponible: {error}")
         traceback.print_exc()
         return {'success': False, 'error': str(error)}
 
+# ===== FUNCIONES API =====
+
 @jwt_required()
 def obtener_notificaciones_usuario():
-    """Obtener notificaciones del usuario actual usando UserRepository"""
+    """Obtener notificaciones del usuario actual"""
     try:
-        # Obtener usuario del token JWT
+        print(f"\n🔵 [API] obtener_notificaciones_usuario - INICIANDO")
+        
         user_id = get_jwt_identity()
+        print(f"👤 user_id: {user_id}")
         
-        print(f"\n[API DEBUG] ========== OBTENER NOTIFICACIONES ==========")
-        print(f"User ID del token: {user_id}")
-        
-        # Obtener información del usuario usando el repositorio
         usuario = user_repo.find_by_id(user_id)
         if not usuario:
-            print(f"Usuario con ID {user_id} NO encontrado en la base de datos!")
+            print(f"❌ Usuario no encontrado")
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
         usuario_dict = user_repo.to_dict(usuario)
-        
-        print(f"Usuario encontrado:")
-        print(f"   - ID: {usuario_dict.get('id')}")
-        print(f"   - Nombre: {usuario_dict.get('nombre')}")
-        print(f"   - Teléfono: '{usuario_dict.get('telefono')}'")
-        print(f"   - Rol: {usuario_dict.get('rol')} ({'Admin' if usuario_dict.get('rol') == 1 else 'Cliente'})")
-        
-        # Determinar user_type por ROL
         user_type = 'admin' if usuario_dict.get('rol') == 1 else 'cliente'
-        print(f"User_type determinado por rol: {user_type}")
+        print(f"📊 user_type: {user_type}")
         
-        # Obtener parámetros
         pagina = request.args.get('page', 1, type=int)
         por_pagina = request.args.get('per_page', 20, type=int)
+        print(f"📄 página: {pagina}, por_página: {por_pagina}")
         
-        print(f"Parámetros de consulta:")
-        print(f"   - página: {pagina}")
-        print(f"   - por página: {por_pagina}")
-        
-        # Buscar notificaciones
         resultado = Notificacion.obtener_notificaciones_usuario_query(
             user_id=user_id,
             user_type=user_type,
@@ -749,18 +689,9 @@ def obtener_notificaciones_usuario():
             por_pagina=por_pagina
         )
         
-        print(f"Notificaciones encontradas: {resultado['total']}")
+        print(f"📊 Total notificaciones: {resultado['total']}")
         
-        # Convertir a diccionario
-        notificaciones_dict = []
-        for notif in resultado['notificaciones']:
-            notif_dict = Notificacion.to_dict(notif)
-            notificaciones_dict.append(notif_dict)
-        
-        print(f"RESULTADO FINAL:")
-        print(f"   - Total notificaciones: {resultado['total']}")
-        print(f"   - Mostrando: {len(notificaciones_dict)}")
-        print(f"[API DEBUG] ========== FIN ==========\n")
+        notificaciones_dict = [Notificacion.to_dict(notif) for notif in resultado['notificaciones']]
         
         return jsonify({
             'notificaciones': notificaciones_dict,
@@ -770,8 +701,7 @@ def obtener_notificaciones_usuario():
         }), 200
         
     except Exception as error:
-        print(f"ERROR CRÍTICO en obtener_notificaciones_usuario: {error}")
-        import traceback
+        print(f"❌ Error en obtener_notificaciones_usuario: {error}")
         traceback.print_exc()
         return jsonify({"msg": f"Error al obtener notificaciones: {str(error)}"}), 500
 
@@ -804,29 +734,52 @@ def obtener_notificaciones_no_leidas():
 def marcar_como_leida(notificacion_id):
     """Marcar una notificación como leída"""
     try:
-        user_id = get_jwt_identity()
+        print(f"\n🔵 [CONTROLADOR] marcar_como_leida - INICIANDO")
+        print(f"📌 notificacion_id: {notificacion_id} (tipo: {type(notificacion_id)})")
         
-        # Verificar que la notificación pertenece al usuario
-        notificacion = Notificacion.query.get(notificacion_id)
+        user_id = get_jwt_identity()
+        print(f"👤 user_id del token: {user_id} (tipo: {type(user_id)})")
+        
+        notificacion = Notificacion.find_by_id(notificacion_id)
         if not notificacion:
+            print(f"❌ Notificación {notificacion_id} NO encontrada")
             return jsonify({"msg": "Notificación no encontrada"}), 404
         
-        if notificacion.user_id != user_id:
+        print(f"✅ Notificación encontrada")
+        
+        if hasattr(notificacion, 'user_id'):
+            notif_user_id = notificacion.user_id
+            print(f"📊 Notificación.user_id (SQL): {notif_user_id} (tipo: {type(notif_user_id)})")
+        else:
+            notif_user_id = notificacion.get('user_id')
+            print(f"📊 Notificación.user_id (Mongo): {notif_user_id} (tipo: {type(notif_user_id)})")
+        
+        if str(notif_user_id) != str(user_id):
+            print(f"❌ No tienes permiso: tu user_id={user_id}, notif_user_id={notif_user_id}")
             return jsonify({"msg": "No tienes permiso para marcar esta notificación"}), 403
         
-        if Notificacion.marcar_como_leida(notificacion_id):
+        print(f"🔄 Llamando a Notificacion.marcar_como_leida({notificacion_id})")
+        resultado = Notificacion.marcar_como_leida(notificacion_id)
+        print(f"📝 Resultado de marcar_como_leida: {resultado}")
+        
+        if resultado:
+            print(f"✅ Notificación {notificacion_id} marcada como leída exitosamente")
             return jsonify({"msg": "Notificación marcada como leída"}), 200
         else:
+            print(f"ℹ️ La notificación {notificacion_id} ya estaba leída")
             return jsonify({"msg": "La notificación ya estaba leída"}), 200
             
     except Exception as error:
-        print(f"Error al marcar notificación como leída: {error}")
-        return jsonify({"msg": "Error al marcar notificación como leída"}), 500
+        print(f"❌ Error al marcar notificación como leída: {error}")
+        traceback.print_exc()
+        return jsonify({"msg": f"Error al marcar notificación como leída: {str(error)}"}), 500
 
 @jwt_required()
 def marcar_todas_como_leidas():
     """Marcar todas las notificaciones del usuario como leídas"""
     try:
+        print(f"\n🔵 [CONTROLADOR] marcar_todas_como_leidas - INICIANDO")
+        
         user_id = get_jwt_identity()
         usuario = user_repo.find_by_id(user_id)
         
@@ -835,8 +788,10 @@ def marcar_todas_como_leidas():
         
         usuario_dict = user_repo.to_dict(usuario)
         user_type = 'admin' if usuario_dict.get('rol') == 1 else 'cliente'
+        print(f"👤 user_id: {user_id}, user_type: {user_type}")
         
         cantidad = Notificacion.marcar_todas_como_leidas(user_id, user_type)
+        print(f"📝 Notificaciones marcadas: {cantidad}")
         
         return jsonify({
             "msg": f"Se marcaron {cantidad} notificaciones como leídas"
@@ -844,35 +799,50 @@ def marcar_todas_como_leidas():
         
     except Exception as error:
         print(f"Error al marcar todas las notificaciones como leídas: {error}")
+        traceback.print_exc()
         return jsonify({"msg": "Error al marcar notificaciones como leídas"}), 500
 
 @jwt_required()
 def eliminar_notificacion(notificacion_id):
-    """Eliminar una notificación"""
+    """Eliminar una notificación (solo el propietario puede hacerlo)"""
     try:
-        user_id = get_jwt_identity()
+        print(f"\n🔵 [CONTROLADOR] eliminar_notificacion - INICIANDO")
+        print(f"📌 notificacion_id: {notificacion_id}")
         
-        # Verificar que la notificación pertenece al usuario
-        notificacion = Notificacion.query.get(notificacion_id)
+        user_id = get_jwt_identity()
+        print(f"👤 user_id del token: {user_id}")
+        
+        notificacion = Notificacion.find_by_id(notificacion_id)
         if not notificacion:
             return jsonify({"msg": "Notificación no encontrada"}), 404
         
-        if notificacion.user_id != user_id:
+        if hasattr(notificacion, 'user_id'):
+            notif_user_id = notificacion.user_id
+        else:
+            notif_user_id = notificacion.get('user_id')
+        
+        if str(notif_user_id) != str(user_id):
+            print(f"❌ No tienes permiso: tu user_id={user_id}, notif_user_id={notif_user_id}")
             return jsonify({"msg": "No tienes permiso para eliminar esta notificación"}), 403
         
         if Notificacion.eliminar_notificacion(notificacion_id):
+            print(f"✅ Notificación {notificacion_id} eliminada correctamente")
             return jsonify({"msg": "Notificación eliminada correctamente"}), 200
         else:
+            print(f"❌ Error al eliminar notificación {notificacion_id}")
             return jsonify({"msg": "Error al eliminar la notificación"}), 500
             
     except Exception as error:
         print(f"Error al eliminar notificación: {error}")
+        traceback.print_exc()
         return jsonify({"msg": "Error al eliminar notificación"}), 500
 
 @jwt_required()
 def eliminar_todas_leidas():
     """Eliminar todas las notificaciones leídas del usuario"""
     try:
+        print(f"\n🔵 [CONTROLADOR] eliminar_todas_leidas - INICIANDO")
+        
         user_id = get_jwt_identity()
         usuario = user_repo.find_by_id(user_id)
         
@@ -883,6 +853,7 @@ def eliminar_todas_leidas():
         user_type = 'admin' if usuario_dict.get('rol') == 1 else 'cliente'
         
         cantidad = Notificacion.eliminar_todas_leidas(user_id, user_type)
+        print(f"📝 Notificaciones eliminadas: {cantidad}")
         
         return jsonify({
             "msg": f"Se eliminaron {cantidad} notificaciones leídas"
@@ -890,17 +861,19 @@ def eliminar_todas_leidas():
         
     except Exception as error:
         print(f"Error al eliminar notificaciones leídas: {error}")
+        traceback.print_exc()
         return jsonify({"msg": "Error al eliminar notificaciones"}), 500
 
 @jwt_required()
 def enviar_mensaje():
     """Enviar mensaje/notificación a usuarios (solo admin)"""
     try:
+        print(f"\n🔵 [CONTROLADOR] enviar_mensaje - INICIANDO")
+        
         data = request.get_json()
         if not data:
             return jsonify({"msg": "No se proporcionaron datos"}), 400
         
-        # Verificar que el usuario es admin usando el repositorio
         user_id = get_jwt_identity()
         usuario = user_repo.find_by_id(user_id)
         
@@ -924,37 +897,40 @@ def enviar_mensaje():
         notificaciones_creadas = []
         
         if destinatario_tipo == 'todos':
-            # Enviar a todos los clientes
             clientes = user_repo.get_users_by_role(2)
             for cliente in clientes:
                 cliente_dict = user_repo.to_dict(cliente)
-                notificacion = Notificacion.crear_notificacion_cliente(
-                    cliente_id=cliente_dict['id'],
+                notificacion = Notificacion.crear_notificacion(
+                    user_id=cliente_dict['id'],
+                    user_type='cliente',
                     tipo='mensaje_admin',
                     titulo=titulo,
                     mensaje=mensaje,
                     datos_adicionales=datos_adicionales
                 )
-                notificaciones_creadas.append(notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id'))
+                if notificacion:
+                    notif_id = notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id')
+                    notificaciones_creadas.append(notif_id)
                 
         elif destinatario_tipo == 'cliente' and destinatario_id:
-            # Enviar a un cliente específico
             cliente = user_repo.find_by_id(destinatario_id)
             if not cliente:
                 return jsonify({"msg": "Cliente no encontrado"}), 404
             
             cliente_dict = user_repo.to_dict(cliente)
-            notificacion = Notificacion.crear_notificacion_cliente(
-                cliente_id=cliente_dict['id'],
+            notificacion = Notificacion.crear_notificacion(
+                user_id=cliente_dict['id'],
+                user_type='cliente',
                 tipo='mensaje_admin',
                 titulo=titulo,
                 mensaje=mensaje,
                 datos_adicionales=datos_adicionales
             )
-            notificaciones_creadas.append(notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id'))
+            if notificacion:
+                notif_id = notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id')
+                notificaciones_creadas.append(notif_id)
             
         elif destinatario_tipo == 'admin' and destinatario_id:
-            # Enviar a otro administrador
             admin = user_repo.find_by_id(destinatario_id)
             if not admin:
                 return jsonify({"msg": "Administrador no encontrado"}), 404
@@ -971,10 +947,11 @@ def enviar_mensaje():
                 mensaje=mensaje,
                 datos_adicionales=datos_adicionales
             )
-            notificaciones_creadas.append(notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id'))
+            if notificacion:
+                notif_id = notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id')
+                notificaciones_creadas.append(notif_id)
             
         elif destinatario_tipo == 'todos_admins':
-            # Enviar a todos los administradores
             admins = user_repo.get_users_by_role(1)
             for admin in admins:
                 admin_dict = user_repo.to_dict(admin)
@@ -986,7 +963,9 @@ def enviar_mensaje():
                     mensaje=mensaje,
                     datos_adicionales=datos_adicionales
                 )
-                notificaciones_creadas.append(notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id'))
+                if notificacion:
+                    notif_id = notificacion.id if hasattr(notificacion, 'id') else notificacion.get('id')
+                    notificaciones_creadas.append(notif_id)
         
         return jsonify({
             "msg": f"Mensaje enviado correctamente a {len(notificaciones_creadas)} usuarios",
@@ -995,7 +974,6 @@ def enviar_mensaje():
         
     except Exception as error:
         print(f"Error al enviar mensaje: {error}")
-        import traceback
         traceback.print_exc()
         return jsonify({"msg": f"Error al enviar mensaje: {str(error)}"}), 500
 
@@ -1003,11 +981,16 @@ def enviar_mensaje():
 def obtener_analiticas():
     """Obtener analíticas de notificaciones (solo admin)"""
     try:
-        # Verificar que el usuario es admin
+        print(f"\n🔵 [CONTROLADOR] obtener_analiticas - INICIANDO")
+        
         user_id = get_jwt_identity()
         usuario = user_repo.find_by_id(user_id)
         
-        if not usuario or usuario.rol != 1:
+        if not usuario:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        usuario_dict = user_repo.to_dict(usuario)
+        if usuario_dict.get('rol') != 1:
             return jsonify({"msg": "Solo los administradores pueden ver analíticas"}), 403
         
         dias = request.args.get('dias', 30, type=int)
@@ -1017,13 +1000,15 @@ def obtener_analiticas():
         
     except Exception as error:
         print(f"Error al obtener analíticas: {error}")
+        traceback.print_exc()
         return jsonify({"msg": "Error al obtener analíticas"}), 500
 
 @jwt_required()
 def obtener_usuarios_para_mensaje():
     """Obtener lista de usuarios para enviar mensajes (solo admin)"""
     try:
-        # Verificar que el usuario es admin
+        print(f"\n🔵 [CONTROLADOR] obtener_usuarios_para_mensaje - INICIANDO")
+        
         user_id = get_jwt_identity()
         usuario = user_repo.find_by_id(user_id)
         
@@ -1034,7 +1019,6 @@ def obtener_usuarios_para_mensaje():
         if usuario_dict.get('rol') != 1:
             return jsonify({"msg": "Solo los administradores pueden ver esta lista"}), 403
         
-        # Obtener todos los usuarios
         usuarios = user_repo.get_all_users()
         
         usuarios_dict = []
@@ -1049,17 +1033,21 @@ def obtener_usuarios_para_mensaje():
                 'rol_nombre': 'Administrador' if user_dict.get('rol') == 1 else 'Cliente'
             })
         
+        print(f"📊 Usuarios encontrados: {len(usuarios_dict)}")
         return jsonify(usuarios_dict), 200
         
     except Exception as error:
         print(f"Error al obtener usuarios: {error}")
+        traceback.print_exc()
         return jsonify({"msg": "Error al obtener usuarios"}), 500
 
 @jwt_required()
 def obtener_notificaciones_por_orden(orden_id):
     """Obtener notificaciones relacionadas con una orden específica"""
     try:
-        # Verificar permisos
+        print(f"\n🔵 [CONTROLADOR] obtener_notificaciones_por_orden - INICIANDO")
+        print(f"📌 orden_id: {orden_id}")
+        
         user_id = get_jwt_identity()
         usuario = user_repo.find_by_id(user_id)
         
@@ -1068,20 +1056,29 @@ def obtener_notificaciones_por_orden(orden_id):
         
         usuario_dict = user_repo.to_dict(usuario)
         
-        orden = Orden.query.get(orden_id)
+        orden = Orden.find_by_id(orden_id)
         if not orden:
             return jsonify({"msg": "Orden no encontrada"}), 404
         
-        # Solo el admin o el dueño de la orden pueden ver sus notificaciones
+        if hasattr(orden, 'telefono_usuario'):
+            orden_telefono = orden.telefono_usuario
+        else:
+            orden_telefono = orden.get('telefono_usuario')
+        
         es_admin = usuario_dict.get('rol') == 1
-        es_dueño = orden.telefono_usuario == usuario_dict.get('telefono') if usuario_dict.get('telefono') else False
+        es_dueño = orden_telefono == usuario_dict.get('telefono') if usuario_dict.get('telefono') else False
         
         if not es_admin and not es_dueño:
             return jsonify({"msg": "No tienes permisos para ver estas notificaciones"}), 403
         
-        notificaciones = Notificacion.query.filter_by(orden_id=orden_id).order_by(
-            Notificacion.fecha_creacion.desc()
-        ).all()
+        if hasattr(Notificacion, 'query'):
+            notificaciones = Notificacion.query.filter_by(orden_id=orden_id).order_by(
+                Notificacion.fecha_creacion.desc()
+            ).all()
+        else:
+            notificaciones = list(Notificacion._get_collection().find(
+                {'orden_id': str(orden_id)}
+            ).sort('fecha_creacion', -1))
         
         notificaciones_dict = [Notificacion.to_dict(notif) for notif in notificaciones]
         
@@ -1092,12 +1089,15 @@ def obtener_notificaciones_por_orden(orden_id):
         
     except Exception as error:
         print(f"Error al obtener notificaciones por orden: {error}")
+        traceback.print_exc()
         return jsonify({"msg": "Error al obtener notificaciones"}), 500
 
 @jwt_required()
 def obtener_contador_notificaciones():
     """Obtener contador de notificaciones no leídas"""
     try:
+        print(f"\n🔵 [CONTROLADOR] obtener_contador_notificaciones - INICIANDO")
+        
         user_id = get_jwt_identity()
         usuario = user_repo.find_by_id(user_id)
         
@@ -1127,4 +1127,40 @@ def obtener_contador_notificaciones():
         
     except Exception as error:
         print(f"Error al obtener contador de notificaciones: {error}")
+        traceback.print_exc()
         return jsonify({"msg": "Error al obtener contador de notificaciones"}), 500
+
+def create_notification(user_id, titulo, mensaje, tipo='info', datos_adicionales=None):
+    """Crear notificación para un usuario"""
+    try:
+        from Models.Notificaciones import Notificacion
+        from Models.User import user_repo
+        
+        user = user_repo.find_by_id(user_id)
+        if not user:
+            print(f"Usuario {user_id} no encontrado")
+            return None
+        
+        user_dict = user_repo.to_dict(user)
+        user_type = 'admin' if user_dict.get('rol') == 1 else 'cliente'
+        
+        if tipo == 'backup_code':
+            if datos_adicionales is None:
+                datos_adicionales = {}
+            datos_adicionales['permanent'] = True
+            datos_adicionales['warning'] = 'Este código es permanente. Guárdalo en un lugar seguro. No se mostrará nuevamente después de cerrar esta notificación.'
+        
+        notificacion = Notificacion.crear_notificacion(
+            user_id=user_id,
+            user_type=user_type,
+            tipo=tipo,
+            titulo=titulo,
+            mensaje=mensaje,
+            datos_adicionales=datos_adicionales or {}
+        )
+        return notificacion
+    except Exception as e:
+        print(f"Error creando notificación: {e}")
+        import traceback
+        traceback.print_exc()
+        return None

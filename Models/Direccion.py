@@ -42,6 +42,19 @@ class Direccion:
         return db_mongo.db.direcciones
     
     @classmethod
+    def get_all_direcciones(cls):
+        """Obtener todas las direcciones"""
+        try:
+            if DB_TYPE == 'mysql':
+                return DireccionSQL.query.all()
+            else:
+                cursor = cls._get_collection().find()
+                return list(cursor)
+        except Exception as error:
+            print(f"Error en get_all_direcciones: {error}")
+            return []
+    
+    @classmethod
     def create_direccion(cls, user_id, direccion_data):
         """Crear nueva dirección"""
         try:
