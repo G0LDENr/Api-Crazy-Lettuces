@@ -57,6 +57,15 @@ def analizar_suplementos():
                 "kmeans": {
                     "clusters": [],
                     "silhouette_score": 0
+                },
+                "analisis_nulos": {
+                    "total_nulos": 0,
+                    "detalle_por_campo": {},
+                    "porcentaje_nulos": 0
+                },
+                "data_house": {
+                    "almacenado": False,
+                    "mensaje": "No hay datos para almacenar"
                 }
             }), 200
 
@@ -81,6 +90,18 @@ def analizar_suplementos():
             print(f"Nombre: {s['nombre']}, Stock: {s['stock']}, Precio: {s['precio']}")
         print(f"Total productos: {len(suplementos_data)}")
         print("==========================\n")
+        
+        # ========== ANÁLISIS DE NULOS ==========
+        print("\n=== ANALISIS DE NULOS ===")
+        analisis_nulos = analizar_nulos(suplementos_data)
+        print(f"Total nulos encontrados: {analisis_nulos['total_nulos']}")
+        print("==========================\n")
+        
+        # ========== DATA HOUSE ==========
+        print("\n=== DATA HOUSE ===")
+        data_house_result = almacenar_en_data_house(suplementos_data, analisis_nulos)
+        print(f"Data House: {data_house_result['mensaje']}")
+        print("==================\n")
 
         if pyspark_available and len(suplementos_data) >= 10:
             try:
@@ -93,6 +114,10 @@ def analizar_suplementos():
                 resultado_kmeans = ejecutar_kmeans(suplementos_data)
                 resultado["kmeans"] = resultado_kmeans
                 
+                # Agregar análisis de nulos y data house al resultado
+                resultado["analisis_nulos"] = analisis_nulos
+                resultado["data_house"] = data_house_result
+                
                 return jsonify(resultado), 200
             except Exception as e:
                 print(f"Error en PySpark: {e}")
@@ -100,11 +125,15 @@ def analizar_suplementos():
                 print("Usando analisis basico como fallback...")
                 resultado = analizar_basico_con_regresion(suplementos_data)
                 resultado["kmeans"] = ejecutar_kmeans(suplementos_data)
+                resultado["analisis_nulos"] = analisis_nulos
+                resultado["data_house"] = data_house_result
                 return jsonify(resultado), 200
         else:
             print("Usando analisis basico con regresion lineal...")
             resultado = analizar_basico_con_regresion(suplementos_data)
             resultado["kmeans"] = ejecutar_kmeans(suplementos_data)
+            resultado["analisis_nulos"] = analisis_nulos
+            resultado["data_house"] = data_house_result
             return jsonify(resultado), 200
 
     except Exception as e:
@@ -114,6 +143,122 @@ def analizar_suplementos():
             "msg": f"Error al analizar suplementos: {str(e)}",
             "error": str(e)
         }), 500
+
+
+def analizar_nulos(suplementos_data):
+    """
+    ANALISIS DE NULOS - Detecta valores nulos o faltantes en los datos
+    """
+    try:
+        campos = ['id', 'nombre', 'precio', 'categoria', 'presentacion', 'stock', 'activo']
+        nulos_por_campo = {}
+        total_nulos = 0
+        
+        for campo in campos:
+            nulos = sum(1 for s in suplementos_data if s.get(campo) is None or s.get(campo) == '')
+            if nulos > 0:
+                nulos_por_campo[campo] = nulos
+                total_nulos += nulos
+        
+        porcentaje_nulos = round((total_nulos / (len(suplementos_data) * len(campos))) * 100, 2) if suplementos_data else 0
+        
+        return {
+            "total_nulos": total_nulos,
+            "detalle_por_campo": nulos_por_campo,
+            "porcentaje_nulos": porcentaje_nulos,
+            "calidad_datos": "Excelente" if porcentaje_nulos < 1 else "Buena" if porcentaje_nulos < 5 else "Regular" if porcentaje_nulos < 10 else "Mala",
+            "total_registros": len(suplementos_data)
+        }
+    except Exception as e:
+        print(f"Error en analisis de nulos: {e}")
+        return {
+            "total_nulos": 0,
+            "detalle_por_campo": {},
+            "porcentaje_nulos": 0,
+            "error": str(e)
+        }
+
+
+def almacenar_en_data_house(suplementos_data, analisis_nulos):
+    """
+    DATA HOUSE - Almacena los datos procesados para análisis histórico
+    """
+    try:
+        import json
+        from datetime import datetime
+        import os
+        
+        # Crear directorio data_house si no existe
+        data_house_dir = "data_house"
+        if not os.path.exists(data_house_dir):
+            os.makedirs(data_house_dir)
+        
+        # Preparar datos para almacenamiento
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archivo_historial = f"{data_house_dir}/suplementos_analisis_{timestamp}.json"
+        
+        # Datos a almacenar
+        data_house_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "total_registros": len(suplementos_data),
+            "analisis_nulos": analisis_nulos,
+            "resumen_datos": {
+                "precio_promedio": round(sum(s['precio'] for s in suplementos_data) / len(suplementos_data), 2) if suplementos_data else 0,
+                "stock_total": sum(s['stock'] for s in suplementos_data),
+                "categorias_unicas": len(set(s['categoria'] for s in suplementos_data)),
+                "presentaciones_unicas": len(set(s['presentacion'] for s in suplementos_data))
+            },
+            "primeros_10_registros": [
+                {
+                    "id": s['id'],
+                    "nombre": s['nombre'],
+                    "precio": s['precio'],
+                    "categoria": s['categoria']
+                } for s in suplementos_data[:10]
+            ]
+        }
+        
+        # Guardar en archivo
+        with open(archivo_historial, 'w', encoding='utf-8') as f:
+            json.dump(data_house_entry, f, ensure_ascii=False, indent=2)
+        
+        # Actualizar o crear archivo resumen
+        resumen_file = f"{data_house_dir}/resumen_analisis.json"
+        historial_completo = []
+        
+        if os.path.exists(resumen_file):
+            with open(resumen_file, 'r', encoding='utf-8') as f:
+                historial_completo = json.load(f)
+        
+        historial_completo.append({
+            "timestamp": timestamp,
+            "archivo": archivo_historial,
+            "total_registros": len(suplementos_data),
+            "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        
+        # Mantener solo últimos 100 análisis
+        if len(historial_completo) > 100:
+            historial_completo = historial_completo[-100:]
+        
+        with open(resumen_file, 'w', encoding='utf-8') as f:
+            json.dump(historial_completo, f, ensure_ascii=False, indent=2)
+        
+        return {
+            "almacenado": True,
+            "mensaje": f"Datos almacenados en Data House exitosamente",
+            "archivo": archivo_historial,
+            "total_analisis_historicos": len(historial_completo),
+            "fecha_analisis": timestamp
+        }
+        
+    except Exception as e:
+        print(f"Error en Data House: {e}")
+        return {
+            "almacenado": False,
+            "mensaje": f"Error al almacenar en Data House: {str(e)}",
+            "error": str(e)
+        }
 
 
 def ejecutar_kmeans(suplementos_data):

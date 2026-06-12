@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-06-12T02:51:16.537920",
+  "total_registros": 1009,
+  "analisis_nulos": {
+    "total_nulos": 0,
+    "detalle_por_campo": {},
+    "porcentaje_nulos": 0.0,
+    "calidad_datos": "Excelente",
+    "total_registros": 1009
+  },
+  "resumen_datos": {
+    "precio_promedio": 44.65,
+    "stock_total": 245515,
+    "categorias_unicas": 15,
+    "presentaciones_unicas": 8
+  },
+  "primeros_10_registros": [
+    {
+      "id": 1,
+      "nombre": "Whey Protein",
+      "precio": 450.99,
+      "categoria": "proteinas"
+    },
+    {
+      "id": 2,
+      "nombre": "L-Carnitina Líquida",
+      "precio": 290.99,
+      "categoria": "quemadores"
+    },
+    {
+      "id": 3,
+      "nombre": "Multivitamínico Completo",
+      "precio": 240.99,
+      "categoria": "vitaminas"
+    },
+    {
+      "id": 4,
+      "nombre": "Cafeína 200mg",
+      "precio": 120.9,
+      "categoria": "termogenicos"
+    },
+    {
+      "id": 5,
+      "nombre": "Garcinia Cambogia",
+      "precio": 260.9,
+      "categoria": "control_apetito"
+    },
+    {
+      "id": 6,
+      "nombre": "Pre-Entreno Explosivo",
+      "precio": 490.99,
+      "categoria": "energeticos"
+    },
+    {
+      "id": 7,
+      "nombre": "Psyllium Husk",
+      "precio": 230.9,
+      "categoria": "fibras"
+    },
+    {
+      "id": 8,
+      "nombre": "Cardo Mariano",
+      "precio": 190.9,
+      "categoria": "detox"
+    },
+    {
+      "id": 9,
+      "nombre": "Gomitas Multivitamínicas",
+      "precio": 190.9,
+      "categoria": "vitaminas"
+    },
+    {
+      "id": 10,
+      "nombre": "Beta Alanina",
+      "precio": 70.04,
+      "categoria": "proteinas"
+    }
+  ]
+}
