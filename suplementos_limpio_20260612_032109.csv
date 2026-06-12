@@ -1,0 +1,929 @@
+id,nombre,precio,categoria,presentacion,stock,activo,fecha_creacion,fecha_actualizacion
+1,Whey Protein,69.10199999999999,proteinas,polvo,50,True,2026-03-19T00:38:34,2026-04-02T03:47:08
+2,L-Carnitina Líquida,69.10199999999999,quemadores,polvo,40,True,2026-03-19T00:38:34,2026-04-02T03:43:10
+3,Multivitamínico Completo,69.10199999999999,vitaminas,polvo,80,True,2026-03-19T00:38:34,2026-04-02T03:46:51
+4,Cafeína 200Mg,69.10199999999999,termogenicos,capsulas,100,True,2026-03-19T00:38:34,2026-04-02T03:43:30
+5,Garcinia Cambogia,69.10199999999999,control_apetito,capsulas,35,True,2026-03-19T00:38:34,2026-04-02T03:45:59
+6,Pre-Entreno Explosivo,69.10199999999999,energeticos,polvo,30,True,2026-03-19T00:38:34,2026-04-02T03:46:22
+7,Psyllium Husk,69.10199999999999,fibras,polvo,50,True,2026-03-19T00:38:34,2026-04-02T05:13:40
+8,Cardo Mariano,69.10199999999999,detox,capsulas,30,True,2026-03-19T00:38:34,2026-05-30T03:19:43
+9,Gomitas Multivitamínicas,69.10199999999999,vitaminas,gomitas,80,True,2026-03-19T00:38:34,2026-04-02T03:45:05
+10,Beta Alanina,69.10199999999999,proteinas,geles,0,True,2025-09-06T21:27:31,2026-03-31T05:56:22
+11,Gainer Extreme,21.444,vitaminas,barritas,410,True,2026-04-30T18:56:03,2026-05-11T05:03:01
+12,Proteína Vegana,54.16,creatina,tabletas,335,True,2025-10-07T18:24:48,2026-04-26T09:12:32
+13,Caseína Nocturna 1X,56.2,detox,geles,10,True,2026-02-25T14:19:05,2026-03-13T10:44:50
+14,Creatina Monohidrato,26.39,detox,spray,60,True,2025-06-21T03:12:09,2026-03-08T18:27:29
+15,Tribulus Terrestris 2X,58.56,detox,geles,360,True,2026-02-25T21:10:37,2026-04-08T01:35:33
+16,5-Htp Estado De Ánimo,33.82,quemadores,polvo,310,True,2025-12-13T16:45:01,2026-02-17T01:11:02
+17,Beta Alanina,49.23,ganadores de peso,liquido,10,False,2025-11-21T05:55:16,2026-01-09T17:32:53
+18,Termogénico Extreme,29.12,pre-entreno,barritas,110,False,2026-04-08T15:57:04,2026-05-26T10:16:24
+19,Magnesio Quelado,32.92,proteinas,barritas,10,True,2025-07-08T05:40:37,2026-04-10T07:45:24
+20,Beta Alanina,44.46,quemadores,spray,110,True,2025-09-20T06:12:11,2025-10-15T01:10:36
+21,Maca Peruana Orgánica,54.31,quemadores,polvo,135,True,2026-02-16T14:12:58,2026-05-15T09:52:26
+22,Colágeno Hidrolizado,41.06,minerales,liquido,35,False,2025-09-26T12:34:48,2025-11-17T03:45:43
+23,Termogénico Extreme,63.18,quemadores,spray,210,True,2026-04-23T14:01:22,2026-05-09T18:55:11
+24,Cla Quemador 8X,57.75,aminoacidos,spray,235,False,2025-11-01T14:19:08,2025-12-29T18:19:23
+25,Proteína Vegana,57.96,creatina,liquido,10,True,2025-10-18T05:04:51,2026-05-24T05:04:49
+26,Zma Plus,41.73,pre-entreno,tabletas,285,True,2025-07-04T05:24:19,2025-09-20T20:48:22
+27,Zma Plus,21.444,vitaminas,capsulas,135,True,2025-12-16T20:25:18,2026-02-02T12:33:51
+28,Espirulina 1X,25.17,recuperacion,liquido,110,True,2025-06-17T11:52:00,2025-11-21T08:35:10
+29,Colágeno Hidrolizado 4X,21.444,minerales,tabletas,485,True,2025-09-14T15:18:11,2026-04-04T01:09:51
+30,Zma Plus,68.91,quemadores,liquido,35,True,2025-09-28T17:41:52,2026-01-05T02:38:55
+31,L-Carnitina Líquida,69.10199999999999,ganadores de peso,polvo,385,False,2025-10-08T14:02:30,2026-05-25T11:37:53
+32,Citrulina Malato,57.91,proteinas,geles,235,True,2025-08-14T06:58:27,2026-05-14T13:01:00
+33,Pre-Workout Black,40.79,creatina,geles,85,True,2025-12-30T00:54:26,2026-05-08T07:02:48
+34,Maca Peruana Orgánica,36.22,creatina,liquido,235,True,2025-09-07T08:55:56,2026-04-14T00:02:20
+35,Zinc Picolinato,69.10199999999999,ganadores de peso,spray,85,True,2025-07-29T21:43:56,2026-01-24T19:07:36
+36,Magnesio Quelado,62.12,ganadores de peso,polvo,460,True,2025-12-05T06:03:21,2026-03-14T08:56:38
+37,Multivitamínico Diario 8X,32.23,termogenicos,barritas,385,True,2025-10-04T03:15:33,2026-01-10T12:30:33
+38,Creatina Monohidrato,69.10199999999999,ganadores de peso,barritas,435,True,2025-12-06T20:10:42,2026-04-14T23:03:21
+39,Clorofila Líquida,69.10199999999999,proteinas,capsulas,435,False,2025-09-20T20:50:37,2026-02-15T09:34:22
+40,Glutamina Pura 2X,21.444,pre-entreno,liquido,460,False,2025-10-28T07:40:12,2026-05-16T15:25:09
+41,Zma Plus,67.27,proteinas,capsulas,260,True,2026-01-29T20:05:22,2026-03-17T14:52:26
+42,Citrulina Malato,41.31,detox,barritas,360,True,2026-01-14T19:23:40,2026-03-31T11:50:24
+43,Ashwagandha Ksm-66 1X,32.13,termogenicos,barritas,60,False,2025-08-24T04:12:44,2025-10-05T22:21:57
+44,Glutamina Pura 4X,30.9,ganadores de peso,liquido,460,True,2026-01-14T14:32:32,2026-02-11T21:42:24
+45,Vitamina D3,28.53,recuperacion,tabletas,435,True,2025-08-05T18:18:23,2026-04-02T12:55:28
+46,Ashwagandha Ksm-66,37.19,detox,spray,60,True,2025-09-15T14:24:57,2025-11-30T00:42:35
+47,Electrolitos Hidratación,39.99,detox,liquido,35,False,2026-05-10T09:36:41,2026-05-13T13:56:38
+48,Gainer Extreme,52.6,proteinas,polvo,0,True,2026-01-25T21:29:42,2026-03-08T20:33:03
+49,Beta Alanina,28.51,pre-entreno,geles,385,True,2025-12-16T03:02:07,2026-03-02T22:41:08
+50,Colágeno Hidrolizado 6X,32.75,post-entreno,liquido,260,True,2026-04-28T10:56:52,2026-05-21T00:45:22
+51,Melatonina Sueño,68.48,proteinas,capsulas,235,True,2026-03-12T14:07:33,2026-04-06T17:09:19
+52,Glutamina Pura,52.68,proteinas,tabletas,485,False,2025-10-26T23:58:36,2026-05-02T22:18:33
+53,Magnesio Quelado,53.87,quemadores,liquido,10,True,2026-05-12T09:11:19,2026-05-22T12:37:06
+54,Multivitamínico Diario 5X,46.68,recuperacion,liquido,460,True,2025-07-30T01:54:37,2026-02-25T03:20:49
+55,Zinc Picolinato 3X,38.86,quemadores,liquido,160,True,2025-08-23T09:10:06,2026-04-08T11:41:35
+56,Bcaa 2:1:1 2X,31.71,recuperacion,barritas,460,False,2026-02-02T15:42:11,2026-04-24T08:44:10
+57,Proteína Vegana,36.71,ganadores de peso,tabletas,485,True,2025-06-03T17:14:15,2025-10-10T09:07:08
+58,Maca Peruana Orgánica,31.48,pre-entreno,geles,10,True,2025-05-31T20:19:20,2025-11-14T00:30:10
+59,Citrulina Malato,36.13,post-entreno,spray,360,True,2026-05-21T08:43:41,2026-05-28T00:21:52
+60,Maca Peruana Orgánica 5X,35.27,creatina,spray,85,True,2025-07-30T06:19:52,2025-09-23T07:14:29
+61,Proteína Vegana,68.33,quemadores,barritas,235,False,2026-05-28T01:26:11,2026-05-28T05:50:16
+62,Clorofila Líquida,33.82,minerales,capsulas,235,True,2026-05-19T18:32:07,2026-05-25T00:33:32
+63,Zma Plus 1X,48.05,recuperacion,spray,10,True,2025-09-05T02:47:37,2026-05-11T02:00:12
+64,Caseína Nocturna,52.36,termogenicos,tabletas,460,True,2026-04-17T19:53:42,2026-05-02T08:33:41
+65,Zma Plus,21.444,vitaminas,spray,310,True,2026-05-24T17:56:15,2026-05-28T18:55:43
+66,Creatina Monohidrato,58.65,proteinas,geles,110,True,2026-03-16T05:40:25,2026-04-19T16:44:09
+67,Tribulus Terrestris,47.48,creatina,capsulas,0,True,2025-05-28T17:38:08,2026-03-13T07:14:53
+68,Bcaa 2:1:1 4X,21.444,minerales,geles,135,True,2026-05-03T19:29:45,2026-05-20T20:48:30
+69,Tribulus Terrestris,43.4,vitaminas,tabletas,385,True,2025-07-05T09:31:39,2026-03-05T05:55:22
+70,Creatina Monohidrato 5X,40.68,vitaminas,tabletas,410,True,2026-05-16T13:33:02,2026-05-27T19:11:31
+71,Electrolitos Hidratación,62.28,quemadores,barritas,185,False,2026-05-26T06:13:54,2026-05-28T08:01:31
+72,Maca Peruana Orgánica 9X,57.67,pre-entreno,barritas,160,True,2025-08-25T20:17:40,2025-08-28T12:09:00
+73,Termogénico Extreme,62.55,ganadores de peso,capsulas,285,True,2025-12-29T18:37:03,2026-03-08T04:18:06
+74,Tribulus Terrestris,44.89,post-entreno,capsulas,35,True,2025-06-18T18:01:58,2026-04-07T16:32:39
+75,Electrolitos Hidratación 10X,41.54,pre-entreno,tabletas,110,True,2025-12-16T18:38:25,2026-01-05T02:13:26
+76,Colágeno Hidrolizado,59.67,post-entreno,liquido,235,False,2025-12-24T21:18:22,2026-03-28T21:54:01
+77,Maca Peruana Orgánica,26.26,vitaminas,geles,335,True,2025-09-21T08:37:16,2026-01-12T12:47:08
+78,Multivitamínico Diario 6X,57.82,proteinas,tabletas,310,True,2026-05-26T19:35:53,2026-05-28T04:09:17
+79,Omega 3 Premium,54.97,pre-entreno,polvo,310,True,2026-04-15T21:47:10,2026-05-18T12:25:33
+80,Ashwagandha Ksm-66,31.17,recuperacion,geles,135,True,2025-12-21T22:00:21,2026-05-13T22:31:01
+81,Glutamina Pura 5X,53.97,ganadores de peso,liquido,0,True,2025-12-02T07:48:55,2026-03-09T02:28:48
+82,Tribulus Terrestris 5X,46.81,creatina,tabletas,210,False,2026-04-01T09:49:10,2026-04-07T23:37:07
+83,Zma Plus,46.94,creatina,capsulas,485,True,2026-01-23T13:24:12,2026-02-25T02:09:50
+84,Recuperador Post-Entreno,45.17,detox,barritas,35,True,2025-10-26T01:33:53,2026-03-15T00:47:12
+85,5-Htp Estado De Ánimo 8X,21.444,vitaminas,geles,285,True,2026-02-07T01:13:37,2026-05-11T17:19:15
+86,Melatonina Sueño,25.59,vitaminas,barritas,485,True,2026-03-29T04:31:12,2026-05-11T02:27:06
+87,Melatonina Sueño,39.28,vitaminas,liquido,185,True,2026-03-23T07:52:13,2026-04-06T22:16:48
+88,Tribulus Terrestris,64.45,termogenicos,polvo,260,True,2025-10-01T12:01:13,2026-01-22T06:38:22
+89,Termogénico Extreme,56.45,recuperacion,barritas,0,True,2025-11-14T11:04:02,2026-03-05T19:32:50
+90,Zinc Picolinato,35.75,minerales,tabletas,435,True,2026-03-02T19:42:37,2026-04-08T06:27:27
+91,Bcaa 2:1:1 4X,27.23,aminoacidos,spray,235,True,2025-09-01T23:32:13,2026-05-11T17:15:45
+92,Recuperador Post-Entreno 9X,29.0,recuperacion,tabletas,485,True,2025-11-21T23:19:10,2025-12-09T16:44:55
+93,Gainer Extreme,60.83,quemadores,barritas,110,True,2025-07-30T20:24:12,2026-01-11T19:36:04
+94,Proteína Vegana,59.45,detox,spray,385,False,2025-11-18T05:08:02,2026-01-02T18:59:25
+95,Melatonina Sueño,37.31,quemadores,spray,335,True,2025-07-16T21:57:24,2026-01-20T14:42:09
+96,Whey Protein Gold 7X,58.09,creatina,barritas,185,True,2025-06-25T19:07:25,2025-11-19T00:48:22
+97,Multivitamínico Diario 2X,52.28,pre-entreno,polvo,360,False,2025-06-08T16:19:24,2025-11-04T08:43:20
+98,Espirulina,23.31,vitaminas,capsulas,335,False,2025-10-25T21:49:42,2026-02-05T23:39:32
+99,Termogénico Extreme,56.5,pre-entreno,tabletas,385,False,2025-11-08T04:05:15,2026-04-16T10:38:04
+100,Termogénico Extreme,51.47,ganadores de peso,spray,35,True,2025-06-19T19:12:25,2026-04-08T13:35:34
+101,Té Verde Egcg,26.35,vitaminas,liquido,360,True,2025-08-30T03:39:08,2025-10-21T13:47:53
+102,Maca Peruana Orgánica 2X,21.92,aminoacidos,spray,85,True,2026-05-01T16:52:04,2026-05-09T14:31:13
+103,Melatonina Sueño,52.22,ganadores de peso,polvo,410,True,2026-01-15T23:09:55,2026-02-10T23:51:08
+104,Espirulina,69.10199999999999,proteinas,geles,35,True,2025-07-14T06:23:12,2026-03-31T07:22:55
+105,Pre-Workout Black 9X,50.17,detox,liquido,410,True,2025-07-11T11:38:29,2025-08-01T17:13:55
+106,Maca Peruana Orgánica,54.16,post-entreno,geles,360,False,2026-04-06T14:05:16,2026-05-01T08:16:26
+107,Tribulus Terrestris,61.91,quemadores,liquido,110,True,2025-06-30T06:12:00,2025-07-10T13:37:01
+108,Clorofila Líquida,46.59,creatina,polvo,410,True,2025-10-30T20:38:44,2026-03-07T21:10:38
+109,Garcinia Cambogia,58.47,termogenicos,tabletas,410,False,2025-08-18T20:48:26,2026-01-08T20:29:09
+110,Proteína Vegana,50.98,detox,capsulas,160,False,2025-06-14T20:58:36,2025-12-30T00:41:29
+111,Ashwagandha Ksm-66 2X,69.10199999999999,ganadores de peso,capsulas,60,True,2025-07-26T03:09:10,2025-08-15T06:45:36
+112,Zinc Picolinato,28.83,proteinas,tabletas,10,True,2026-02-20T11:29:32,2026-04-07T12:08:17
+113,Beta Alanina,23.07,creatina,polvo,385,True,2025-08-05T12:14:04,2026-01-28T11:50:36
+114,Clorofila Líquida,36.33,proteinas,polvo,35,True,2025-09-02T01:21:24,2025-11-05T23:28:35
+115,Arginina Akg 10X,27.52,aminoacidos,liquido,235,True,2026-03-31T13:49:16,2026-05-16T20:47:28
+116,5-Htp Estado De Ánimo 3X,51.08,creatina,geles,460,True,2025-06-16T21:44:06,2025-06-23T16:56:07
+117,Clorofila Líquida,41.0,aminoacidos,liquido,285,True,2025-09-01T16:15:17,2025-11-25T18:46:06
+118,Zma Plus,55.52,quemadores,tabletas,85,False,2026-02-14T00:23:53,2026-04-24T15:09:32
+119,Proteína Vegana,69.10199999999999,ganadores de peso,geles,260,True,2025-12-18T09:41:55,2026-01-08T08:05:11
+120,Zma Plus 7X,43.37,post-entreno,geles,260,True,2025-09-06T07:48:17,2025-12-04T02:21:43
+121,Ashwagandha Ksm-66 8X,32.32,detox,liquido,360,True,2025-09-12T18:09:17,2025-11-22T17:40:59
+122,Recuperador Post-Entreno,38.36,proteinas,geles,385,False,2026-04-28T08:56:38,2026-05-17T14:41:28
+123,Arginina Akg,32.1,quemadores,tabletas,110,True,2025-10-30T08:30:02,2026-01-24T04:43:03
+124,Vitamina D3,32.31,vitaminas,geles,310,False,2026-03-16T05:14:00,2026-05-09T01:10:52
+125,Clorofila Líquida 1X,69.10199999999999,proteinas,polvo,35,True,2026-03-02T07:08:51,2026-04-09T01:09:56
+126,Melatonina Sueño,42.33,ganadores de peso,tabletas,385,True,2025-10-20T02:07:23,2025-11-18T09:12:18
+127,5-Htp Estado De Ánimo,50.0,proteinas,liquido,60,False,2026-05-10T04:16:55,2026-05-13T22:29:30
+128,Termogénico Extreme 8X,40.46,aminoacidos,tabletas,310,True,2025-12-23T17:37:25,2026-03-08T21:02:14
+130,Té Verde Egcg,50.48,creatina,barritas,335,True,2025-08-04T05:01:23,2025-08-25T16:46:58
+131,Zinc Picolinato 5X,21.444,vitaminas,geles,285,True,2026-01-09T12:35:47,2026-05-19T11:36:13
+132,Pre-Workout Black 4X,51.5,recuperacion,geles,385,False,2025-11-16T13:35:22,2026-04-24T18:20:51
+133,Caseína Nocturna,37.3,detox,polvo,260,True,2025-06-13T19:30:34,2026-05-16T20:50:21
+134,Omega 3 Premium,21.444,minerales,barritas,335,True,2025-12-29T20:06:00,2026-03-05T03:22:15
+135,Recuperador Post-Entreno,45.86,creatina,capsulas,335,True,2025-12-27T22:22:40,2026-05-01T03:54:15
+136,Cla Quemador,56.46,pre-entreno,tabletas,460,True,2026-05-19T11:49:52,2026-05-22T13:46:33
+137,Té Verde Egcg,26.84,pre-entreno,spray,60,True,2026-03-10T16:13:53,2026-04-10T21:44:05
+138,L-Carnitina Líquida 6X,38.29,recuperacion,geles,435,True,2025-10-25T07:59:27,2026-01-07T04:55:57
+139,L-Carnitina Líquida,57.77,pre-entreno,spray,10,True,2025-09-29T07:19:34,2026-03-20T05:59:34
+140,Zinc Picolinato,32.0,ganadores de peso,tabletas,485,True,2025-06-14T09:13:08,2025-08-04T20:45:07
+141,Maca Peruana Orgánica,43.86,pre-entreno,barritas,185,True,2025-09-11T18:51:04,2025-11-14T06:59:33
+142,Melatonina Sueño,58.44,proteinas,polvo,0,True,2026-03-01T11:26:52,2026-04-20T09:15:39
+143,Creatina Monohidrato,45.47,detox,capsulas,35,True,2026-03-31T20:20:29,2026-05-01T10:36:48
+144,L-Carnitina Líquida,56.22,pre-entreno,tabletas,85,True,2026-03-27T12:58:07,2026-05-14T03:04:40
+145,Maca Peruana Orgánica,51.17,detox,spray,185,True,2025-09-24T19:26:48,2026-04-01T06:12:24
+146,Creatina Monohidrato,35.09,vitaminas,polvo,60,True,2026-02-23T16:52:01,2026-04-26T06:03:15
+147,5-Htp Estado De Ánimo 4X,50.18,recuperacion,geles,460,True,2025-10-29T03:25:31,2025-12-19T06:02:06
+148,Ashwagandha Ksm-66 5X,51.2,recuperacion,liquido,310,True,2026-03-17T13:22:02,2026-05-05T22:44:13
+149,Whey Protein Gold 3X,63.85,quemadores,liquido,460,True,2026-02-14T22:53:49,2026-03-28T03:21:54
+150,Electrolitos Hidratación,42.26,ganadores de peso,tabletas,135,False,2025-09-19T02:14:09,2026-02-12T13:49:05
+151,Maca Peruana Orgánica,41.72,pre-entreno,spray,160,False,2025-06-16T07:39:25,2026-04-24T03:12:14
+152,5-Htp Estado De Ánimo,45.41,creatina,polvo,485,True,2025-08-05T00:32:47,2026-04-20T12:22:49
+153,Citrulina Malato,27.88,recuperacion,liquido,0,True,2025-10-04T20:14:21,2026-02-20T04:13:52
+154,L-Carnitina Líquida,38.64,aminoacidos,tabletas,335,True,2026-03-17T02:00:50,2026-03-21T00:05:41
+155,Zinc Picolinato,48.79,proteinas,liquido,110,False,2026-05-23T04:04:26,2026-05-23T13:09:38
+156,Beta Alanina,23.42,minerales,tabletas,35,True,2025-09-20T02:31:34,2025-11-07T02:38:42
+157,Tribulus Terrestris,42.41,termogenicos,barritas,435,True,2026-05-05T03:05:42,2026-05-05T04:04:36
+158,Magnesio Quelado,53.08,termogenicos,capsulas,235,True,2026-01-16T20:26:18,2026-05-08T15:54:29
+159,Whey Protein Gold,46.08,post-entreno,capsulas,135,True,2026-03-06T11:14:30,2026-04-12T20:14:57
+160,Melatonina Sueño,21.444,vitaminas,capsulas,185,False,2025-12-30T11:22:57,2026-03-04T10:23:22
+161,Arginina Akg,41.33,ganadores de peso,liquido,0,True,2025-08-20T14:58:32,2025-12-17T03:47:48
+162,Melatonina Sueño,46.67,proteinas,tabletas,85,True,2026-01-23T14:27:13,2026-02-19T09:43:09
+163,Creatina Monohidrato,69.10199999999999,proteinas,capsulas,160,True,2025-08-13T07:19:43,2025-09-17T05:16:19
+164,Cla Quemador 4X,31.91,ganadores de peso,geles,0,True,2025-06-12T21:12:44,2025-09-24T23:54:38
+165,Cla Quemador,32.04,minerales,liquido,485,True,2025-09-09T08:03:33,2026-01-02T22:42:34
+166,Caseína Nocturna,53.61,pre-entreno,tabletas,260,True,2026-04-27T02:17:03,2026-05-01T09:00:13
+167,Electrolitos Hidratación 3X,28.78,post-entreno,geles,60,False,2025-07-27T04:51:30,2026-05-06T08:20:18
+168,Glutamina Pura,60.32,ganadores de peso,liquido,60,True,2025-12-21T09:01:37,2025-12-23T07:30:50
+169,Melatonina Sueño,43.55,recuperacion,geles,285,True,2025-09-27T21:49:42,2025-09-28T16:45:27
+170,Creatina Monohidrato,55.79,proteinas,liquido,160,False,2025-12-05T22:21:17,2026-02-21T17:13:23
+171,Colágeno Hidrolizado,64.78,proteinas,geles,360,True,2025-10-11T23:48:09,2026-01-04T07:20:32
+172,Pre-Workout Black 7X,43.65,creatina,geles,285,True,2025-08-28T17:45:24,2025-11-16T08:52:25
+174,L-Carnitina Líquida,53.8,aminoacidos,geles,460,True,2025-12-06T08:10:03,2026-01-10T23:04:44
+175,Zma Plus,29.56,pre-entreno,barritas,385,True,2026-03-19T17:18:23,2026-04-24T03:47:53
+176,Bcaa 2:1:1,32.32,ganadores de peso,tabletas,260,True,2026-04-04T09:54:47,2026-04-06T17:25:08
+178,Beta Alanina,28.8,recuperacion,tabletas,235,True,2026-02-23T21:29:33,2026-04-23T17:51:23
+179,Magnesio Quelado 1X,38.84,detox,capsulas,185,False,2026-04-16T14:13:32,2026-04-18T23:22:06
+180,Citrulina Malato 3X,51.4,quemadores,polvo,310,True,2026-01-12T16:26:12,2026-04-26T19:12:06
+181,L-Carnitina Líquida,30.58,aminoacidos,capsulas,310,True,2026-02-27T14:14:01,2026-04-26T05:58:05
+182,Gainer Extreme,39.78,aminoacidos,capsulas,310,False,2025-07-23T05:11:15,2025-08-29T02:04:04
+183,5-Htp Estado De Ánimo,57.29,proteinas,tabletas,335,True,2026-02-12T23:21:06,2026-05-26T02:46:26
+184,Zinc Picolinato,24.84,recuperacion,tabletas,260,True,2026-05-08T06:47:56,2026-05-08T14:55:36
+185,Glutamina Pura,43.37,pre-entreno,tabletas,160,True,2025-09-15T18:16:13,2025-11-15T08:43:26
+186,Maca Peruana Orgánica 8X,69.10199999999999,proteinas,capsulas,60,True,2025-06-23T16:45:46,2026-03-23T04:26:14
+187,Omega 3 Premium,21.87,vitaminas,spray,235,False,2025-10-26T00:29:29,2025-10-27T09:07:24
+188,Bcaa 2:1:1 7X,42.6,minerales,liquido,10,True,2025-06-10T11:04:33,2026-04-20T14:53:28
+189,Caseína Nocturna,67.55,ganadores de peso,geles,485,True,2026-04-14T11:37:36,2026-04-15T06:07:48
+190,Electrolitos Hidratación,69.10199999999999,ganadores de peso,barritas,260,True,2026-05-04T20:26:40,2026-05-11T16:06:51
+191,Melatonina Sueño,32.13,aminoacidos,barritas,260,True,2025-09-28T01:41:30,2026-01-06T12:18:29
+192,Gainer Extreme 2X,22.99,recuperacion,geles,410,True,2025-06-01T15:50:46,2026-03-15T15:32:40
+193,Termogénico Extreme 4X,33.98,vitaminas,tabletas,310,True,2025-05-30T11:22:56,2026-05-02T08:39:54
+194,Garcinia Cambogia 10X,34.2,quemadores,barritas,410,True,2026-03-12T06:16:57,2026-05-27T01:23:46
+195,Zinc Picolinato 9X,49.1,aminoacidos,tabletas,285,True,2025-11-17T15:47:39,2026-01-27T10:42:06
+196,Garcinia Cambogia,30.96,proteinas,geles,10,False,2025-12-31T23:17:57,2026-05-26T09:43:21
+197,Bcaa 2:1:1 6X,33.74,quemadores,barritas,435,True,2025-07-02T14:02:46,2025-11-03T12:33:47
+198,Arginina Akg,39.8,pre-entreno,liquido,60,True,2025-08-09T19:20:41,2026-02-24T11:26:43
+199,Electrolitos Hidratación,32.64,recuperacion,geles,410,True,2025-07-05T18:49:37,2025-11-02T22:15:02
+200,Garcinia Cambogia,35.9,vitaminas,barritas,10,False,2025-09-02T20:55:41,2026-04-22T21:10:19
+201,Proteína Vegana,32.35,ganadores de peso,barritas,460,True,2025-09-26T02:02:44,2026-02-08T06:25:38
+203,Electrolitos Hidratación 3X,21.63,creatina,barritas,110,True,2025-06-26T10:07:11,2026-04-14T15:33:46
+204,Zma Plus 9X,59.49,ganadores de peso,barritas,160,True,2026-05-21T19:22:35,2026-05-28T12:09:17
+205,Melatonina Sueño,45.85,creatina,geles,160,True,2026-04-10T11:58:51,2026-05-08T15:49:46
+206,Caseína Nocturna,28.42,recuperacion,geles,410,True,2025-08-11T02:32:46,2026-01-12T04:50:15
+207,Cla Quemador,21.444,pre-entreno,geles,260,True,2025-07-18T13:00:28,2026-04-27T14:00:25
+208,Gainer Extreme 9X,68.17,quemadores,capsulas,35,True,2026-04-21T10:19:48,2026-05-19T17:56:38
+209,Zinc Picolinato 8X,34.56,recuperacion,capsulas,85,True,2026-03-22T21:12:46,2026-05-02T02:21:08
+210,Magnesio Quelado 10X,54.19,recuperacion,capsulas,410,False,2025-10-03T17:48:22,2026-04-19T15:29:29
+211,Proteína Vegana,55.12,post-entreno,liquido,460,True,2025-12-01T17:46:04,2026-02-03T16:54:21
+212,Colágeno Hidrolizado,41.33,recuperacion,tabletas,135,True,2025-12-03T22:52:49,2025-12-23T12:13:18
+213,Creatina Monohidrato 2X,43.81,minerales,liquido,385,True,2026-03-11T17:25:59,2026-04-12T16:37:48
+214,5-Htp Estado De Ánimo,21.444,detox,capsulas,235,True,2025-06-08T19:58:44,2025-06-24T15:38:50
+215,Multivitamínico Diario,50.63,recuperacion,spray,435,True,2026-04-10T03:00:58,2026-04-15T04:44:31
+216,Maca Peruana Orgánica 8X,29.04,proteinas,geles,385,True,2025-06-17T08:29:20,2025-07-19T04:11:06
+217,Espirulina 9X,67.49,quemadores,geles,185,True,2026-04-27T02:00:48,2026-05-11T22:20:25
+218,Creatina Monohidrato 6X,24.3,detox,geles,110,True,2025-10-01T03:28:55,2026-02-17T09:19:05
+219,5-Htp Estado De Ánimo,57.86,recuperacion,polvo,335,True,2025-06-24T05:46:57,2025-07-28T23:08:37
+220,Termogénico Extreme,28.53,aminoacidos,polvo,360,True,2025-08-11T13:01:28,2026-01-24T03:00:21
+221,Beta Alanina,57.82,post-entreno,barritas,135,True,2025-10-15T23:38:55,2026-03-05T13:56:26
+222,Bcaa 2:1:1,42.46,pre-entreno,polvo,60,True,2026-03-25T00:31:59,2026-04-05T01:33:12
+223,Caseína Nocturna,32.91,pre-entreno,liquido,0,True,2026-02-01T03:05:35,2026-04-17T07:20:45
+224,Bcaa 2:1:1 5X,41.72,post-entreno,spray,185,True,2026-03-05T10:56:35,2026-05-17T05:53:09
+225,Bcaa 2:1:1,34.94,vitaminas,spray,35,True,2025-12-07T02:05:23,2025-12-23T06:18:08
+226,Té Verde Egcg,63.15,proteinas,barritas,360,True,2025-10-17T11:08:23,2025-10-25T06:58:58
+227,Electrolitos Hidratación 3X,43.87,ganadores de peso,tabletas,35,True,2025-07-23T20:56:36,2026-03-27T06:29:41
+228,Glutamina Pura,36.75,pre-entreno,polvo,260,False,2025-11-25T18:35:09,2025-12-06T03:53:30
+229,Tribulus Terrestris,28.55,minerales,polvo,335,False,2025-08-06T02:05:10,2025-12-02T22:58:24
+230,Té Verde Egcg,40.71,quemadores,liquido,285,True,2026-02-06T06:36:10,2026-04-26T09:03:17
+231,Té Verde Egcg 4X,36.06,termogenicos,spray,260,True,2026-02-09T19:36:14,2026-02-24T03:55:40
+232,Colágeno Hidrolizado,33.5,quemadores,capsulas,435,True,2025-10-10T01:35:17,2025-12-31T03:23:44
+233,Caseína Nocturna,42.42,ganadores de peso,liquido,360,False,2026-05-13T16:46:06,2026-05-17T22:04:10
+234,Magnesio Quelado,39.16,post-entreno,spray,10,True,2025-11-11T08:02:28,2025-12-03T20:52:39
+235,Zma Plus 2X,21.444,pre-entreno,spray,260,True,2026-03-17T10:09:41,2026-03-22T21:12:15
+236,Creatina Monohidrato 4X,44.54,creatina,capsulas,410,True,2026-02-08T17:48:03,2026-05-27T19:53:05
+237,Zinc Picolinato,33.55,pre-entreno,geles,210,True,2026-03-18T08:42:04,2026-04-03T00:44:45
+238,Omega 3 Premium,42.66,aminoacidos,tabletas,10,False,2025-06-26T11:06:37,2025-08-20T15:02:20
+239,Zma Plus,23.01,pre-entreno,polvo,35,False,2026-02-02T03:36:48,2026-04-09T14:15:10
+240,Multivitamínico Diario 5X,69.10199999999999,ganadores de peso,spray,235,True,2026-03-21T12:54:18,2026-04-01T15:32:35
+241,Tribulus Terrestris,32.29,post-entreno,polvo,310,True,2026-01-12T07:00:42,2026-04-30T04:13:51
+242,Garcinia Cambogia,32.11,proteinas,spray,35,True,2026-05-07T05:05:57,2026-05-13T14:57:02
+243,Espirulina 8X,69.10199999999999,proteinas,geles,410,True,2026-01-13T20:19:31,2026-05-05T00:34:29
+244,Té Verde Egcg,34.05,post-entreno,polvo,185,True,2025-07-31T04:04:53,2026-02-22T06:52:07
+245,Melatonina Sueño,45.71,ganadores de peso,barritas,460,True,2025-06-07T01:44:02,2025-12-29T15:01:56
+246,Ashwagandha Ksm-66 2X,57.15,detox,barritas,35,True,2026-05-13T21:49:25,2026-05-24T07:56:11
+247,Vitamina D3,32.06,vitaminas,polvo,360,True,2025-12-03T18:02:02,2026-05-09T00:04:13
+248,Pre-Workout Black 7X,49.53,ganadores de peso,polvo,385,True,2025-08-15T07:44:53,2025-08-19T21:14:59
+249,Beta Alanina,67.23,ganadores de peso,polvo,360,True,2025-09-11T19:08:07,2026-05-20T22:12:03
+250,Melatonina Sueño,69.10199999999999,proteinas,spray,185,False,2025-09-05T07:05:02,2025-12-30T22:14:39
+251,Té Verde Egcg 6X,28.91,recuperacion,spray,310,True,2026-02-11T10:05:27,2026-05-18T09:15:14
+252,Zinc Picolinato 5X,59.41,ganadores de peso,barritas,335,True,2025-12-01T11:18:08,2025-12-13T23:11:04
+253,Whey Protein Gold,32.47,creatina,capsulas,85,False,2025-06-19T03:06:08,2026-05-04T17:06:40
+254,L-Carnitina Líquida,53.35,quemadores,liquido,460,True,2026-01-11T11:42:20,2026-05-26T14:02:39
+255,Zma Plus,53.51,pre-entreno,capsulas,485,True,2025-11-14T16:36:23,2026-05-03T10:19:20
+256,Clorofila Líquida,42.73,creatina,spray,360,True,2026-05-08T04:39:28,2026-05-19T02:40:52
+257,Glutamina Pura,46.76,pre-entreno,liquido,235,True,2025-12-18T16:08:22,2026-02-01T10:18:00
+258,Caseína Nocturna 10X,46.79,aminoacidos,capsulas,210,True,2025-07-16T15:27:30,2025-08-25T18:21:07
+259,Magnesio Quelado 10X,69.10199999999999,ganadores de peso,polvo,135,False,2026-01-18T21:46:52,2026-02-06T05:59:42
+260,Té Verde Egcg 3X,67.91,quemadores,capsulas,410,True,2025-12-02T11:36:49,2026-02-13T22:35:16
+261,Ashwagandha Ksm-66 7X,53.89,aminoacidos,barritas,35,False,2025-10-14T16:05:35,2025-12-09T21:28:53
+262,Multivitamínico Diario 10X,41.18,pre-entreno,spray,85,True,2025-07-12T12:21:35,2025-10-08T21:15:06
+263,Bcaa 2:1:1 8X,56.96,pre-entreno,liquido,110,True,2026-04-17T02:21:18,2026-05-20T16:02:54
+264,Colágeno Hidrolizado,46.74,pre-entreno,spray,110,True,2025-10-21T14:23:30,2026-05-25T13:49:23
+265,Termogénico Extreme,42.95,creatina,tabletas,335,False,2026-01-26T02:09:23,2026-04-03T02:46:56
+266,Cla Quemador,43.28,creatina,spray,0,True,2026-05-06T12:01:50,2026-05-20T16:33:26
+267,Beta Alanina,21.97,detox,tabletas,335,False,2025-08-30T03:56:32,2025-10-27T11:16:47
+268,Proteína Vegana 2X,45.08,quemadores,barritas,210,True,2025-10-22T23:02:35,2026-05-17T06:28:53
+269,Clorofila Líquida,25.08,recuperacion,spray,410,False,2025-10-30T03:36:39,2025-11-22T14:30:37
+270,Té Verde Egcg 8X,45.39,pre-entreno,tabletas,310,True,2025-09-10T05:59:42,2026-02-12T21:35:29
+271,Pre-Workout Black,39.57,pre-entreno,geles,160,True,2025-08-14T13:26:19,2026-05-04T19:18:24
+272,Zinc Picolinato,42.96,post-entreno,barritas,35,False,2025-08-06T22:04:18,2025-11-28T05:55:06
+273,Zinc Picolinato,63.0,quemadores,geles,335,True,2026-05-22T01:07:27,2026-05-24T05:58:42
+274,Citrulina Malato,21.444,minerales,polvo,60,True,2025-10-22T23:06:27,2026-05-14T20:31:20
+275,Espirulina 3X,46.52,aminoacidos,geles,360,True,2026-01-13T12:33:09,2026-04-11T03:01:34
+276,Colágeno Hidrolizado 6X,23.65,detox,tabletas,310,True,2026-02-20T12:29:16,2026-05-20T23:06:46
+277,Creatina Monohidrato 7X,36.01,proteinas,geles,335,False,2026-05-21T15:14:00,2026-05-24T02:21:27
+278,Omega 3 Premium 3X,39.34,aminoacidos,geles,310,True,2025-12-10T16:02:23,2026-01-30T10:19:29
+279,Caseína Nocturna,58.29,detox,tabletas,235,True,2026-03-12T15:20:56,2026-05-01T11:14:02
+280,5-Htp Estado De Ánimo,58.16,quemadores,capsulas,485,True,2026-01-10T23:26:23,2026-04-18T23:28:21
+281,Colágeno Hidrolizado,28.62,proteinas,capsulas,285,False,2025-10-11T16:52:51,2025-12-15T08:14:28
+282,Melatonina Sueño 8X,34.35,termogenicos,capsulas,60,True,2026-04-01T23:29:39,2026-05-16T23:00:19
+283,Magnesio Quelado,58.21,creatina,spray,110,True,2025-07-22T06:37:10,2025-12-12T07:05:41
+285,Garcinia Cambogia,38.24,post-entreno,spray,60,True,2026-01-08T15:44:22,2026-01-30T02:36:15
+286,Caseína Nocturna,37.32,termogenicos,capsulas,35,True,2025-06-11T16:55:20,2026-05-26T13:29:45
+287,Termogénico Extreme,43.92,proteinas,spray,410,True,2025-09-11T15:01:02,2026-05-17T15:22:37
+288,Tribulus Terrestris,35.77,minerales,geles,485,True,2026-03-25T13:41:26,2026-05-26T00:48:19
+290,Citrulina Malato,36.73,vitaminas,geles,185,True,2026-02-03T09:25:58,2026-04-09T12:57:41
+291,Beta Alanina,51.49,ganadores de peso,capsulas,35,True,2026-02-01T15:06:06,2026-02-12T22:38:56
+292,Electrolitos Hidratación,38.47,vitaminas,capsulas,210,True,2025-09-03T16:33:47,2025-09-16T15:55:00
+293,Garcinia Cambogia,49.13,creatina,polvo,260,True,2026-01-28T18:12:48,2026-03-15T07:39:59
+294,Gainer Extreme,35.13,termogenicos,barritas,35,True,2026-02-08T11:12:13,2026-04-13T02:26:10
+295,Termogénico Extreme,42.96,detox,geles,285,False,2025-12-28T02:41:41,2026-05-12T06:10:47
+296,Bcaa 2:1:1 2X,55.86,detox,geles,60,True,2026-01-13T20:42:25,2026-04-10T23:01:15
+297,Creatina Monohidrato,22.68,minerales,barritas,10,True,2025-08-14T08:09:36,2026-05-10T00:49:00
+298,Maca Peruana Orgánica 2X,33.9,ganadores de peso,spray,10,True,2026-01-11T17:22:02,2026-03-05T02:19:13
+299,Maca Peruana Orgánica,42.09,quemadores,spray,360,True,2025-12-12T22:23:45,2026-02-04T18:14:33
+300,Melatonina Sueño,21.444,minerales,barritas,260,True,2025-10-10T09:08:02,2026-03-11T17:50:50
+301,Espirulina,39.31,quemadores,spray,85,False,2025-12-11T23:27:27,2026-04-22T07:40:02
+302,Cla Quemador,22.38,minerales,barritas,410,True,2026-04-05T12:13:47,2026-05-18T18:06:13
+303,Termogénico Extreme,52.05,creatina,capsulas,485,True,2026-04-10T20:00:51,2026-04-19T11:02:23
+305,Gainer Extreme,54.75,recuperacion,spray,10,False,2026-05-27T01:29:36,2026-05-27T07:52:56
+306,Multivitamínico Diario 6X,59.72,proteinas,polvo,485,True,2025-08-25T12:03:03,2026-01-29T14:09:52
+307,Caseína Nocturna,35.13,creatina,polvo,185,False,2025-08-12T03:53:16,2026-04-24T23:45:14
+308,Glutamina Pura,52.11,aminoacidos,capsulas,35,True,2025-11-13T20:29:51,2026-02-19T00:15:41
+310,Bcaa 2:1:1,40.45,recuperacion,capsulas,110,False,2025-10-23T20:59:44,2026-04-24T10:25:30
+311,Glutamina Pura 3X,26.03,ganadores de peso,liquido,35,True,2025-08-24T01:17:30,2025-11-21T04:26:18
+312,Zma Plus,63.37,termogenicos,geles,360,True,2025-10-04T16:05:17,2026-02-01T03:49:24
+313,Multivitamínico Diario,32.91,detox,capsulas,160,True,2025-12-28T08:39:38,2026-04-11T04:55:52
+314,Cla Quemador,41.59,minerales,spray,335,True,2025-06-17T12:41:50,2025-09-14T01:42:59
+315,Clorofila Líquida 7X,36.03,pre-entreno,polvo,85,True,2026-03-02T11:11:39,2026-05-01T17:53:05
+316,Citrulina Malato 3X,28.28,vitaminas,geles,60,True,2026-02-02T06:47:12,2026-05-16T08:25:39
+317,L-Carnitina Líquida,48.15,aminoacidos,spray,160,True,2025-12-18T12:32:27,2026-05-09T17:34:42
+318,Colágeno Hidrolizado,40.36,ganadores de peso,liquido,160,True,2026-03-12T18:37:46,2026-05-20T11:29:04
+319,Arginina Akg,43.8,pre-entreno,spray,85,True,2026-02-05T21:02:39,2026-02-27T15:04:13
+320,Melatonina Sueño,57.95,termogenicos,barritas,285,True,2025-10-01T18:54:03,2026-02-20T03:06:16
+321,Vitamina D3,21.67,creatina,spray,110,True,2025-11-11T04:30:29,2025-12-07T01:59:09
+322,Whey Protein Gold,21.444,aminoacidos,geles,310,False,2026-01-17T00:14:21,2026-04-09T09:00:31
+323,Multivitamínico Diario,49.29,creatina,spray,210,True,2026-02-16T04:56:44,2026-03-02T03:42:30
+324,Pre-Workout Black,32.62,aminoacidos,tabletas,235,True,2025-10-01T07:48:39,2026-04-26T02:12:33
+325,Ashwagandha Ksm-66,53.7,termogenicos,tabletas,260,True,2026-05-01T10:38:30,2026-05-03T15:32:00
+326,Cla Quemador,33.33,vitaminas,polvo,460,False,2025-10-01T16:26:23,2025-10-12T09:19:32
+327,Bcaa 2:1:1 9X,24.98,minerales,capsulas,85,True,2026-03-04T05:50:50,2026-04-18T07:06:52
+328,Espirulina 7X,30.42,creatina,liquido,60,True,2025-06-17T18:07:26,2025-07-01T08:06:06
+329,Gainer Extreme,29.84,pre-entreno,tabletas,210,True,2026-03-12T09:50:58,2026-03-18T20:42:11
+330,Electrolitos Hidratación,62.35,termogenicos,barritas,10,False,2025-12-23T02:07:12,2026-01-19T19:06:58
+333,Maca Peruana Orgánica,35.06,quemadores,liquido,485,True,2026-01-01T22:31:01,2026-03-26T23:10:45
+334,Vitamina D3 5X,38.76,quemadores,barritas,335,True,2026-01-21T20:32:42,2026-04-25T17:34:44
+335,Colágeno Hidrolizado 5X,58.1,aminoacidos,liquido,485,True,2025-10-26T23:10:24,2025-11-20T18:40:24
+336,Arginina Akg 7X,32.1,aminoacidos,liquido,335,True,2025-07-31T03:37:27,2025-10-07T19:20:48
+337,Colágeno Hidrolizado,41.82,aminoacidos,geles,360,True,2026-01-29T11:13:09,2026-04-09T10:17:40
+338,Whey Protein Gold,55.32,quemadores,spray,160,True,2026-04-07T07:38:42,2026-05-24T09:46:17
+339,Multivitamínico Diario,27.46,detox,spray,110,True,2026-05-23T03:13:03,2026-05-28T03:18:16
+340,Ashwagandha Ksm-66 4X,48.98,ganadores de peso,polvo,235,True,2026-02-09T07:56:04,2026-03-18T10:57:41
+341,Whey Protein Gold 1X,54.28,creatina,tabletas,385,True,2025-06-17T17:26:47,2025-09-20T17:31:33
+342,Recuperador Post-Entreno,39.2,termogenicos,geles,60,True,2025-12-29T22:47:56,2026-04-29T08:35:31
+343,Omega 3 Premium,38.0,post-entreno,tabletas,35,True,2025-12-08T00:56:53,2026-04-06T05:33:06
+344,Clorofila Líquida 7X,51.5,post-entreno,capsulas,310,True,2026-02-14T20:10:14,2026-02-21T04:57:37
+345,Electrolitos Hidratación,67.2,proteinas,barritas,260,True,2026-04-19T10:24:12,2026-05-22T09:39:00
+346,Maca Peruana Orgánica,69.10199999999999,ganadores de peso,tabletas,210,True,2025-11-03T10:50:07,2025-12-13T10:35:25
+347,Omega 3 Premium,43.03,creatina,barritas,260,True,2026-03-20T16:51:06,2026-03-25T09:11:24
+348,Multivitamínico Diario,34.14,aminoacidos,geles,310,True,2026-04-26T05:25:15,2026-04-29T12:52:38
+349,Ashwagandha Ksm-66,50.59,recuperacion,polvo,285,True,2026-01-30T05:55:07,2026-03-23T09:44:34
+351,Gainer Extreme,29.9,minerales,spray,135,True,2025-06-10T21:01:15,2025-07-17T23:11:18
+352,Whey Protein Gold,34.13,vitaminas,spray,260,True,2025-06-02T15:16:49,2026-04-28T11:25:09
+354,Creatina Monohidrato 9X,55.64,quemadores,tabletas,310,True,2025-11-28T12:53:40,2026-05-17T02:18:21
+355,Pre-Workout Black 1X,37.33,minerales,polvo,110,True,2026-01-13T04:05:59,2026-05-15T07:10:37
+356,Gainer Extreme 9X,69.10199999999999,ganadores de peso,tabletas,35,True,2026-02-23T20:32:09,2026-04-20T15:06:09
+357,Cla Quemador 5X,39.27,vitaminas,geles,10,False,2025-10-12T19:17:29,2026-04-14T03:02:38
+358,Creatina Monohidrato,54.93,termogenicos,geles,35,False,2025-10-14T21:45:53,2026-04-13T11:42:32
+359,Omega 3 Premium 5X,43.42,detox,barritas,235,True,2025-10-16T10:52:44,2026-01-03T21:16:23
+360,Vitamina D3,57.27,termogenicos,spray,110,False,2025-08-18T06:25:20,2026-05-17T19:54:27
+361,Citrulina Malato 7X,58.0,recuperacion,polvo,385,True,2026-04-05T03:43:53,2026-05-25T11:23:31
+362,Omega 3 Premium,59.08,recuperacion,geles,435,False,2025-07-26T20:38:11,2025-08-28T16:24:31
+363,Maca Peruana Orgánica,45.12,detox,geles,235,True,2025-06-05T07:28:48,2025-12-01T23:22:25
+364,Magnesio Quelado,36.86,minerales,liquido,10,True,2025-11-14T19:23:23,2026-05-19T14:50:14
+365,Ashwagandha Ksm-66 8X,46.4,post-entreno,liquido,260,True,2026-03-12T03:43:49,2026-03-19T22:52:50
+366,Pre-Workout Black,30.48,post-entreno,geles,85,True,2025-10-06T19:39:26,2025-12-07T03:11:38
+367,Clorofila Líquida 3X,25.81,post-entreno,tabletas,460,True,2025-10-31T17:16:07,2026-02-23T06:41:49
+368,Garcinia Cambogia 1X,36.27,aminoacidos,liquido,485,True,2026-03-26T06:02:12,2026-03-29T15:05:57
+369,Garcinia Cambogia 10X,40.43,minerales,polvo,360,True,2026-04-28T18:29:13,2026-05-02T10:25:00
+370,Colágeno Hidrolizado,43.17,detox,barritas,285,True,2026-05-12T20:35:53,2026-05-22T08:13:51
+371,Termogénico Extreme 1X,24.85,detox,polvo,410,False,2025-12-21T13:35:14,2025-12-23T12:16:16
+372,Recuperador Post-Entreno 4X,62.15,proteinas,geles,485,True,2025-06-07T21:40:59,2026-02-11T13:47:12
+373,Recuperador Post-Entreno 7X,66.27,quemadores,polvo,285,True,2025-12-22T17:17:10,2026-02-27T15:39:39
+374,Zma Plus,48.33,aminoacidos,capsulas,435,True,2025-10-11T18:53:50,2026-03-16T18:58:45
+375,Beta Alanina 8X,28.47,detox,geles,410,False,2025-08-28T12:29:48,2026-04-18T17:44:56
+376,Multivitamínico Diario,55.42,quemadores,geles,85,True,2025-10-13T05:51:26,2026-02-14T14:23:09
+378,Clorofila Líquida 1X,35.21,minerales,liquido,10,True,2025-11-15T02:52:25,2026-01-18T21:01:45
+379,Multivitamínico Diario,64.63,ganadores de peso,polvo,385,True,2026-02-05T05:09:26,2026-03-21T00:56:53
+380,L-Carnitina Líquida 10X,40.72,creatina,capsulas,185,True,2026-03-26T12:15:43,2026-05-18T11:01:11
+381,Clorofila Líquida,38.42,minerales,tabletas,385,True,2026-05-13T06:15:33,2026-05-27T13:17:54
+382,Gainer Extreme,28.67,pre-entreno,polvo,360,True,2026-01-02T16:02:09,2026-05-01T05:47:30
+383,Proteína Vegana 7X,28.12,proteinas,liquido,460,True,2026-02-06T11:01:08,2026-02-16T05:22:16
+384,Creatina Monohidrato,21.444,vitaminas,geles,210,True,2025-06-05T13:31:04,2025-08-02T18:31:46
+385,Proteína Vegana,55.03,detox,barritas,60,True,2025-09-29T07:05:16,2026-02-09T22:34:50
+386,Magnesio Quelado 10X,51.48,creatina,tabletas,435,True,2025-07-09T19:32:45,2025-09-14T17:06:50
+387,Zinc Picolinato,30.98,recuperacion,capsulas,385,True,2025-12-26T16:02:42,2026-04-08T14:18:38
+388,Multivitamínico Diario,69.10199999999999,ganadores de peso,spray,160,True,2025-08-11T14:43:38,2025-10-04T07:36:10
+389,Creatina Monohidrato,33.64,creatina,liquido,135,True,2026-04-12T00:19:59,2026-04-28T15:00:06
+390,Cla Quemador,34.68,post-entreno,capsulas,235,True,2025-12-14T02:16:37,2026-03-27T04:29:04
+391,Melatonina Sueño,25.15,detox,polvo,185,True,2025-06-07T10:37:34,2026-01-20T02:04:20
+392,Proteína Vegana,25.82,detox,polvo,285,True,2025-12-21T17:55:45,2026-04-02T03:34:26
+393,Cla Quemador,38.77,minerales,capsulas,335,True,2025-12-01T01:53:24,2026-01-01T07:33:03
+394,Colágeno Hidrolizado,45.39,termogenicos,tabletas,360,True,2025-06-23T06:28:22,2026-04-17T09:02:39
+395,Multivitamínico Diario,35.06,pre-entreno,geles,110,True,2025-06-15T01:48:29,2025-12-23T00:13:54
+396,Citrulina Malato,41.11,detox,tabletas,110,True,2026-04-26T08:24:49,2026-05-24T02:38:24
+397,Whey Protein Gold,34.57,proteinas,capsulas,135,True,2025-09-30T05:24:30,2025-11-09T20:54:33
+398,Beta Alanina 8X,55.46,quemadores,tabletas,435,False,2025-10-18T15:10:23,2025-11-20T03:49:50
+399,Citrulina Malato,24.16,post-entreno,barritas,10,True,2026-01-25T13:54:09,2026-04-05T13:44:29
+400,Beta Alanina,49.77,detox,capsulas,35,False,2025-12-06T07:36:27,2026-05-10T22:00:38
+401,Té Verde Egcg,31.05,quemadores,polvo,485,True,2026-03-11T23:02:45,2026-04-26T12:00:25
+402,Clorofila Líquida,21.444,vitaminas,barritas,160,True,2025-07-23T06:30:24,2025-09-22T02:34:36
+403,Melatonina Sueño,41.29,pre-entreno,polvo,310,True,2026-04-19T13:00:22,2026-04-29T16:52:11
+404,Ashwagandha Ksm-66 4X,47.0,proteinas,capsulas,310,True,2026-01-25T15:30:26,2026-03-17T19:05:38
+405,Whey Protein Gold,52.1,detox,barritas,310,False,2026-03-16T08:00:35,2026-03-27T18:48:20
+406,Proteína Vegana,43.04,minerales,barritas,285,False,2025-07-02T01:37:34,2026-04-29T09:18:45
+407,Ashwagandha Ksm-66,46.34,pre-entreno,capsulas,360,True,2025-09-21T12:18:24,2026-02-16T09:02:31
+408,Tribulus Terrestris,26.76,proteinas,spray,335,True,2026-03-19T14:38:48,2026-05-07T00:30:41
+409,Multivitamínico Diario 9X,39.68,termogenicos,polvo,435,True,2025-12-15T22:40:01,2026-01-02T16:33:40
+410,Creatina Monohidrato,69.10199999999999,ganadores de peso,spray,85,True,2025-07-06T17:40:36,2025-10-17T17:55:37
+411,Termogénico Extreme,31.16,recuperacion,liquido,235,True,2025-07-13T18:17:49,2025-08-04T03:57:13
+413,L-Carnitina Líquida 9X,45.95,pre-entreno,capsulas,110,True,2025-09-25T02:05:15,2026-02-22T03:39:53
+414,Electrolitos Hidratación 10X,37.0,proteinas,liquido,185,True,2026-02-15T18:33:33,2026-05-25T23:09:42
+415,Tribulus Terrestris 4X,43.35,post-entreno,capsulas,385,True,2025-08-31T19:59:46,2025-10-17T08:27:55
+417,Beta Alanina,68.3,quemadores,polvo,335,True,2026-05-20T20:15:37,2026-05-21T22:31:40
+418,Cla Quemador,33.38,creatina,capsulas,310,True,2026-04-20T00:55:43,2026-04-26T23:38:22
+419,Pre-Workout Black,52.03,creatina,polvo,160,True,2025-09-25T23:05:49,2025-11-10T17:03:47
+420,Glutamina Pura,69.10199999999999,proteinas,spray,310,True,2026-04-02T07:14:27,2026-05-20T21:34:51
+421,Zinc Picolinato 3X,29.22,minerales,spray,35,True,2026-04-03T14:05:33,2026-05-24T22:19:45
+422,Glutamina Pura 7X,21.444,vitaminas,liquido,435,True,2025-10-03T18:18:37,2026-01-06T19:58:43
+423,Té Verde Egcg,51.91,aminoacidos,liquido,35,True,2025-07-23T12:29:43,2026-01-14T09:42:21
+424,Termogénico Extreme,48.33,termogenicos,spray,435,True,2026-01-02T06:37:31,2026-04-23T02:18:38
+425,Zma Plus 10X,21.444,vitaminas,geles,310,True,2025-10-04T21:16:12,2026-05-05T01:11:44
+426,Maca Peruana Orgánica,44.14,termogenicos,barritas,485,True,2025-05-30T22:21:49,2026-05-08T06:29:40
+427,Glutamina Pura 6X,30.29,post-entreno,tabletas,260,True,2025-10-11T22:06:18,2026-05-17T18:43:27
+431,Beta Alanina,58.97,proteinas,capsulas,485,True,2025-06-23T16:06:16,2025-12-04T14:24:53
+432,Espirulina,37.68,vitaminas,geles,235,True,2026-04-22T10:38:11,2026-05-20T01:52:52
+433,Omega 3 Premium 7X,56.17,creatina,spray,460,True,2026-03-27T21:11:06,2026-04-05T02:31:16
+434,Ashwagandha Ksm-66,56.0,post-entreno,barritas,285,True,2026-03-28T12:26:00,2026-05-04T20:17:42
+435,Garcinia Cambogia,38.96,creatina,capsulas,485,True,2026-05-27T18:41:05,2026-05-28T16:27:07
+436,Bcaa 2:1:1,23.95,post-entreno,tabletas,385,True,2025-10-05T11:11:31,2026-04-21T09:05:36
+437,Arginina Akg,38.58,vitaminas,barritas,135,True,2026-03-22T14:25:24,2026-03-28T06:19:43
+438,Tribulus Terrestris,26.89,vitaminas,polvo,310,True,2025-12-12T03:01:39,2026-01-24T19:03:26
+439,Maca Peruana Orgánica,57.98,creatina,spray,485,True,2025-06-14T10:04:36,2025-06-27T10:43:36
+441,Whey Protein Gold 10X,30.5,recuperacion,geles,260,True,2025-06-16T16:46:51,2025-08-23T13:59:56
+442,Pre-Workout Black,44.95,aminoacidos,liquido,360,True,2025-11-26T07:06:20,2026-03-23T22:28:08
+443,Beta Alanina,31.85,recuperacion,barritas,35,True,2026-04-07T09:03:47,2026-05-16T00:26:57
+445,Arginina Akg 5X,58.37,post-entreno,spray,85,True,2026-01-16T22:17:54,2026-05-05T23:32:29
+446,Maca Peruana Orgánica,58.64,detox,liquido,385,True,2025-09-27T02:56:01,2025-11-25T02:31:28
+447,Arginina Akg 5X,45.91,quemadores,barritas,285,True,2025-06-29T00:41:30,2025-10-20T02:14:21
+448,Recuperador Post-Entreno 5X,22.03,vitaminas,barritas,260,True,2026-02-14T01:39:26,2026-03-17T17:23:03
+449,Garcinia Cambogia,31.52,minerales,tabletas,410,True,2025-07-02T03:12:01,2025-10-21T07:53:17
+450,Caseína Nocturna,39.13,proteinas,polvo,210,True,2025-12-22T06:29:18,2026-04-05T21:15:07
+452,Beta Alanina,37.06,aminoacidos,barritas,410,False,2025-11-08T09:13:27,2026-02-05T11:45:47
+453,Espirulina,57.38,pre-entreno,liquido,485,True,2026-02-14T08:19:20,2026-04-01T07:50:31
+454,Clorofila Líquida,69.10199999999999,ganadores de peso,capsulas,410,True,2026-02-03T19:48:02,2026-05-23T14:28:18
+455,Whey Protein Gold 7X,42.04,recuperacion,polvo,60,False,2025-12-23T14:58:21,2026-04-14T15:26:53
+456,Electrolitos Hidratación 1X,49.04,creatina,liquido,235,True,2025-11-13T22:19:50,2026-04-13T12:08:27
+457,Caseína Nocturna,58.09,post-entreno,spray,335,True,2025-08-08T03:02:50,2025-08-08T14:03:38
+459,Beta Alanina 1X,24.73,post-entreno,spray,360,True,2025-06-26T19:05:37,2025-07-18T18:36:13
+460,Zma Plus,54.09,aminoacidos,polvo,235,True,2026-04-03T11:14:35,2026-05-27T16:51:35
+461,Clorofila Líquida,48.56,quemadores,liquido,35,False,2026-01-27T08:06:15,2026-04-25T01:26:18
+462,Zma Plus,52.36,recuperacion,spray,285,True,2026-01-01T10:18:23,2026-01-03T00:43:51
+463,5-Htp Estado De Ánimo,41.76,aminoacidos,polvo,460,False,2025-09-06T06:15:51,2026-02-24T01:26:22
+464,Vitamina D3,41.11,vitaminas,capsulas,310,True,2025-09-16T17:41:16,2026-02-06T23:39:16
+466,Maca Peruana Orgánica,69.10199999999999,ganadores de peso,geles,60,True,2025-08-05T15:48:42,2026-05-03T14:20:22
+467,Zinc Picolinato,30.93,post-entreno,liquido,185,True,2026-05-10T05:16:20,2026-05-20T08:30:09
+468,Melatonina Sueño 3X,56.39,pre-entreno,barritas,35,True,2026-03-21T05:55:48,2026-04-27T19:05:29
+469,Omega 3 Premium 7X,30.08,quemadores,tabletas,360,True,2026-01-22T01:51:36,2026-01-27T01:44:19
+470,Arginina Akg 4X,56.96,proteinas,polvo,460,True,2025-11-19T16:33:17,2026-05-24T11:10:13
+471,Cla Quemador,35.78,termogenicos,liquido,160,True,2025-11-29T05:35:12,2026-02-07T01:05:49
+472,Zinc Picolinato 1X,34.58,recuperacion,capsulas,310,True,2026-02-24T09:10:22,2026-03-02T23:19:06
+473,Termogénico Extreme 3X,58.79,quemadores,capsulas,35,False,2025-06-17T16:42:16,2026-05-02T18:21:29
+474,Glutamina Pura,53.02,creatina,spray,360,True,2025-07-02T14:22:42,2025-10-11T05:31:29
+475,Omega 3 Premium,25.14,minerales,spray,460,True,2025-06-13T19:22:51,2026-04-12T11:58:55
+476,Arginina Akg 8X,40.17,termogenicos,geles,285,True,2026-02-06T14:26:02,2026-03-03T15:54:18
+477,Creatina Monohidrato,29.23,minerales,capsulas,285,True,2026-01-21T17:39:11,2026-04-28T11:42:21
+478,Colágeno Hidrolizado 8X,48.24,quemadores,spray,185,True,2026-01-16T08:47:12,2026-02-14T02:08:42
+479,Recuperador Post-Entreno,41.94,recuperacion,barritas,460,True,2025-11-30T22:45:25,2026-05-25T16:42:36
+480,Tribulus Terrestris,41.19,proteinas,capsulas,435,False,2025-09-02T05:57:36,2025-11-08T16:09:32
+481,Creatina Monohidrato,50.01,creatina,tabletas,160,True,2026-04-12T05:02:24,2026-04-15T19:54:20
+482,Maca Peruana Orgánica 6X,22.85,creatina,tabletas,335,True,2025-12-07T02:08:30,2026-01-01T00:05:27
+483,Pre-Workout Black,69.10199999999999,ganadores de peso,liquido,360,True,2025-06-02T11:01:38,2026-03-25T20:36:06
+484,Electrolitos Hidratación,25.78,creatina,barritas,410,True,2025-07-30T05:12:36,2025-09-23T00:50:49
+485,Vitamina D3 5X,35.75,vitaminas,barritas,210,True,2026-02-08T00:45:48,2026-04-05T23:20:35
+486,Glutamina Pura,50.43,aminoacidos,barritas,260,True,2025-09-04T04:54:53,2025-10-11T08:59:59
+487,Té Verde Egcg 5X,33.67,aminoacidos,capsulas,435,False,2025-10-04T11:34:01,2026-02-18T11:44:45
+488,Melatonina Sueño 1X,22.92,creatina,geles,310,True,2025-12-07T03:55:36,2026-03-13T18:33:55
+489,Cla Quemador,52.54,aminoacidos,polvo,110,True,2026-01-26T18:37:10,2026-02-18T02:18:00
+490,Tribulus Terrestris,36.75,detox,tabletas,135,True,2025-06-05T21:49:42,2025-07-27T14:28:19
+491,Maca Peruana Orgánica,58.82,creatina,tabletas,310,False,2025-10-04T00:43:31,2026-01-05T11:41:42
+492,Recuperador Post-Entreno 1X,24.67,pre-entreno,polvo,310,True,2026-02-14T12:20:12,2026-03-08T15:30:04
+494,Zma Plus,53.65,detox,spray,460,True,2026-03-29T14:03:36,2026-05-01T15:37:18
+495,Glutamina Pura,43.7,quemadores,spray,285,True,2025-08-03T00:45:15,2025-11-30T07:39:11
+496,Melatonina Sueño,33.55,vitaminas,polvo,0,True,2026-04-08T04:22:12,2026-04-15T02:31:53
+497,Zinc Picolinato 4X,41.96,proteinas,geles,60,True,2026-05-14T19:29:10,2026-05-15T15:12:37
+498,Arginina Akg,22.75,post-entreno,capsulas,335,True,2026-05-07T20:07:47,2026-05-17T19:33:24
+499,Colágeno Hidrolizado 4X,40.61,minerales,polvo,310,True,2025-11-24T08:14:14,2025-12-31T02:50:50
+500,Citrulina Malato 8X,47.97,post-entreno,geles,485,True,2025-07-26T03:41:07,2026-02-26T17:47:12
+502,Cla Quemador 9X,50.78,proteinas,tabletas,485,True,2026-04-20T17:13:16,2026-05-01T22:47:30
+503,Cla Quemador 6X,34.31,termogenicos,capsulas,135,True,2025-12-06T23:18:55,2026-04-02T02:03:34
+504,Caseína Nocturna 7X,56.3,termogenicos,capsulas,260,True,2025-12-19T14:11:02,2026-04-19T22:15:38
+505,Maca Peruana Orgánica,54.73,recuperacion,spray,60,True,2025-10-11T04:48:58,2025-12-14T16:13:29
+506,Clorofila Líquida,69.10199999999999,ganadores de peso,tabletas,185,True,2025-06-16T03:49:05,2026-03-09T02:12:32
+507,Multivitamínico Diario,24.18,pre-entreno,capsulas,335,True,2025-07-29T00:37:36,2026-02-05T14:55:00
+508,Cla Quemador,47.89,recuperacion,liquido,335,True,2026-03-16T18:33:15,2026-05-06T12:53:18
+509,Garcinia Cambogia,21.444,minerales,liquido,410,True,2025-10-03T03:57:18,2025-11-26T07:45:53
+510,Omega 3 Premium 4X,31.2,creatina,liquido,410,True,2025-06-07T18:12:36,2025-10-16T21:20:14
+511,Zinc Picolinato,64.71,quemadores,tabletas,185,True,2026-05-06T10:54:23,2026-05-20T08:27:56
+512,Bcaa 2:1:1,21.66,detox,tabletas,385,True,2025-11-10T22:54:36,2026-03-11T06:52:50
+513,Espirulina,58.2,post-entreno,spray,60,True,2025-12-15T10:54:02,2026-04-30T17:25:20
+514,L-Carnitina Líquida 9X,44.24,creatina,capsulas,160,True,2026-02-27T08:35:26,2026-03-24T22:53:30
+515,Recuperador Post-Entreno,22.54,detox,polvo,35,False,2026-05-04T11:40:15,2026-05-06T00:39:36
+516,Té Verde Egcg,48.85,post-entreno,liquido,410,True,2025-08-26T10:39:48,2026-01-17T08:17:19
+517,Bcaa 2:1:1 4X,54.93,detox,spray,360,True,2026-02-19T12:42:19,2026-03-29T20:44:24
+519,Pre-Workout Black,69.10199999999999,quemadores,barritas,0,True,2025-06-28T09:00:21,2025-10-12T16:47:27
+520,Bcaa 2:1:1 10X,58.15,aminoacidos,barritas,310,True,2025-07-29T22:10:23,2026-05-01T22:48:22
+521,Beta Alanina 6X,52.11,pre-entreno,tabletas,285,True,2025-06-07T11:07:48,2025-12-11T23:52:26
+522,Espirulina,45.11,creatina,capsulas,85,False,2026-04-11T04:06:49,2026-04-15T20:17:27
+523,Arginina Akg,33.41,quemadores,capsulas,360,True,2025-10-30T20:39:03,2026-05-17T17:52:32
+524,Creatina Monohidrato,48.03,post-entreno,spray,285,True,2026-03-20T08:56:06,2026-04-27T07:13:01
+525,Arginina Akg,37.89,minerales,polvo,335,True,2025-11-07T03:19:57,2026-03-18T20:40:37
+526,Maca Peruana Orgánica 9X,21.444,pre-entreno,geles,485,True,2026-02-12T16:59:10,2026-04-19T17:45:16
+528,Garcinia Cambogia 4X,46.92,termogenicos,geles,460,True,2025-06-06T04:44:55,2025-09-24T14:44:53
+529,Clorofila Líquida 3X,42.35,post-entreno,liquido,60,True,2026-05-12T00:21:25,2026-05-25T01:29:47
+530,5-Htp Estado De Ánimo,37.63,pre-entreno,geles,485,True,2026-03-07T01:21:40,2026-05-16T10:30:30
+531,Gainer Extreme 9X,66.89,termogenicos,tabletas,435,True,2026-05-12T15:49:09,2026-05-21T10:57:07
+532,Electrolitos Hidratación,37.43,quemadores,capsulas,260,True,2026-05-12T08:22:31,2026-05-14T18:48:25
+533,Beta Alanina,48.39,proteinas,barritas,410,True,2025-09-18T22:32:47,2026-02-09T02:58:46
+534,Ashwagandha Ksm-66,57.67,creatina,spray,110,True,2025-07-11T11:13:14,2026-03-19T20:45:16
+535,Zinc Picolinato,21.444,vitaminas,capsulas,10,False,2026-04-17T04:21:45,2026-05-26T09:10:33
+536,Melatonina Sueño,44.73,post-entreno,polvo,385,True,2025-08-20T01:08:14,2025-09-25T14:16:16
+537,Glutamina Pura,42.28,quemadores,capsulas,235,True,2025-08-19T12:36:28,2026-03-25T10:30:57
+538,Espirulina,67.86,proteinas,spray,285,True,2025-11-04T04:45:53,2025-12-24T05:18:02
+539,Omega 3 Premium,69.10199999999999,proteinas,capsulas,260,True,2025-07-11T23:49:32,2026-03-02T15:34:53
+540,Espirulina,38.5,aminoacidos,liquido,10,True,2025-06-25T03:44:15,2025-08-31T19:41:06
+541,Termogénico Extreme 7X,69.10199999999999,ganadores de peso,geles,310,True,2025-07-15T08:54:29,2025-07-27T20:27:54
+542,Colágeno Hidrolizado 3X,56.88,creatina,barritas,485,True,2026-05-14T14:04:21,2026-05-21T18:56:34
+543,L-Carnitina Líquida,55.43,recuperacion,polvo,460,True,2025-09-30T23:34:32,2025-11-04T07:54:02
+546,L-Carnitina Líquida 9X,26.39,ganadores de peso,geles,10,False,2026-02-03T10:03:26,2026-03-19T16:19:49
+547,Caseína Nocturna,21.444,vitaminas,liquido,0,False,2026-04-06T17:35:15,2026-05-25T15:44:35
+550,Zma Plus,21.75,creatina,spray,110,True,2026-04-26T12:48:29,2026-05-24T02:57:55
+551,Tribulus Terrestris 3X,41.62,post-entreno,tabletas,210,False,2025-09-22T12:09:32,2026-01-26T18:59:25
+552,Espirulina,69.10199999999999,proteinas,liquido,485,True,2025-05-30T07:40:08,2025-10-28T14:40:00
+553,Recuperador Post-Entreno,21.444,vitaminas,geles,410,True,2025-09-03T22:48:26,2025-12-12T16:03:53
+554,Creatina Monohidrato,28.65,minerales,spray,135,True,2026-02-08T09:33:34,2026-04-05T16:54:34
+555,Vitamina D3,45.86,quemadores,capsulas,10,False,2026-01-20T18:14:20,2026-05-22T12:43:52
+556,Clorofila Líquida 7X,46.14,termogenicos,tabletas,110,True,2025-10-14T01:42:50,2026-04-03T11:57:24
+557,Multivitamínico Diario,63.7,quemadores,barritas,110,True,2025-11-16T01:09:26,2026-05-25T02:32:30
+558,Vitamina D3,30.33,detox,spray,385,True,2026-05-08T16:16:12,2026-05-13T06:03:00
+559,Arginina Akg 2X,34.29,quemadores,polvo,410,False,2026-02-11T21:11:25,2026-05-02T04:36:54
+560,Garcinia Cambogia,36.86,quemadores,tabletas,385,True,2025-09-01T18:46:30,2026-01-11T23:53:22
+561,Pre-Workout Black,57.72,post-entreno,capsulas,260,True,2025-06-11T00:10:28,2025-08-31T16:49:34
+562,Magnesio Quelado,30.73,detox,liquido,410,True,2025-10-12T08:53:39,2025-10-17T15:06:38
+563,Bcaa 2:1:1,44.48,post-entreno,geles,310,True,2025-12-15T00:33:43,2026-04-13T13:43:29
+564,Garcinia Cambogia,21.444,vitaminas,tabletas,0,True,2025-11-16T17:34:08,2026-03-01T05:13:24
+565,Cla Quemador,42.2,pre-entreno,liquido,110,True,2025-09-16T19:24:54,2026-02-16T08:28:42
+566,Termogénico Extreme 3X,40.71,detox,tabletas,260,True,2026-01-16T20:04:43,2026-05-21T08:28:17
+567,Bcaa 2:1:1 7X,41.9,pre-entreno,capsulas,135,True,2025-06-28T12:27:21,2025-08-06T12:56:19
+568,Espirulina,54.28,pre-entreno,geles,460,True,2025-10-31T00:57:02,2026-04-05T03:42:15
+569,Espirulina,48.03,creatina,spray,435,True,2025-11-06T14:16:46,2025-12-03T11:52:29
+570,Clorofila Líquida,35.19,detox,capsulas,310,True,2025-11-13T18:57:01,2026-01-04T08:39:28
+571,Creatina Monohidrato,54.26,detox,liquido,335,True,2025-12-27T21:33:38,2026-02-20T09:18:49
+572,Ashwagandha Ksm-66,44.13,ganadores de peso,barritas,360,False,2026-03-07T23:41:52,2026-05-10T02:01:54
+573,Zinc Picolinato,40.67,aminoacidos,capsulas,185,True,2025-12-31T21:20:47,2026-03-20T20:02:59
+574,5-Htp Estado De Ánimo,25.93,detox,barritas,385,True,2026-03-04T05:31:39,2026-04-30T22:39:40
+575,Omega 3 Premium,49.06,detox,liquido,385,True,2025-06-16T18:21:53,2026-04-23T20:36:18
+576,L-Carnitina Líquida 3X,62.95,quemadores,geles,60,True,2025-09-03T15:45:56,2025-10-19T05:53:10
+577,Melatonina Sueño,23.7,aminoacidos,geles,110,True,2026-05-16T09:13:18,2026-05-28T16:23:07
+578,Clorofila Líquida,28.12,ganadores de peso,liquido,460,True,2025-07-07T03:13:47,2026-01-17T12:03:01
+579,Cla Quemador,48.46,creatina,geles,60,True,2025-12-01T06:16:39,2026-05-24T11:43:57
+580,Termogénico Extreme 6X,21.79,recuperacion,geles,160,True,2026-01-25T18:40:56,2026-02-06T13:09:58
+581,Recuperador Post-Entreno,45.2,termogenicos,liquido,60,False,2026-03-28T01:11:17,2026-04-20T21:28:20
+582,Creatina Monohidrato,21.444,vitaminas,capsulas,110,True,2026-05-23T08:23:50,2026-05-27T21:59:09
+584,Espirulina 6X,38.52,post-entreno,capsulas,135,True,2025-06-27T01:59:18,2026-05-15T00:41:13
+585,Caseína Nocturna 2X,48.08,detox,capsulas,460,False,2025-09-19T22:59:11,2025-11-11T16:45:19
+587,Té Verde Egcg 4X,40.04,detox,spray,160,True,2025-09-05T00:54:29,2025-12-05T00:20:40
+588,Caseína Nocturna,52.05,post-entreno,liquido,335,True,2026-05-22T23:43:52,2026-05-23T16:57:05
+589,Arginina Akg 7X,49.61,ganadores de peso,capsulas,260,True,2025-08-27T07:04:12,2025-10-03T05:56:03
+590,Zinc Picolinato,66.26,termogenicos,capsulas,185,True,2026-04-25T04:33:54,2026-05-11T08:43:37
+591,Zinc Picolinato 4X,30.3,vitaminas,spray,385,True,2025-08-27T08:30:55,2025-10-08T23:12:47
+592,Citrulina Malato,46.12,pre-entreno,spray,10,True,2025-08-11T21:45:47,2025-10-07T10:27:33
+593,Vitamina D3,45.25,pre-entreno,tabletas,60,True,2026-04-05T10:36:04,2026-05-23T09:36:15
+594,Beta Alanina,30.43,termogenicos,capsulas,235,False,2025-11-17T10:24:11,2026-04-05T12:12:01
+595,Té Verde Egcg 2X,44.0,aminoacidos,barritas,260,True,2025-08-20T17:44:25,2026-01-11T16:51:25
+596,Colágeno Hidrolizado,34.1,pre-entreno,capsulas,85,False,2025-12-08T04:42:51,2026-01-08T22:40:21
+597,Té Verde Egcg 9X,27.85,minerales,barritas,260,True,2026-02-25T00:49:48,2026-03-17T15:21:28
+598,Bcaa 2:1:1,41.34,vitaminas,geles,110,True,2026-01-28T12:05:36,2026-04-24T01:32:16
+599,Recuperador Post-Entreno,28.7,proteinas,tabletas,360,True,2025-10-17T03:21:46,2026-04-19T12:57:23
+600,Tribulus Terrestris,64.55,proteinas,liquido,360,True,2025-08-02T07:46:01,2025-12-29T03:14:20
+601,Garcinia Cambogia,55.06,detox,barritas,310,True,2025-10-17T15:58:20,2026-03-11T10:19:49
+602,Ashwagandha Ksm-66,28.0,pre-entreno,geles,385,True,2025-12-14T08:33:21,2026-03-21T09:10:44
+603,Clorofila Líquida 6X,28.83,minerales,polvo,185,True,2025-09-24T15:12:06,2025-10-25T12:15:21
+604,Melatonina Sueño,38.46,pre-entreno,spray,310,True,2026-02-26T18:42:45,2026-04-22T04:07:32
+605,Tribulus Terrestris 1X,37.45,creatina,geles,0,True,2025-07-21T11:25:49,2026-05-14T06:45:14
+606,Creatina Monohidrato 9X,22.88,post-entreno,geles,10,True,2025-06-18T14:34:05,2025-11-02T10:32:34
+607,Creatina Monohidrato,43.24,minerales,tabletas,360,True,2026-03-31T19:34:41,2026-04-01T17:47:44
+608,Beta Alanina,47.48,creatina,capsulas,60,True,2025-10-27T23:58:44,2026-03-04T12:38:46
+609,Proteína Vegana 6X,47.08,quemadores,polvo,385,False,2026-03-11T17:41:30,2026-05-28T14:21:54
+610,Multivitamínico Diario,46.7,proteinas,barritas,335,True,2026-04-25T21:22:11,2026-05-10T20:32:28
+611,Proteína Vegana,29.28,recuperacion,tabletas,310,True,2025-11-23T03:18:17,2025-11-30T17:40:10
+612,Arginina Akg,21.47,post-entreno,tabletas,235,True,2026-05-21T22:48:01,2026-05-23T23:32:51
+613,Magnesio Quelado,33.89,creatina,polvo,285,True,2026-02-12T17:39:04,2026-04-27T09:03:21
+614,Ashwagandha Ksm-66,46.49,creatina,geles,135,True,2025-11-13T04:55:29,2026-03-27T04:54:25
+615,Bcaa 2:1:1 1X,49.58,detox,spray,185,True,2025-06-10T07:26:17,2026-01-19T15:42:50
+616,Vitamina D3,46.52,pre-entreno,polvo,460,True,2025-09-12T20:27:48,2026-04-12T15:56:48
+617,Beta Alanina 8X,44.12,recuperacion,geles,335,True,2025-09-15T21:02:32,2025-11-27T03:53:18
+618,Termogénico Extreme,30.07,minerales,tabletas,410,True,2025-07-23T04:35:22,2026-05-23T10:23:54
+619,Té Verde Egcg,26.01,minerales,capsulas,10,True,2025-11-01T18:03:07,2026-04-04T07:17:44
+620,Beta Alanina,23.59,detox,liquido,285,False,2025-11-21T20:28:01,2026-04-02T20:23:24
+621,Whey Protein Gold,58.42,termogenicos,spray,310,True,2025-12-21T02:04:38,2026-02-25T02:43:51
+622,Termogénico Extreme,39.79,termogenicos,liquido,385,True,2025-10-20T15:40:54,2026-03-27T02:22:23
+624,Multivitamínico Diario,58.42,termogenicos,spray,60,False,2026-01-29T11:54:48,2026-04-16T14:04:22
+626,Multivitamínico Diario,45.18,recuperacion,geles,260,True,2026-01-09T22:35:57,2026-04-24T21:54:46
+627,Caseína Nocturna,27.24,vitaminas,geles,60,False,2026-04-02T12:08:15,2026-04-08T05:12:22
+628,Omega 3 Premium,21.48,post-entreno,polvo,310,False,2026-03-09T05:29:47,2026-05-15T18:14:25
+629,Beta Alanina 5X,28.56,post-entreno,spray,360,True,2025-10-14T08:44:52,2026-01-15T18:32:12
+630,Arginina Akg,28.0,vitaminas,geles,460,True,2025-08-05T03:32:57,2025-12-30T03:22:31
+631,Tribulus Terrestris,21.444,vitaminas,spray,235,True,2025-06-01T15:03:16,2026-04-07T10:25:20
+632,Colágeno Hidrolizado,51.06,recuperacion,capsulas,460,True,2025-12-20T23:20:01,2026-04-04T11:12:42
+633,Magnesio Quelado,46.35,aminoacidos,tabletas,135,True,2025-09-27T12:30:57,2025-12-07T08:41:51
+634,Ashwagandha Ksm-66,35.61,post-entreno,spray,10,True,2025-10-09T23:51:49,2025-10-20T13:55:26
+635,Vitamina D3 4X,40.86,minerales,polvo,10,True,2025-11-22T08:35:58,2026-02-11T10:26:17
+636,Pre-Workout Black 1X,23.1,post-entreno,liquido,185,False,2025-06-20T06:31:15,2025-07-21T03:41:39
+637,Citrulina Malato 1X,40.01,minerales,liquido,360,False,2026-04-11T01:41:57,2026-05-14T23:15:53
+639,Recuperador Post-Entreno,51.64,quemadores,barritas,35,False,2026-03-10T04:21:19,2026-05-06T07:17:17
+640,Arginina Akg 4X,29.52,minerales,geles,60,True,2025-12-29T10:49:32,2025-12-31T22:39:13
+641,Caseína Nocturna,42.07,vitaminas,barritas,235,True,2025-07-28T06:38:39,2026-03-15T22:10:16
+642,Multivitamínico Diario,31.8,vitaminas,capsulas,160,False,2026-05-18T00:42:31,2026-05-28T09:07:14
+643,Maca Peruana Orgánica,46.34,recuperacion,polvo,485,True,2025-12-08T04:35:31,2026-01-17T23:31:02
+644,Zinc Picolinato,34.29,post-entreno,tabletas,385,True,2026-04-15T22:52:53,2026-05-07T01:04:48
+645,Zinc Picolinato,36.88,minerales,polvo,435,True,2026-03-15T13:22:17,2026-03-24T18:17:07
+646,Espirulina,55.95,proteinas,polvo,0,True,2025-12-13T19:54:32,2026-01-14T08:49:59
+647,Tribulus Terrestris,36.35,recuperacion,liquido,460,False,2026-05-15T17:37:21,2026-05-21T02:50:19
+648,Multivitamínico Diario 4X,40.98,vitaminas,liquido,160,True,2026-04-01T12:38:08,2026-05-18T12:46:01
+649,Omega 3 Premium 6X,56.67,detox,polvo,35,True,2025-09-30T13:20:32,2026-01-05T15:24:18
+650,Zma Plus 6X,32.42,minerales,liquido,85,True,2025-08-19T05:36:13,2025-10-07T23:19:43
+651,Arginina Akg,47.85,ganadores de peso,tabletas,260,True,2025-08-18T19:51:26,2025-08-25T06:57:06
+652,Citrulina Malato,52.62,pre-entreno,liquido,210,True,2026-01-18T23:33:59,2026-04-26T09:34:36
+653,Maca Peruana Orgánica 4X,53.41,proteinas,capsulas,460,False,2026-05-08T10:07:55,2026-05-20T19:55:20
+654,Glutamina Pura,36.09,post-entreno,liquido,360,False,2025-12-20T16:50:48,2026-01-20T09:19:04
+655,Colágeno Hidrolizado,21.444,vitaminas,barritas,435,True,2025-06-20T01:25:23,2026-05-19T06:55:24
+656,Electrolitos Hidratación,45.7,recuperacion,spray,460,True,2025-10-03T09:02:34,2026-04-01T01:14:01
+657,Ashwagandha Ksm-66 5X,46.12,pre-entreno,tabletas,160,True,2025-07-23T22:00:15,2025-12-23T20:48:03
+658,Caseína Nocturna 2X,38.86,vitaminas,capsulas,285,True,2026-03-02T17:30:24,2026-03-06T01:36:46
+660,Caseína Nocturna,29.82,pre-entreno,barritas,10,True,2025-09-28T19:08:57,2026-04-10T09:49:03
+661,5-Htp Estado De Ánimo,55.85,termogenicos,tabletas,0,True,2026-01-14T08:29:30,2026-02-04T01:12:09
+662,Beta Alanina,47.84,aminoacidos,polvo,310,True,2026-02-08T06:30:47,2026-03-19T14:53:12
+663,Pre-Workout Black,58.73,detox,polvo,485,True,2026-03-31T20:00:44,2026-05-26T07:32:14
+664,Cla Quemador 2X,44.29,vitaminas,barritas,85,False,2026-02-07T22:17:30,2026-03-30T18:58:24
+665,Vitamina D3,58.92,pre-entreno,barritas,160,True,2026-04-25T20:58:32,2026-05-10T08:17:25
+667,Termogénico Extreme 1X,21.444,recuperacion,polvo,260,True,2025-09-12T23:24:38,2026-03-23T09:47:16
+668,Pre-Workout Black,62.81,quemadores,capsulas,260,True,2025-06-08T05:30:19,2025-10-11T06:17:43
+669,Bcaa 2:1:1,69.05,ganadores de peso,capsulas,335,True,2025-09-06T09:43:05,2026-01-31T01:37:42
+670,Maca Peruana Orgánica 5X,31.34,quemadores,polvo,0,True,2025-11-27T10:16:26,2026-04-11T12:38:02
+671,Zma Plus 3X,52.11,pre-entreno,polvo,335,True,2025-07-25T20:08:00,2026-01-13T12:27:33
+672,Té Verde Egcg,35.56,recuperacion,liquido,135,True,2026-02-20T19:00:39,2026-04-15T02:28:09
+673,Bcaa 2:1:1,53.05,quemadores,polvo,235,True,2025-12-24T13:14:45,2026-01-14T11:38:54
+674,Omega 3 Premium,31.89,termogenicos,geles,460,False,2026-03-11T23:12:06,2026-03-17T23:15:37
+675,Pre-Workout Black 1X,25.74,minerales,spray,135,True,2026-03-04T04:45:52,2026-05-28T10:12:43
+676,Clorofila Líquida,48.49,quemadores,capsulas,110,False,2025-12-04T04:43:12,2025-12-14T15:58:03
+677,Clorofila Líquida,27.33,post-entreno,polvo,60,True,2025-10-21T05:25:51,2026-04-16T12:06:57
+678,Zinc Picolinato,52.81,termogenicos,polvo,110,False,2026-01-13T03:15:10,2026-05-05T11:18:04
+679,Cla Quemador,28.62,minerales,tabletas,310,True,2025-11-15T04:05:48,2026-03-03T11:37:11
+680,Termogénico Extreme,33.21,vitaminas,barritas,235,False,2026-01-13T21:36:28,2026-02-20T08:38:56
+681,Gainer Extreme,42.91,vitaminas,spray,310,True,2025-10-05T05:40:45,2026-04-22T22:39:17
+682,Garcinia Cambogia,46.18,pre-entreno,tabletas,310,True,2026-05-24T17:10:06,2026-05-25T12:54:18
+683,Gainer Extreme,24.1,creatina,capsulas,310,True,2026-04-25T22:03:49,2026-05-19T18:06:13
+684,Espirulina,46.37,aminoacidos,tabletas,435,True,2026-02-14T20:43:56,2026-04-17T05:07:37
+685,Whey Protein Gold 1X,42.32,detox,geles,160,True,2025-12-06T20:39:09,2026-05-08T08:47:14
+686,Espirulina,29.39,post-entreno,liquido,310,False,2026-03-29T19:48:41,2026-04-04T11:34:17
+688,Melatonina Sueño,53.87,post-entreno,barritas,0,True,2025-09-13T09:34:16,2025-11-30T01:22:21
+689,Espirulina,54.86,pre-entreno,tabletas,85,False,2025-08-29T14:11:36,2026-02-03T03:11:06
+690,Clorofila Líquida,48.61,detox,barritas,310,True,2025-07-08T17:26:59,2026-03-18T00:08:08
+691,Citrulina Malato 6X,56.81,termogenicos,barritas,310,False,2026-04-21T02:32:01,2026-04-25T07:32:35
+692,Zinc Picolinato,28.63,creatina,geles,235,True,2025-10-05T06:26:24,2025-12-11T01:34:25
+693,Clorofila Líquida,22.98,pre-entreno,geles,260,True,2025-11-15T01:57:13,2025-12-28T04:27:34
+694,Tribulus Terrestris,36.1,aminoacidos,barritas,385,False,2026-01-05T07:55:24,2026-04-05T04:51:55
+696,Garcinia Cambogia,46.94,detox,tabletas,135,False,2025-08-31T01:11:24,2026-05-21T02:57:15
+697,Zinc Picolinato,29.76,detox,spray,85,True,2026-01-01T22:43:30,2026-05-22T03:38:36
+698,Citrulina Malato,40.02,aminoacidos,tabletas,460,True,2026-05-25T15:40:31,2026-05-26T13:42:34
+699,Zinc Picolinato,26.94,creatina,tabletas,210,True,2026-04-13T02:51:32,2026-04-30T20:55:50
+700,Electrolitos Hidratación,35.24,vitaminas,barritas,35,True,2025-05-31T14:19:37,2026-01-28T20:51:29
+701,Pre-Workout Black,37.95,detox,capsulas,485,False,2025-11-14T17:59:42,2026-03-12T09:37:06
+702,Glutamina Pura 4X,51.31,post-entreno,liquido,360,True,2026-01-26T10:20:00,2026-04-12T04:53:01
+704,Gainer Extreme,57.4,ganadores de peso,barritas,385,True,2025-07-12T00:16:51,2026-03-04T17:08:13
+705,Whey Protein Gold,48.22,termogenicos,barritas,335,True,2026-02-10T16:54:49,2026-02-16T06:12:28
+706,Melatonina Sueño,33.99,pre-entreno,liquido,10,True,2025-07-28T00:28:38,2026-05-28T01:15:07
+707,Citrulina Malato,68.35,quemadores,tabletas,285,True,2025-10-25T21:19:00,2025-11-01T16:37:51
+708,L-Carnitina Líquida 4X,54.91,ganadores de peso,tabletas,485,True,2025-06-23T23:04:49,2025-11-01T10:37:33
+709,Garcinia Cambogia 8X,45.79,termogenicos,capsulas,360,True,2025-09-16T03:17:16,2026-04-26T14:45:59
+710,Colágeno Hidrolizado,36.03,quemadores,spray,160,True,2025-09-30T14:39:10,2025-11-26T00:49:31
+711,Glutamina Pura,53.78,pre-entreno,spray,210,True,2025-06-29T08:04:24,2026-05-18T13:26:31
+712,Magnesio Quelado,49.21,quemadores,polvo,0,True,2025-09-13T20:23:09,2026-01-06T03:07:08
+713,Zma Plus,41.19,minerales,spray,110,True,2025-11-07T03:37:04,2025-11-26T20:56:19
+714,Gainer Extreme 7X,34.2,ganadores de peso,geles,260,True,2026-04-15T17:17:05,2026-04-30T23:48:11
+715,Colágeno Hidrolizado 8X,69.10199999999999,ganadores de peso,barritas,285,True,2026-02-03T09:11:45,2026-02-09T13:19:54
+716,Proteína Vegana 8X,37.58,aminoacidos,tabletas,85,True,2025-08-03T08:23:05,2026-03-02T04:47:28
+717,Citrulina Malato 3X,44.07,pre-entreno,liquido,10,True,2025-07-26T04:24:40,2025-09-11T04:36:12
+720,Espirulina,37.36,proteinas,capsulas,235,True,2025-06-21T18:18:58,2025-10-14T06:15:56
+722,Tribulus Terrestris,37.89,minerales,liquido,85,True,2025-09-02T21:32:44,2026-01-24T19:15:55
+723,Electrolitos Hidratación 8X,21.444,creatina,barritas,135,True,2025-09-13T10:16:07,2025-12-29T01:21:39
+724,Citrulina Malato 7X,26.54,vitaminas,liquido,110,True,2025-10-21T11:04:38,2026-03-12T00:08:36
+725,Espirulina,36.66,vitaminas,polvo,135,True,2026-03-16T10:32:48,2026-04-22T17:54:25
+726,Recuperador Post-Entreno 6X,37.85,vitaminas,capsulas,285,True,2026-01-26T08:02:00,2026-04-05T09:44:22
+727,Vitamina D3,27.89,post-entreno,spray,60,True,2025-06-23T20:04:25,2025-10-13T05:41:53
+728,Pre-Workout Black,45.45,recuperacion,polvo,35,True,2026-02-12T18:42:28,2026-05-05T20:50:57
+729,Ashwagandha Ksm-66,37.93,aminoacidos,barritas,260,True,2026-03-19T20:40:05,2026-03-21T18:00:35
+730,Maca Peruana Orgánica,43.69,aminoacidos,capsulas,60,False,2025-06-23T02:35:15,2025-11-09T04:50:27
+732,Electrolitos Hidratación 2X,58.59,proteinas,barritas,185,True,2026-02-23T20:12:27,2026-05-14T01:31:31
+733,Recuperador Post-Entreno,54.89,detox,spray,385,False,2025-10-30T20:22:00,2025-11-04T07:36:52
+734,Ashwagandha Ksm-66 6X,27.54,minerales,spray,135,False,2025-07-18T15:52:59,2025-08-16T17:16:28
+736,Caseína Nocturna 2X,43.72,detox,liquido,210,True,2025-08-23T16:03:00,2025-10-22T10:52:58
+737,Clorofila Líquida 7X,45.38,ganadores de peso,capsulas,310,True,2025-10-17T12:17:45,2026-03-10T07:48:26
+738,Tribulus Terrestris,41.87,recuperacion,capsulas,35,False,2025-07-31T05:24:39,2025-08-17T17:34:17
+739,Electrolitos Hidratación 7X,30.23,detox,liquido,385,True,2025-12-28T16:12:23,2026-04-04T17:20:23
+740,Magnesio Quelado,37.58,termogenicos,polvo,210,False,2025-12-13T03:59:07,2025-12-13T04:19:55
+742,Whey Protein Gold,31.42,aminoacidos,liquido,60,True,2026-02-23T08:19:00,2026-05-22T12:46:41
+743,Pre-Workout Black,45.26,ganadores de peso,tabletas,485,True,2025-11-07T23:27:29,2026-03-18T05:22:45
+746,5-Htp Estado De Ánimo,55.6,creatina,spray,285,True,2026-04-22T00:43:52,2026-05-27T20:42:35
+747,Omega 3 Premium,43.34,quemadores,polvo,185,True,2026-01-20T15:58:35,2026-02-21T06:00:58
+748,Caseína Nocturna 8X,38.57,recuperacion,geles,210,True,2026-04-23T21:52:29,2026-04-26T11:12:39
+749,Arginina Akg,36.47,minerales,tabletas,10,True,2025-08-18T01:12:56,2026-02-12T08:22:56
+750,Proteína Vegana 4X,21.444,vitaminas,geles,435,True,2025-06-13T05:26:21,2025-08-03T23:25:48
+751,Citrulina Malato,47.27,recuperacion,tabletas,110,True,2025-11-06T10:40:12,2026-03-08T02:59:36
+752,Tribulus Terrestris,57.16,aminoacidos,geles,410,True,2025-06-24T17:18:26,2025-11-16T18:49:21
+753,Clorofila Líquida,43.79,aminoacidos,capsulas,10,True,2025-08-27T11:58:44,2026-03-07T08:19:47
+754,Magnesio Quelado,23.8,creatina,capsulas,485,True,2025-11-09T06:02:42,2026-02-18T19:21:11
+755,Glutamina Pura 4X,32.62,ganadores de peso,polvo,110,True,2025-07-13T08:01:51,2025-10-30T06:04:06
+756,Magnesio Quelado,66.01,termogenicos,barritas,185,False,2026-04-29T08:29:23,2026-05-17T19:04:42
+758,Zinc Picolinato,58.74,aminoacidos,polvo,335,True,2025-05-29T15:46:24,2026-05-02T00:57:42
+759,Espirulina 2X,30.79,minerales,capsulas,60,True,2026-05-13T11:26:02,2026-05-28T15:54:34
+761,Melatonina Sueño,54.77,proteinas,barritas,285,True,2026-04-05T22:43:00,2026-04-21T14:43:52
+762,Arginina Akg,23.75,minerales,capsulas,210,True,2026-02-01T03:49:09,2026-02-23T06:23:35
+763,Creatina Monohidrato,23.57,post-entreno,barritas,285,False,2026-02-17T01:01:37,2026-03-26T00:01:39
+764,Proteína Vegana 7X,32.36,minerales,polvo,110,True,2025-10-03T12:12:41,2025-11-19T16:17:14
+765,Melatonina Sueño 8X,52.45,post-entreno,capsulas,85,True,2026-05-22T21:17:03,2026-05-25T22:14:32
+766,Tribulus Terrestris,40.44,creatina,barritas,485,False,2026-03-01T17:59:10,2026-03-04T11:02:54
+767,Gainer Extreme,45.97,detox,barritas,235,True,2025-10-04T15:00:00,2026-01-27T14:43:29
+769,Caseína Nocturna,48.39,aminoacidos,spray,185,True,2025-09-22T07:40:06,2026-01-16T12:05:03
+770,Espirulina,36.39,recuperacion,barritas,210,True,2025-06-13T06:04:31,2025-08-14T08:01:38
+771,Clorofila Líquida,23.36,vitaminas,liquido,410,True,2025-09-01T07:41:19,2025-10-12T14:24:52
+772,Pre-Workout Black 6X,68.81,quemadores,tabletas,335,True,2025-07-21T17:27:47,2026-03-31T16:05:13
+773,Maca Peruana Orgánica,31.64,recuperacion,liquido,235,True,2026-01-26T02:21:22,2026-05-13T19:36:54
+775,Cla Quemador,69.10199999999999,ganadores de peso,capsulas,185,True,2025-12-05T18:08:16,2026-04-06T23:23:30
+776,Té Verde Egcg,45.55,proteinas,polvo,10,True,2026-05-08T17:22:33,2026-05-18T14:55:21
+777,Omega 3 Premium,25.79,creatina,liquido,260,True,2025-11-18T05:45:49,2026-01-30T08:57:57
+778,5-Htp Estado De Ánimo,48.22,detox,tabletas,360,True,2026-03-12T15:47:30,2026-05-13T12:01:32
+779,Caseína Nocturna,32.52,pre-entreno,geles,235,True,2025-06-20T11:01:21,2025-07-24T08:37:23
+780,Electrolitos Hidratación,23.2,aminoacidos,capsulas,160,True,2026-02-10T03:42:42,2026-03-13T16:50:10
+781,Proteína Vegana 9X,45.27,creatina,polvo,260,True,2026-01-29T17:30:10,2026-02-27T08:38:59
+782,Recuperador Post-Entreno,39.0,pre-entreno,geles,235,True,2026-03-08T03:56:00,2026-04-02T22:46:00
+783,Tribulus Terrestris,28.21,aminoacidos,spray,10,True,2025-08-16T14:45:25,2026-05-01T12:20:38
+784,L-Carnitina Líquida,59.73,proteinas,geles,360,False,2026-02-20T03:24:12,2026-03-15T09:28:42
+785,Citrulina Malato,62.95,proteinas,liquido,410,True,2026-02-06T07:55:53,2026-04-30T12:06:45
+786,Pre-Workout Black,21.444,post-entreno,spray,410,True,2026-01-02T18:10:09,2026-03-31T12:36:53
+787,Gainer Extreme 8X,33.96,minerales,geles,235,True,2025-11-28T02:52:44,2026-04-29T09:28:46
+789,Recuperador Post-Entreno,31.45,detox,tabletas,185,True,2025-11-24T05:25:13,2026-02-06T02:57:59
+790,Creatina Monohidrato 7X,31.18,minerales,spray,60,True,2026-03-06T18:28:58,2026-05-19T10:45:12
+791,Caseína Nocturna 1X,61.34,proteinas,tabletas,35,True,2025-10-31T12:46:58,2025-12-10T12:30:42
+792,Espirulina 8X,24.0,detox,tabletas,310,True,2025-12-14T07:19:02,2026-04-05T19:32:34
+793,Zma Plus 7X,32.79,quemadores,polvo,385,True,2026-01-22T15:53:26,2026-05-22T12:20:25
+794,Pre-Workout Black,31.64,termogenicos,spray,35,True,2025-05-31T07:46:34,2025-11-02T23:40:58
+795,Creatina Monohidrato,29.91,aminoacidos,polvo,310,False,2025-07-06T01:19:47,2025-09-06T12:14:44
+796,Multivitamínico Diario,21.444,minerales,geles,0,True,2025-12-13T19:28:20,2025-12-20T05:12:04
+797,Vitamina D3,29.4,minerales,barritas,0,True,2025-09-10T07:03:19,2025-12-08T14:00:54
+798,Té Verde Egcg,41.72,recuperacion,geles,335,True,2025-08-24T17:32:30,2025-10-05T20:43:53
+799,Pre-Workout Black 1X,69.10199999999999,ganadores de peso,tabletas,435,True,2025-09-24T11:22:21,2025-10-11T03:23:18
+800,Citrulina Malato,24.48,vitaminas,spray,210,True,2026-01-30T19:51:15,2026-03-11T15:29:08
+801,Vitamina D3,50.7,pre-entreno,capsulas,285,True,2025-07-14T21:23:13,2026-03-05T21:16:16
+802,5-Htp Estado De Ánimo,69.10199999999999,proteinas,barritas,185,True,2026-01-04T20:15:59,2026-05-04T08:51:30
+803,Maca Peruana Orgánica,58.08,creatina,geles,360,True,2025-11-17T23:13:48,2026-04-13T08:52:31
+804,Beta Alanina 6X,43.64,aminoacidos,barritas,60,True,2025-06-21T00:57:26,2026-04-08T11:27:24
+805,Espirulina 4X,43.97,recuperacion,barritas,410,True,2025-09-03T01:25:51,2026-04-10T12:16:08
+806,Pre-Workout Black,21.444,minerales,geles,0,True,2025-12-23T20:49:16,2026-05-28T07:16:05
+807,Recuperador Post-Entreno 10X,37.88,aminoacidos,capsulas,85,True,2025-08-24T18:14:09,2025-12-12T18:30:58
+808,Pre-Workout Black,44.32,creatina,tabletas,435,False,2026-04-25T05:33:48,2026-04-26T05:13:19
+809,Colágeno Hidrolizado 2X,51.54,proteinas,spray,485,True,2026-02-10T02:00:30,2026-04-09T08:39:06
+810,L-Carnitina Líquida 7X,54.87,creatina,capsulas,210,False,2025-09-29T22:17:26,2026-05-25T19:57:11
+811,Multivitamínico Diario 10X,25.91,aminoacidos,capsulas,335,True,2025-07-05T19:46:27,2026-02-22T10:31:53
+812,5-Htp Estado De Ánimo,37.0,post-entreno,barritas,135,True,2025-12-27T23:40:00,2026-03-19T16:19:16
+813,Melatonina Sueño 3X,49.66,proteinas,capsulas,460,True,2026-05-26T03:49:46,2026-05-28T06:12:32
+814,Cla Quemador,55.46,proteinas,tabletas,10,True,2025-10-24T03:55:54,2026-03-02T23:50:31
+815,Espirulina,21.444,vitaminas,spray,460,True,2026-04-26T09:47:16,2026-04-28T06:09:37
+816,Zinc Picolinato,25.16,minerales,geles,160,False,2026-01-24T13:35:11,2026-03-14T00:02:43
+817,Gainer Extreme,56.7,aminoacidos,polvo,160,False,2025-08-06T13:38:19,2025-08-19T13:40:24
+818,Melatonina Sueño 6X,51.73,aminoacidos,geles,435,True,2025-11-24T07:39:34,2026-04-24T18:20:52
+819,Glutamina Pura,58.91,post-entreno,geles,210,False,2026-01-12T22:19:25,2026-03-07T17:11:23
+820,Citrulina Malato,49.87,detox,polvo,10,True,2025-12-26T21:21:43,2026-04-24T12:09:51
+821,Electrolitos Hidratación,46.49,aminoacidos,tabletas,10,True,2025-11-01T01:48:40,2026-01-13T16:16:20
+822,Glutamina Pura,31.35,detox,capsulas,435,True,2025-06-07T11:28:04,2026-02-16T18:00:47
+823,Té Verde Egcg 8X,62.88,ganadores de peso,liquido,360,True,2025-11-03T03:29:59,2026-02-21T20:52:55
+824,Colágeno Hidrolizado,54.19,termogenicos,spray,235,True,2026-05-07T14:42:51,2026-05-08T12:23:42
+825,Multivitamínico Diario 10X,21.444,detox,geles,410,True,2025-06-05T14:22:48,2026-02-08T03:53:34
+826,Multivitamínico Diario 3X,29.86,vitaminas,spray,435,True,2025-10-22T17:31:07,2026-05-20T08:42:46
+827,Creatina Monohidrato,38.03,termogenicos,spray,360,False,2026-03-04T11:22:36,2026-04-28T10:49:25
+829,Colágeno Hidrolizado 4X,32.25,detox,tabletas,235,True,2026-04-12T18:39:56,2026-04-17T21:11:04
+830,Arginina Akg,52.78,detox,geles,410,True,2025-10-06T18:22:37,2025-12-22T10:35:50
+832,Colágeno Hidrolizado,29.73,post-entreno,geles,10,True,2026-01-22T07:25:40,2026-05-06T10:21:56
+833,Garcinia Cambogia,40.83,recuperacion,capsulas,410,True,2026-05-19T14:06:09,2026-05-27T05:09:47
+834,Whey Protein Gold,45.36,aminoacidos,polvo,185,True,2025-12-30T12:49:39,2026-02-01T14:54:49
+835,Zinc Picolinato 2X,37.04,pre-entreno,tabletas,160,True,2025-09-30T13:42:07,2025-11-18T14:08:19
+836,Termogénico Extreme,25.65,post-entreno,geles,85,True,2025-09-23T09:36:03,2026-01-11T10:30:11
+837,Melatonina Sueño 10X,64.61,ganadores de peso,geles,110,True,2025-12-04T08:42:47,2026-03-08T00:28:31
+838,Té Verde Egcg,25.01,aminoacidos,tabletas,35,True,2026-04-08T02:56:31,2026-05-13T18:53:00
+839,Té Verde Egcg,26.57,detox,geles,335,True,2026-04-13T13:51:41,2026-05-12T22:45:42
+841,Electrolitos Hidratación,32.26,vitaminas,spray,135,False,2026-01-19T13:58:39,2026-04-19T17:48:05
+842,Té Verde Egcg,26.23,minerales,polvo,435,True,2025-09-10T12:28:11,2026-02-08T23:04:43
+843,Zma Plus 1X,46.33,recuperacion,liquido,135,True,2026-03-03T16:24:41,2026-05-24T15:11:18
+844,Bcaa 2:1:1,37.45,minerales,capsulas,410,True,2026-01-06T13:36:18,2026-02-14T12:28:41
+845,Zinc Picolinato 8X,35.65,recuperacion,geles,35,True,2025-06-11T17:47:18,2025-06-29T15:14:38
+846,Gainer Extreme,42.44,recuperacion,barritas,435,True,2025-08-27T17:28:21,2026-05-06T01:32:23
+848,Glutamina Pura,41.8,quemadores,polvo,310,True,2025-11-04T21:44:56,2026-05-21T06:37:24
+849,Cla Quemador,37.05,pre-entreno,capsulas,0,True,2025-07-31T14:10:35,2026-03-24T09:48:50
+850,Pre-Workout Black,53.73,termogenicos,polvo,485,True,2026-03-31T18:38:06,2026-05-26T04:18:10
+851,Vitamina D3,31.65,quemadores,spray,110,True,2025-10-13T07:51:46,2026-03-25T14:31:27
+852,Colágeno Hidrolizado 3X,69.10199999999999,proteinas,liquido,260,True,2026-03-18T16:10:24,2026-05-09T02:07:41
+853,Bcaa 2:1:1 8X,54.7,detox,geles,410,True,2026-05-02T01:38:24,2026-05-14T12:43:33
+854,Arginina Akg,49.6,recuperacion,spray,35,False,2026-05-07T05:31:40,2026-05-14T12:38:56
+856,Caseína Nocturna,34.71,pre-entreno,capsulas,310,False,2025-11-23T10:42:18,2026-01-22T01:53:35
+858,Tribulus Terrestris 1X,45.44,detox,polvo,335,True,2025-08-16T10:56:59,2026-02-17T10:53:12
+859,Gainer Extreme,25.95,vitaminas,geles,60,True,2025-06-20T22:48:15,2026-05-17T21:09:29
+860,Zma Plus,53.82,detox,geles,0,True,2025-11-01T07:50:32,2025-11-03T04:55:22
+861,Citrulina Malato,30.13,aminoacidos,capsulas,485,False,2025-06-10T04:09:07,2025-09-26T06:45:05
+862,Té Verde Egcg 8X,43.54,vitaminas,spray,235,True,2025-10-13T04:46:10,2026-03-04T08:34:54
+864,Caseína Nocturna,34.9,recuperacion,tabletas,110,True,2025-10-06T20:01:39,2026-03-02T05:09:36
+866,Creatina Monohidrato,40.64,minerales,geles,0,True,2026-02-13T10:30:31,2026-04-06T22:25:37
+867,Melatonina Sueño 7X,34.02,creatina,geles,310,True,2025-10-06T04:23:05,2026-01-06T03:39:35
+868,Termogénico Extreme,39.66,termogenicos,tabletas,485,True,2026-02-17T19:13:27,2026-05-10T18:33:22
+869,Melatonina Sueño 4X,57.2,proteinas,spray,60,True,2025-09-14T17:14:25,2025-12-21T01:30:41
+871,5-Htp Estado De Ánimo,57.93,ganadores de peso,barritas,135,True,2025-08-11T19:05:42,2026-02-14T12:50:22
+872,Citrulina Malato,37.92,minerales,capsulas,235,True,2026-03-07T07:26:09,2026-05-24T18:01:23
+874,Ashwagandha Ksm-66 10X,43.45,termogenicos,spray,185,True,2026-01-25T18:13:35,2026-04-08T13:52:11
+875,Creatina Monohidrato,49.94,pre-entreno,polvo,185,False,2025-12-21T17:18:38,2026-03-10T14:55:42
+877,Bcaa 2:1:1 5X,34.16,quemadores,liquido,260,True,2026-01-27T05:02:17,2026-03-01T22:31:52
+878,Termogénico Extreme,22.47,recuperacion,tabletas,360,True,2025-09-22T22:54:02,2026-03-31T21:15:09
+879,Espirulina,34.73,minerales,barritas,485,False,2026-03-22T09:51:39,2026-05-11T21:09:22
+880,Tribulus Terrestris 9X,35.28,vitaminas,tabletas,485,True,2025-06-12T15:47:07,2025-08-15T20:46:06
+881,Electrolitos Hidratación,53.09,quemadores,liquido,260,True,2026-01-09T04:30:33,2026-02-28T17:32:39
+882,Tribulus Terrestris 1X,53.98,post-entreno,capsulas,10,True,2025-08-21T09:59:37,2026-03-10T04:46:26
+883,Maca Peruana Orgánica 1X,61.37,proteinas,spray,110,True,2025-07-20T09:03:17,2026-03-01T14:05:00
+885,Pre-Workout Black,40.23,termogenicos,capsulas,160,True,2025-06-20T23:33:50,2025-10-26T10:46:28
+886,Citrulina Malato 1X,58.13,pre-entreno,barritas,410,True,2026-01-11T05:31:23,2026-04-25T18:14:42
+887,Zma Plus 8X,35.7,vitaminas,capsulas,285,True,2026-02-12T19:53:17,2026-04-25T03:49:12
+888,Pre-Workout Black,69.10199999999999,proteinas,barritas,110,True,2026-02-11T17:52:17,2026-05-28T12:44:07
+889,Glutamina Pura,45.6,termogenicos,geles,410,True,2026-05-14T00:36:09,2026-05-15T05:17:14
+890,Garcinia Cambogia 6X,57.94,ganadores de peso,spray,285,True,2026-04-21T04:54:08,2026-05-11T21:58:37
+891,Citrulina Malato 1X,58.32,aminoacidos,capsulas,285,True,2025-12-08T11:31:05,2026-03-30T10:34:11
+892,Recuperador Post-Entreno 2X,26.09,minerales,liquido,460,True,2025-12-21T02:37:35,2026-01-25T17:51:57
+893,Pre-Workout Black,50.72,pre-entreno,spray,335,True,2025-10-29T10:13:07,2025-11-24T03:28:18
+894,Citrulina Malato,38.4,aminoacidos,polvo,435,True,2026-01-09T15:39:31,2026-05-22T16:16:31
+895,Bcaa 2:1:1 10X,41.75,minerales,polvo,435,True,2026-03-21T01:20:21,2026-04-20T15:19:22
+896,Clorofila Líquida,40.22,detox,polvo,485,True,2025-07-27T20:17:59,2026-04-16T11:33:47
+897,Arginina Akg 10X,25.93,aminoacidos,spray,260,True,2026-03-07T02:31:32,2026-04-30T18:06:29
+898,L-Carnitina Líquida,21.444,vitaminas,spray,385,True,2025-10-07T16:41:54,2026-02-13T23:50:58
+899,5-Htp Estado De Ánimo 8X,42.0,minerales,barritas,0,True,2025-08-28T22:12:05,2026-04-14T10:13:16
+900,Ashwagandha Ksm-66 7X,25.71,detox,tabletas,85,True,2026-02-28T07:27:09,2026-05-10T07:59:05
+901,Clorofila Líquida 6X,52.59,recuperacion,geles,435,True,2026-01-24T21:59:45,2026-05-08T13:01:36
+902,Maca Peruana Orgánica,46.48,termogenicos,polvo,335,True,2025-08-14T09:59:09,2025-08-14T17:42:31
+905,Magnesio Quelado 5X,60.44,quemadores,spray,335,True,2025-08-24T13:50:47,2025-09-21T00:36:55
+906,Magnesio Quelado,29.22,recuperacion,tabletas,60,True,2026-01-02T12:34:57,2026-03-21T06:57:56
+907,Creatina Monohidrato,30.59,vitaminas,tabletas,35,False,2026-01-08T10:00:09,2026-05-20T21:47:00
+908,Zma Plus 7X,69.10199999999999,proteinas,capsulas,285,True,2026-03-03T18:03:43,2026-04-03T06:53:00
+909,Garcinia Cambogia 6X,53.57,aminoacidos,tabletas,410,True,2025-05-29T02:49:58,2026-04-02T10:14:10
+910,Bcaa 2:1:1,41.1,creatina,liquido,260,True,2025-11-23T01:24:25,2026-04-25T23:22:44
+911,Pre-Workout Black,56.12,quemadores,tabletas,10,False,2025-08-22T14:52:56,2026-01-18T21:38:36
+912,Tribulus Terrestris 3X,45.6,pre-entreno,polvo,135,True,2025-12-19T02:00:08,2026-04-27T16:58:11
+913,Tribulus Terrestris 2X,21.444,minerales,polvo,260,True,2026-04-23T02:53:31,2026-05-05T16:31:47
+914,Omega 3 Premium,60.29,ganadores de peso,capsulas,35,True,2026-05-21T13:40:25,2026-05-27T09:17:07
+916,Garcinia Cambogia,21.444,post-entreno,barritas,260,True,2025-09-16T15:46:16,2025-09-17T20:07:06
+917,Clorofila Líquida,30.62,termogenicos,geles,485,True,2025-08-18T14:55:29,2026-02-13T21:59:10
+918,Recuperador Post-Entreno 6X,40.41,quemadores,barritas,460,False,2025-08-06T13:02:31,2025-09-28T00:09:08
+919,Té Verde Egcg,36.76,detox,capsulas,310,False,2026-04-01T14:18:37,2026-04-29T08:50:31
+920,L-Carnitina Líquida,33.05,detox,polvo,110,True,2026-01-24T07:39:58,2026-04-10T13:31:55
+921,Beta Alanina,37.2,termogenicos,tabletas,335,True,2025-05-30T04:06:47,2025-10-04T20:53:41
+922,Clorofila Líquida,46.38,aminoacidos,tabletas,360,True,2026-01-27T06:42:51,2026-04-29T02:57:47
+923,Melatonina Sueño 7X,57.45,post-entreno,liquido,160,True,2025-06-11T19:54:52,2025-08-29T05:08:50
+924,L-Carnitina Líquida,21.444,detox,geles,385,False,2025-12-20T02:43:03,2026-05-21T17:26:53
+925,Beta Alanina 2X,21.444,minerales,liquido,385,True,2025-07-17T03:33:13,2026-03-22T10:20:04
+927,Vitamina D3,44.09,vitaminas,spray,235,True,2025-07-26T07:25:06,2025-08-10T18:55:37
+928,Proteína Vegana 10X,21.444,vitaminas,spray,285,False,2025-12-23T10:42:55,2026-05-17T15:08:57
+929,Whey Protein Gold,35.56,quemadores,polvo,185,True,2025-10-13T02:02:52,2026-03-09T13:04:26
+930,Zinc Picolinato,53.8,proteinas,geles,385,False,2025-09-13T12:33:23,2025-09-22T02:31:21
+931,Té Verde Egcg,21.444,minerales,tabletas,60,True,2025-12-16T22:15:21,2026-03-03T20:04:56
+932,Omega 3 Premium 5X,35.01,minerales,geles,260,True,2025-07-20T18:05:37,2026-03-02T00:00:54
+933,Proteína Vegana,50.72,creatina,barritas,110,True,2026-05-04T17:39:56,2026-05-17T02:31:54
+934,Gainer Extreme,56.71,termogenicos,liquido,260,True,2025-08-25T06:56:20,2026-01-05T11:59:15
+936,Ashwagandha Ksm-66,52.93,recuperacion,capsulas,110,True,2026-03-26T19:51:48,2026-04-13T22:17:29
+937,Multivitamínico Diario,37.15,aminoacidos,barritas,160,True,2025-09-23T18:06:27,2026-02-01T05:59:50
+938,Bcaa 2:1:1,43.11,post-entreno,capsulas,210,True,2026-05-10T12:21:04,2026-05-14T00:38:14
+939,Arginina Akg,66.22,ganadores de peso,polvo,185,True,2025-11-13T04:27:09,2026-05-25T12:07:57
+941,Glutamina Pura,53.68,recuperacion,liquido,385,True,2025-06-18T01:18:48,2026-01-27T20:57:54
+942,Caseína Nocturna 2X,58.85,creatina,capsulas,10,True,2026-03-16T08:06:52,2026-04-02T18:52:34
+943,Glutamina Pura,30.11,termogenicos,barritas,185,True,2026-05-17T19:09:16,2026-05-25T16:16:51
+945,Melatonina Sueño,33.68,termogenicos,liquido,160,True,2025-07-07T00:12:27,2026-03-26T12:14:24
+946,Arginina Akg,47.74,termogenicos,spray,385,True,2025-08-07T19:34:08,2025-11-10T02:06:12
+947,Caseína Nocturna 7X,40.66,proteinas,polvo,485,True,2025-10-02T01:17:42,2025-10-06T03:18:43
+948,Clorofila Líquida,46.27,creatina,tabletas,185,True,2025-07-29T00:06:27,2025-11-12T21:15:55
+949,Garcinia Cambogia,63.97,termogenicos,geles,260,False,2025-10-10T19:12:39,2025-10-13T21:30:49
+950,Colágeno Hidrolizado,21.444,recuperacion,polvo,385,True,2025-07-26T18:48:07,2025-07-27T23:49:18
+951,Arginina Akg,40.2,creatina,polvo,10,True,2025-06-12T11:04:35,2026-05-03T13:15:35
+952,Recuperador Post-Entreno,26.56,vitaminas,polvo,335,True,2025-11-22T09:27:43,2026-02-03T04:04:29
+953,Zinc Picolinato 1X,60.87,termogenicos,barritas,210,True,2025-09-11T12:04:29,2026-03-20T22:54:44
+954,Proteína Vegana,27.96,aminoacidos,geles,135,True,2025-09-22T08:05:01,2025-10-01T05:24:14
+956,Magnesio Quelado,36.55,proteinas,capsulas,85,True,2026-01-04T14:21:17,2026-04-22T06:54:06
+957,Gainer Extreme,50.05,post-entreno,geles,210,True,2025-12-31T23:51:47,2026-05-23T21:27:10
+958,Bcaa 2:1:1,69.10199999999999,termogenicos,geles,185,True,2025-10-17T22:09:34,2026-02-03T22:23:07
+960,Espirulina,64.0,quemadores,liquido,210,False,2026-02-13T14:22:05,2026-03-01T14:49:56
+961,Proteína Vegana,25.88,vitaminas,polvo,10,True,2025-12-08T11:05:35,2026-04-03T16:19:51
+962,Glutamina Pura 4X,57.7,proteinas,polvo,235,True,2026-04-05T16:12:38,2026-05-14T07:46:56
+963,L-Carnitina Líquida,63.45,ganadores de peso,tabletas,460,True,2026-05-03T23:35:12,2026-05-28T00:33:23
+966,Arginina Akg,27.0,recuperacion,capsulas,360,True,2025-07-01T10:46:50,2026-04-09T10:09:10
+967,Electrolitos Hidratación 10X,56.43,creatina,spray,310,True,2025-09-03T23:12:03,2025-11-22T10:26:52
+968,Beta Alanina,43.71,pre-entreno,barritas,35,True,2026-05-14T11:35:01,2026-05-28T03:00:44
+969,Maca Peruana Orgánica 4X,58.74,recuperacion,capsulas,385,True,2026-05-24T20:37:40,2026-05-28T10:19:15
+970,Creatina Monohidrato,45.15,creatina,barritas,435,True,2025-08-22T11:06:48,2026-02-13T21:06:03
+971,Colágeno Hidrolizado,33.66,termogenicos,geles,35,True,2025-06-27T21:08:50,2026-02-27T08:52:12
+972,Electrolitos Hidratación,68.12,quemadores,polvo,385,True,2026-02-10T05:29:04,2026-05-26T22:20:16
+973,Recuperador Post-Entreno,49.0,aminoacidos,polvo,160,False,2025-07-28T09:14:08,2025-12-13T12:34:10
+974,Zinc Picolinato,35.79,vitaminas,liquido,35,True,2025-09-06T15:40:19,2026-03-04T19:10:30
+975,Citrulina Malato,29.16,pre-entreno,polvo,260,True,2025-07-04T18:32:32,2026-02-08T02:34:17
+976,Tribulus Terrestris 6X,21.444,vitaminas,liquido,335,True,2026-01-13T03:08:12,2026-04-21T19:37:16
+977,Zma Plus,48.94,ganadores de peso,barritas,10,True,2025-07-08T14:14:24,2026-03-18T20:04:03
+978,Citrulina Malato 3X,55.25,proteinas,barritas,410,False,2025-11-05T12:41:33,2026-02-08T00:46:06
+979,Garcinia Cambogia,66.5,termogenicos,liquido,0,True,2025-08-13T02:37:49,2025-08-25T05:59:19
+981,Omega 3 Premium,53.46,detox,capsulas,335,True,2026-04-15T01:42:42,2026-05-04T23:12:04
+982,Whey Protein Gold,55.82,detox,spray,10,True,2026-03-18T23:36:55,2026-05-21T13:02:23
+984,Té Verde Egcg,21.444,vitaminas,spray,135,True,2025-11-07T10:57:45,2026-04-08T06:52:43
+985,Pre-Workout Black 6X,21.59,detox,liquido,0,True,2026-05-24T22:39:03,2026-05-26T18:07:41
+986,5-Htp Estado De Ánimo,48.87,creatina,tabletas,185,True,2026-04-17T01:10:55,2026-05-03T21:05:11
+987,Magnesio Quelado,32.35,pre-entreno,spray,260,True,2025-06-19T15:28:07,2025-09-09T19:15:58
+989,Maca Peruana Orgánica 3X,41.83,quemadores,polvo,10,True,2025-09-26T20:26:28,2025-11-27T09:54:08
+990,Beta Alanina,25.73,creatina,barritas,60,True,2026-03-29T00:14:40,2026-04-30T12:53:50
+991,Melatonina Sueño,30.28,detox,capsulas,485,True,2025-09-28T00:28:13,2026-05-12T06:34:21
+992,Zinc Picolinato,60.4,quemadores,barritas,410,True,2025-12-05T04:02:29,2026-01-23T06:40:39
+993,Melatonina Sueño,68.9,ganadores de peso,geles,235,True,2025-10-20T06:49:53,2026-02-25T06:49:52
+995,Maca Peruana Orgánica,32.31,pre-entreno,liquido,185,True,2025-09-09T12:01:44,2026-03-29T22:00:57
+996,Gainer Extreme,67.4,ganadores de peso,capsulas,185,False,2026-02-15T12:47:24,2026-04-28T14:37:18
+997,Whey Protein Gold,23.04,aminoacidos,spray,285,True,2026-05-20T01:48:53,2026-05-27T18:30:36
+998,Arginina Akg,43.45,minerales,spray,385,True,2026-01-20T00:56:26,2026-03-14T11:57:40
+999,Glutamina Pura,33.31,detox,spray,485,True,2026-02-08T12:24:45,2026-05-03T01:40:14
+1000,Citrulina Malato,28.5,pre-entreno,geles,135,False,2026-05-14T04:25:14,2026-05-23T15:10:45
+1001,Citrulina Malato,32.55,termogenicos,barritas,460,True,2025-06-23T11:34:25,2025-11-20T11:09:13
+1002,Whey Protein Gold,69.10199999999999,ganadores de peso,spray,485,True,2026-04-01T22:46:50,2026-04-23T02:02:34
+1003,Recuperador Post-Entreno,48.84,quemadores,tabletas,310,True,2026-02-15T19:13:42,2026-02-18T22:42:43
+1004,Zma Plus 7X,33.68,creatina,spray,410,True,2025-06-17T00:42:25,2026-03-30T06:04:47
+1005,L-Carnitina Líquida,48.82,post-entreno,tabletas,460,True,2026-03-07T00:03:25,2026-03-31T00:18:48
+1006,Omega 3 Premium,22.84,post-entreno,geles,160,False,2025-11-05T19:03:46,2026-05-18T18:17:56
+1007,Multivitamínico Diario 8X,56.31,quemadores,polvo,135,True,2025-08-10T22:54:51,2026-05-03T05:13:27
+1008,Arginina Akg,37.79,quemadores,geles,485,True,2026-05-19T19:57:48,2026-05-22T11:06:35
+1009,Beta Alanina,37.88,vitaminas,geles,435,True,2025-10-30T23:25:48,2025-12-31T22:18:40

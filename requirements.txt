@@ -11,6 +11,7 @@ cryptography==46.0.5
 cycler==0.12.1
 dnspython==2.8.0
 dotenv==0.9.9
+Faker==40.19.1
 flasgger==0.9.7.1
 Flask==3.1.2
 Flask-Bcrypt==1.0.1

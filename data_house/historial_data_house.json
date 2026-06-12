@@ -1,0 +1,16 @@
+[
+  {
+    "timestamp": "20260612_031821",
+    "fecha": "2026-06-12T03:18:21.592296",
+    "archivo": "data_house/snowflake_schema_20260612_031821.json",
+    "total_registros": 8,
+    "calidad_datos": "No definida"
+  },
+  {
+    "timestamp": "20260612_032109",
+    "fecha": "2026-06-12T03:21:09.556547",
+    "archivo": "data_house/snowflake_schema_20260612_032109.json",
+    "total_registros": 928,
+    "calidad_datos": "Excelente"
+  }
+]

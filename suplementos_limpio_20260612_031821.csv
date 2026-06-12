@@ -1,0 +1,9 @@
+id,nombre,precio,categoria,presentacion,stock,activo,fecha_creacion,fecha_actualizacion
+1,Whey Protein,450.99,proteinas,polvo,50,True,2026-03-19T00:38:34,2026-04-02T03:47:08
+2,L-Carnitina Líquida,290.99,quemadores,polvo,40,True,2026-03-19T00:38:34,2026-04-02T03:43:10
+3,Multivitamínico Completo,240.99,vitaminas,polvo,80,True,2026-03-19T00:38:34,2026-04-02T03:46:51
+5,Garcinia Cambogia,260.9,control_apetito,capsulas,35,True,2026-03-19T00:38:34,2026-04-02T03:45:59
+6,Pre-Entreno Explosivo,490.99,energeticos,polvo,30,True,2026-03-19T00:38:34,2026-04-02T03:46:22
+7,Psyllium Husk,230.9,fibras,polvo,50,True,2026-03-19T00:38:34,2026-04-02T05:13:40
+8,Cardo Mariano,190.9,detox,capsulas,30,True,2026-03-19T00:38:34,2026-05-30T03:19:43
+9,Gomitas Multivitamínicas,190.9,vitaminas,gomitas,80,True,2026-03-19T00:38:34,2026-04-02T03:45:05

@@ -1,0 +1,72 @@
+{
+  "nombre": "Balancea_Data_House",
+  "version": "1.0",
+  "fecha_generacion": "2026-06-12T03:21:09.514085",
+  "descripcion": "Data House con modelo Copo de Nieve",
+  "estructura": {
+    "tabla_hechos": {
+      "nombre": "VENTAS_HECHOS",
+      "tipo": "FACT_TABLE",
+      "descripcion": "Tabla central de hechos",
+      "registros": 928
+    },
+    "dimensiones": [
+      {
+        "nombre": "DIM_PRODUCTO",
+        "tipo": "DIMENSION",
+        "descripcion": "Dimension de productos",
+        "total_registros": 928
+      },
+      {
+        "nombre": "DIM_CATEGORIA",
+        "tipo": "SUB_DIMENSION",
+        "descripcion": "Subdimension de categorias",
+        "dimension_padre": "DIM_PRODUCTO",
+        "total_registros": 15
+      },
+      {
+        "nombre": "DIM_PRESENTACION",
+        "tipo": "SUB_DIMENSION",
+        "descripcion": "Subdimension de presentaciones",
+        "dimension_padre": "DIM_PRODUCTO",
+        "total_registros": 8
+      }
+    ]
+  },
+  "estadisticas": {
+    "total_tablas": 4,
+    "total_dimensiones": 1,
+    "total_subdimensiones": 2,
+    "registros_totales": 928
+  },
+  "limpieza_referencia": {
+    "nulos_originales": {
+      "id": 0.0,
+      "nombre": 0.0,
+      "precio": 0.0,
+      "categoria": 0.0,
+      "presentacion": 0.0,
+      "stock": 0.0,
+      "activo": 0.0,
+      "fecha_creacion": 0.0,
+      "fecha_actualizacion": 0.0
+    },
+    "nulos_despues": {
+      "id": 0,
+      "nombre": 0,
+      "precio": 0,
+      "categoria": 0,
+      "presentacion": 0,
+      "stock": 0,
+      "activo": 0,
+      "fecha_creacion": 0,
+      "fecha_actualizacion": 0
+    },
+    "duplicados_eliminados": 155,
+    "precios_fuera_rango": 94,
+    "stocks_fuera_rango": 0,
+    "registros_iniciales": 1009,
+    "registros_finales": 928,
+    "calidad_datos": "Excelente"
+  }
+}

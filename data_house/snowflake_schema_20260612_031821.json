@@ -1,0 +1,501 @@
+{
+  "nombre": "Balancea_Data_House",
+  "version": "1.0",
+  "fecha_generacion": "2026-06-12T03:18:21.585394",
+  "descripcion": "Data House con modelo Copo de Nieve (Snowflake Schema)",
+  "based_on": "Guía de entrega - Tabla 3",
+  "esquema": {
+    "tabla_hechos": {
+      "nombre": "VENTAS_HECHOS",
+      "tipo": "FACT_TABLE",
+      "descripcion": "Tabla central de hechos - Transacciones de ventas",
+      "metricas": [
+        "total_venta",
+        "cantidad"
+      ],
+      "registros": 8,
+      "data": [
+        {
+          "producto_id": 0,
+          "producto_nombre": "Whey Protein",
+          "precio": 450.99,
+          "cantidad": 1,
+          "total_venta": 450.99,
+          "stock_actual": 50
+        },
+        {
+          "producto_id": 1,
+          "producto_nombre": "L-Carnitina Líquida",
+          "precio": 290.99,
+          "cantidad": 1,
+          "total_venta": 290.99,
+          "stock_actual": 40
+        },
+        {
+          "producto_id": 2,
+          "producto_nombre": "Multivitamínico Completo",
+          "precio": 240.99,
+          "cantidad": 1,
+          "total_venta": 240.99,
+          "stock_actual": 80
+        },
+        {
+          "producto_id": 3,
+          "producto_nombre": "Garcinia Cambogia",
+          "precio": 260.9,
+          "cantidad": 1,
+          "total_venta": 260.9,
+          "stock_actual": 35
+        },
+        {
+          "producto_id": 4,
+          "producto_nombre": "Pre-Entreno Explosivo",
+          "precio": 490.99,
+          "cantidad": 1,
+          "total_venta": 490.99,
+          "stock_actual": 30
+        },
+        {
+          "producto_id": 5,
+          "producto_nombre": "Psyllium Husk",
+          "precio": 230.9,
+          "cantidad": 1,
+          "total_venta": 230.9,
+          "stock_actual": 50
+        },
+        {
+          "producto_id": 6,
+          "producto_nombre": "Cardo Mariano",
+          "precio": 190.9,
+          "cantidad": 1,
+          "total_venta": 190.9,
+          "stock_actual": 30
+        },
+        {
+          "producto_id": 7,
+          "producto_nombre": "Gomitas Multivitamínicas",
+          "precio": 190.9,
+          "cantidad": 1,
+          "total_venta": 190.9,
+          "stock_actual": 80
+        }
+      ]
+    },
+    "dimensiones": [
+      {
+        "nombre": "DIM_PRODUCTO",
+        "tipo": "DIMENSION",
+        "descripcion": "Dimensión de productos - Información de suplementos",
+        "atributos": [
+          "producto_id",
+          "nombre",
+          "precio",
+          "stock"
+        ],
+        "subdimensiones": [
+          "DIM_CATEGORIA",
+          "DIM_PRESENTACION"
+        ],
+        "total_registros": 8,
+        "data": [
+          {
+            "producto_id": 0,
+            "nombre": "Whey Protein",
+            "precio": 450.99,
+            "stock": 50,
+            "categoria": "proteinas",
+            "presentacion": "polvo"
+          },
+          {
+            "producto_id": 1,
+            "nombre": "L-Carnitina Líquida",
+            "precio": 290.99,
+            "stock": 40,
+            "categoria": "quemadores",
+            "presentacion": "polvo"
+          },
+          {
+            "producto_id": 2,
+            "nombre": "Multivitamínico Completo",
+            "precio": 240.99,
+            "stock": 80,
+            "categoria": "vitaminas",
+            "presentacion": "polvo"
+          },
+          {
+            "producto_id": 3,
+            "nombre": "Garcinia Cambogia",
+            "precio": 260.9,
+            "stock": 35,
+            "categoria": "control_apetito",
+            "presentacion": "capsulas"
+          },
+          {
+            "producto_id": 4,
+            "nombre": "Pre-Entreno Explosivo",
+            "precio": 490.99,
+            "stock": 30,
+            "categoria": "energeticos",
+            "presentacion": "polvo"
+          },
+          {
+            "producto_id": 5,
+            "nombre": "Psyllium Husk",
+            "precio": 230.9,
+            "stock": 50,
+            "categoria": "fibras",
+            "presentacion": "polvo"
+          },
+          {
+            "producto_id": 6,
+            "nombre": "Cardo Mariano",
+            "precio": 190.9,
+            "stock": 30,
+            "categoria": "detox",
+            "presentacion": "capsulas"
+          },
+          {
+            "producto_id": 7,
+            "nombre": "Gomitas Multivitamínicas",
+            "precio": 190.9,
+            "stock": 80,
+            "categoria": "vitaminas",
+            "presentacion": "gomitas"
+          }
+        ]
+      },
+      {
+        "nombre": "DIM_CATEGORIA",
+        "tipo": "SUB_DIMENSION",
+        "descripcion": "Subdimensión de categorías - Jerarquía de productos",
+        "dimension_padre": "DIM_PRODUCTO",
+        "atributos": [
+          "categoria_id",
+          "nombre_categoria"
+        ],
+        "total_registros": 7,
+        "data": [
+          {
+            "categoria_id": 0,
+            "nombre_categoria": "control_apetito"
+          },
+          {
+            "categoria_id": 1,
+            "nombre_categoria": "energeticos"
+          },
+          {
+            "categoria_id": 2,
+            "nombre_categoria": "vitaminas"
+          },
+          {
+            "categoria_id": 3,
+            "nombre_categoria": "proteinas"
+          },
+          {
+            "categoria_id": 4,
+            "nombre_categoria": "detox"
+          },
+          {
+            "categoria_id": 5,
+            "nombre_categoria": "quemadores"
+          },
+          {
+            "categoria_id": 6,
+            "nombre_categoria": "fibras"
+          }
+        ]
+      },
+      {
+        "nombre": "DIM_PRESENTACION",
+        "tipo": "SUB_DIMENSION",
+        "descripcion": "Subdimensión de presentaciones - Formato del producto",
+        "dimension_padre": "DIM_PRODUCTO",
+        "atributos": [
+          "presentacion_id",
+          "tipo_presentacion"
+        ],
+        "total_registros": 3,
+        "data": [
+          {
+            "presentacion_id": 0,
+            "tipo_presentacion": "polvo"
+          },
+          {
+            "presentacion_id": 1,
+            "tipo_presentacion": "gomitas"
+          },
+          {
+            "presentacion_id": 2,
+            "tipo_presentacion": "capsulas"
+          }
+        ]
+      },
+      {
+        "nombre": "DIM_TIEMPO",
+        "tipo": "DIMENSION",
+        "descripcion": "Dimensión temporal - Jerarquía de fechas",
+        "atributos": [
+          "tiempo_id",
+          "fecha",
+          "año",
+          "mes",
+          "dia"
+        ],
+        "subdimensiones": [],
+        "total_registros": 365,
+        "data": [
+          {
+            "tiempo_id": 0,
+            "fecha": "2024-01-01",
+            "año": 2024,
+            "mes": 1,
+            "dia": 1
+          },
+          {
+            "tiempo_id": 1,
+            "fecha": "2024-02-02",
+            "año": 2024,
+            "mes": 2,
+            "dia": 2
+          },
+          {
+            "tiempo_id": 2,
+            "fecha": "2024-03-03",
+            "año": 2024,
+            "mes": 3,
+            "dia": 3
+          },
+          {
+            "tiempo_id": 3,
+            "fecha": "2024-04-04",
+            "año": 2024,
+            "mes": 4,
+            "dia": 4
+          },
+          {
+            "tiempo_id": 4,
+            "fecha": "2024-05-05",
+            "año": 2024,
+            "mes": 5,
+            "dia": 5
+          },
+          {
+            "tiempo_id": 5,
+            "fecha": "2024-06-06",
+            "año": 2024,
+            "mes": 6,
+            "dia": 6
+          },
+          {
+            "tiempo_id": 6,
+            "fecha": "2024-07-07",
+            "año": 2024,
+            "mes": 7,
+            "dia": 7
+          },
+          {
+            "tiempo_id": 7,
+            "fecha": "2024-08-08",
+            "año": 2024,
+            "mes": 8,
+            "dia": 8
+          },
+          {
+            "tiempo_id": 8,
+            "fecha": "2024-09-09",
+            "año": 2024,
+            "mes": 9,
+            "dia": 9
+          },
+          {
+            "tiempo_id": 9,
+            "fecha": "2024-10-10",
+            "año": 2024,
+            "mes": 10,
+            "dia": 10
+          },
+          {
+            "tiempo_id": 10,
+            "fecha": "2024-11-11",
+            "año": 2024,
+            "mes": 11,
+            "dia": 11
+          },
+          {
+            "tiempo_id": 11,
+            "fecha": "2024-12-12",
+            "año": 2024,
+            "mes": 12,
+            "dia": 12
+          }
+        ]
+      }
+    ],
+    "relaciones": [
+      {
+        "tabla_origen": "VENTAS_HECHOS",
+        "tabla_destino": "DIM_PRODUCTO",
+        "campo_origen": "producto_id",
+        "campo_destino": "producto_id",
+        "cardinalidad": "N:1",
+        "descripcion": "Cada venta corresponde a un producto"
+      },
+      {
+        "tabla_origen": "DIM_PRODUCTO",
+        "tabla_destino": "DIM_CATEGORIA",
+        "campo_origen": "categoria",
+        "campo_destino": "nombre_categoria",
+        "cardinalidad": "N:1",
+        "descripcion": "Cada producto pertenece a una categoría"
+      },
+      {
+        "tabla_origen": "DIM_PRODUCTO",
+        "tabla_destino": "DIM_PRESENTACION",
+        "campo_origen": "presentacion",
+        "campo_destino": "tipo_presentacion",
+        "cardinalidad": "N:1",
+        "descripcion": "Cada producto tiene una presentación"
+      }
+    ]
+  },
+  "estadisticas": {
+    "total_tablas": 5,
+    "total_dimensiones": 2,
+    "total_subdimensiones": 2,
+    "total_relaciones": 3,
+    "registros_totales": 8
+  },
+  "limpieza_referencia": {
+    "datos_limpios": [
+      {
+        "id": 1,
+        "nombre": "Whey Protein",
+        "precio": 450.99,
+        "categoria": "proteinas",
+        "presentacion": "polvo",
+        "stock": 50,
+        "activo": true,
+        "fecha_creacion": "2026-03-19T00:38:34",
+        "fecha_actualizacion": "2026-04-02T03:47:08"
+      },
+      {
+        "id": 2,
+        "nombre": "L-Carnitina Líquida",
+        "precio": 290.99,
+        "categoria": "quemadores",
+        "presentacion": "polvo",
+        "stock": 40,
+        "activo": true,
+        "fecha_creacion": "2026-03-19T00:38:34",
+        "fecha_actualizacion": "2026-04-02T03:43:10"
+      },
+      {
+        "id": 3,
+        "nombre": "Multivitamínico Completo",
+        "precio": 240.99,
+        "categoria": "vitaminas",
+        "presentacion": "polvo",
+        "stock": 80,
+        "activo": true,
+        "fecha_creacion": "2026-03-19T00:38:34",
+        "fecha_actualizacion": "2026-04-02T03:46:51"
+      },
+      {
+        "id": 5,
+        "nombre": "Garcinia Cambogia",
+        "precio": 260.9,
+        "categoria": "control_apetito",
+        "presentacion": "capsulas",
+        "stock": 35,
+        "activo": true,
+        "fecha_creacion": "2026-03-19T00:38:34",
+        "fecha_actualizacion": "2026-04-02T03:45:59"
+      },
+      {
+        "id": 6,
+        "nombre": "Pre-Entreno Explosivo",
+        "precio": 490.99,
+        "categoria": "energeticos",
+        "presentacion": "polvo",
+        "stock": 30,
+        "activo": true,
+        "fecha_creacion": "2026-03-19T00:38:34",
+        "fecha_actualizacion": "2026-04-02T03:46:22"
+      },
+      {
+        "id": 7,
+        "nombre": "Psyllium Husk",
+        "precio": 230.9,
+        "categoria": "fibras",
+        "presentacion": "polvo",
+        "stock": 50,
+        "activo": true,
+        "fecha_creacion": "2026-03-19T00:38:34",
+        "fecha_actualizacion": "2026-04-02T05:13:40"
+      },
+      {
+        "id": 8,
+        "nombre": "Cardo Mariano",
+        "precio": 190.9,
+        "categoria": "detox",
+        "presentacion": "capsulas",
+        "stock": 30,
+        "activo": true,
+        "fecha_creacion": "2026-03-19T00:38:34",
+        "fecha_actualizacion": "2026-05-30T03:19:43"
+      },
+      {
+        "id": 9,
+        "nombre": "Gomitas Multivitamínicas",
+        "precio": 190.9,
+        "categoria": "vitaminas",
+        "presentacion": "gomitas",
+        "stock": 80,
+        "activo": true,
+        "fecha_creacion": "2026-03-19T00:38:34",
+        "fecha_actualizacion": "2026-04-02T03:45:05"
+      }
+    ],
+    "resumen": {
+      "nulos_originales": {
+        "id": 0.0,
+        "nombre": 0.0,
+        "precio": 0.0,
+        "categoria": 0.0,
+        "presentacion": 0.0,
+        "stock": 0.0,
+        "activo": 0.0,
+        "fecha_creacion": 0.0,
+        "fecha_actualizacion": 0.0
+      },
+      "nulos_despues": {
+        "id": 0,
+        "nombre": 0,
+        "precio": 0,
+        "categoria": 0,
+        "presentacion": 0,
+        "stock": 0,
+        "activo": 0,
+        "fecha_creacion": 0,
+        "fecha_actualizacion": 0
+      },
+      "duplicados_eliminados": "155",
+      "precios_fuera_rango": 920,
+      "stocks_fuera_rango": 0,
+      "registros_iniciales": 1009,
+      "registros_finales": 8,
+      "calidad_datos": "Mala",
+      "columnas": [
+        "id",
+        "nombre",
+        "precio",
+        "categoria",
+        "presentacion",
+        "stock",
+        "activo",
+        "fecha_creacion",
+        "fecha_actualizacion"
+      ]
+    }
+  }
+}
