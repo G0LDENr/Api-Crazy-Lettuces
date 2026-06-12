@@ -1,3 +1,4 @@
+# Controllers/diagramaController.py
 from flask import jsonify, send_file
 from config import DB_TYPE, db_sql
 from Models.User import UserSQL
@@ -12,6 +13,7 @@ from datetime import datetime
 import os
 import json
 import tempfile
+import traceback
 
 # ============================================
 # FUNCIÓN PARA GENERAR DIAGRAMA DE MYSQL
@@ -31,7 +33,6 @@ def generar_diagrama_mysql():
             'relaciones': []
         }
         
-        # Mapeo de modelos SQLAlchemy
         modelos = {
             'users': UserSQL,
             'direcciones': DireccionSQL,
@@ -57,7 +58,6 @@ def generar_diagrama_mysql():
                 'foreign_keys': []
             }
             
-            # Columnas
             for col in columnas:
                 info_tabla['columnas'].append({
                     'nombre': col['name'],
@@ -66,7 +66,6 @@ def generar_diagrama_mysql():
                     'default': str(col['default']) if col['default'] else None
                 })
             
-            # Foreign Keys
             for fk in fks:
                 for i, col in enumerate(fk['constrained_columns']):
                     relacion = {
@@ -79,7 +78,6 @@ def generar_diagrama_mysql():
                     info_tabla['foreign_keys'].append(relacion)
                     diagrama['relaciones'].append(relacion)
             
-            # Total registros
             try:
                 modelo = modelos.get(tabla)
                 if modelo:
@@ -121,7 +119,6 @@ def generar_diagrama_mongodb():
         relaciones_vistas = set()
         
         for coleccion in colecciones:
-            # Estadísticas
             try:
                 stats = db_mongo.db.command('collstats', coleccion)
                 tamanio_mb = round(stats.get('size', 0) / (1024 * 1024), 2)
@@ -217,8 +214,8 @@ def generar_diagrama():
                 'success': False,
                 'message': diagrama['error']
             }), 500
+        
         try:
-            import tempfile
             temp_dir = tempfile.gettempdir()
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"diagrama_{DB_TYPE}_{timestamp}.json"
@@ -412,7 +409,7 @@ def get_database_stats():
                         'error': str(e)
                     })
             
-        else:  # MongoDB
+        else:
             from config import db_mongo
             colecciones = db_mongo.db.list_collection_names()
             
@@ -467,7 +464,6 @@ def comparar_estructuras():
         estructura_mongo = None
         errores = []
         
-        # Intentar MySQL
         try:
             inspector = db_sql.inspect(db_sql.engine)
             tablas = inspector.get_table_names()
@@ -476,7 +472,6 @@ def comparar_estructuras():
         except Exception as e:
             errores.append(f"MySQL: {str(e)}")
         
-        # Intentar MongoDB
         try:
             colecciones = db_mongo.db.list_collection_names()
             if colecciones:
@@ -486,8 +481,8 @@ def comparar_estructuras():
         
         comparacion = {
             'fecha': datetime.now().isoformat(),
-            'mysql_disponible': estructura_mysql is not None,
-            'mongodb_disponible': estructura_mongo is not None,
+            'mysql_disponible': estructura_mysql is not None and 'error' not in estructura_mysql,
+            'mongodb_disponible': estructura_mongo is not None and 'error' not in estructura_mongo,
             'errores': errores
         }
         
@@ -509,6 +504,461 @@ def comparar_estructuras():
             'success': True,
             'comparacion': comparacion
         }), 200
+        
+    except Exception as e:
+        print(f"❌ Error en comparar_estructuras: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al comparar estructuras: {str(e)}'
+        }), 500
+
+
+# ============================================
+# FUNCIONES PARA DIAGRAMA DE COPO DE NIEVE (CORREGIDAS)
+# ============================================
+
+def generar_diagrama_copo_nieve():
+    """Generar diagrama de copo de nieve (Snowflake Schema)"""
+    try:
+        print(f"🎨 Generando diagrama de COPO DE NIEVE para DB_TYPE: {DB_TYPE}")
+        
+        if DB_TYPE == 'mysql':
+            diagrama_base = generar_diagrama_mysql()
+            diagrama = construir_diagrama_copo_nieve_mysql(diagrama_base)
+        else:
+            diagrama_base = generar_diagrama_mongodb()
+            diagrama = construir_diagrama_copo_nieve_mongodb(diagrama_base)
+        
+        if 'error' in diagrama:
+            return jsonify({
+                'success': False,
+                'message': diagrama['error']
+            }), 500
+        
+        return jsonify({
+            'success': True,
+            'message': f'Diagrama de COPO DE NIEVE para {DB_TYPE.upper()} generado',
+            'data': diagrama
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error en generar_diagrama_copo_nieve: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
+
+def construir_diagrama_copo_nieve_mysql(diagrama_base):
+    """Construir estructura de copo de nieve a partir del diagrama ER MySQL"""
+    try:
+        # Mapeo de tablas a dimensiones
+        dimension_mapping = {
+            'users': {
+                'nombre': 'dim_usuarios',
+                'descripcion': 'Dimensión de usuarios - Información demográfica',
+                'atributos': ['id', 'nombre', 'correo', 'telefono', 'sexo', 'edad', 'tipo_cuenta'],
+                'jerarquias': {
+                    'demografia': ['tipo_cuenta', 'sexo', 'grupo_edad']
+                }
+            },
+            'direcciones': {
+                'nombre': 'dim_ubicacion',
+                'descripcion': 'Dimensión geográfica - Ubicaciones',
+                'atributos': ['id', 'calle', 'colonia', 'ciudad', 'estado', 'codigo_postal'],
+                'jerarquias': {
+                    'geografia': ['codigo_postal', 'colonia', 'ciudad', 'estado']
+                }
+            },
+            'suplementos': {
+                'nombre': 'dim_productos',
+                'descripcion': 'Dimensión de productos - Suplementos',
+                'atributos': ['id', 'nombre', 'descripcion', 'precio', 'stock', 'categoria'],
+                'jerarquias': {
+                    'categoria': ['categoria', 'subcategoria', 'producto']
+                }
+            },
+            'tarjetas': {
+                'nombre': 'dim_pagos',
+                'descripcion': 'Dimensión de pagos - Métodos de pago',
+                'atributos': ['id', 'tipo', 'ultimos_digitos', 'nombre_titular'],
+                'jerarquias': {
+                    'tipo_pago': ['tipo', 'banco']
+                }
+            },
+            'dietas': {
+                'nombre': 'dim_dietas',
+                'descripcion': 'Dimensión de dietas - Planes nutricionales',
+                'atributos': ['id', 'nombre', 'objetivo', 'calorias_totales', 'dificultad'],
+                'jerarquias': {
+                    'objetivo': ['objetivo', 'dificultad']
+                }
+            },
+            'dietas_usuario': {
+                'nombre': 'dim_asignacion_dietas',
+                'descripcion': 'Dimensión de asignación de dietas a usuarios',
+                'atributos': ['id', 'user_id', 'dieta_id', 'fecha_asignacion'],
+                'jerarquias': {}
+            },
+            'seguimiento_dieta': {
+                'nombre': 'dim_seguimiento_dieta',
+                'descripcion': 'Sub-dimensión de seguimiento de dietas',
+                'atributos': ['id', 'dieta_usuario_id', 'fecha', 'cumplimiento', 'progreso'],
+                'jerarquias': {}
+            },
+            'notificaciones': {
+                'nombre': 'dim_notificaciones',
+                'descripcion': 'Dimensión de notificaciones',
+                'atributos': ['id', 'user_id', 'titulo', 'mensaje', 'fecha_envio'],
+                'jerarquias': {
+                    'tiempo': ['fecha_envio']
+                }
+            },
+            'backups': {
+                'nombre': 'dim_backups',
+                'descripcion': 'Dimensión de respaldos',
+                'atributos': ['id', 'user_id', 'fecha_creacion', 'tamaño', 'tipo'],
+                'jerarquias': {
+                    'tiempo': ['fecha_creacion']
+                }
+            }
+        }
+        
+        # Construir dimensiones
+        dimensions = []
+        tabla_hechos = None
+        
+        for tabla in diagrama_base.get('tablas', []):
+            nombre_tabla = tabla['nombre']
+            
+            # Identificar tabla de hechos (fact table)
+            if nombre_tabla == 'ordenes':
+                tabla_hechos = {
+                    'nombre': nombre_tabla,
+                    'tipo': 'FACT_TABLE',
+                    'descripcion': 'Tabla de hechos - Contiene las transacciones de órdenes',
+                    'metricas': ['total', 'cantidad', 'fecha_orden'],
+                    'total_registros': tabla.get('total_registros', 0)
+                }
+            
+            # Crear dimensión si está en el mapping
+            if nombre_tabla in dimension_mapping:
+                dim_info = dimension_mapping[nombre_tabla]
+                dimensions.append({
+                    'nombre': dim_info['nombre'],
+                    'tabla_fisica': nombre_tabla,
+                    'tipo': 'DIMENSION',
+                    'descripcion': dim_info['descripcion'],
+                    'atributos': dim_info['atributos'],
+                    'jerarquias': dim_info['jerarquias'],
+                    'total_registros': tabla.get('total_registros', 0)
+                })
+        
+        # Construir relaciones
+        relaciones = []
+        for dim in dimensions:
+            relaciones.append({
+                'tipo': 'FACT_TO_DIMENSION',
+                'origen': 'ordenes',
+                'destino': dim['nombre'],
+                'cardinalidad': 'N:1',
+                'join': f"ordenes.{dim['tabla_fisica']}_id = {dim['tabla_fisica']}.id"
+            })
+        
+        # Sub-dimensiones (para seguimiento_dieta)
+        sub_dimensions = []
+        for tabla in diagrama_base.get('tablas', []):
+            if tabla['nombre'] == 'seguimiento_dieta':
+                sub_dimensions.append({
+                    'nombre': 'dim_seguimiento',
+                    'tabla_fisica': 'seguimiento_dieta',
+                    'tipo': 'SUB_DIMENSION',
+                    'descripcion': 'Sub-dimensión de seguimiento de dietas',
+                    'dimension_padre': 'dim_dietas',
+                    'atributos': ['fecha', 'cumplimiento', 'progreso', 'notas'],
+                    'total_registros': tabla.get('total_registros', 0)
+                })
+                relaciones.append({
+                    'tipo': 'DIMENSION_TO_SUB_DIMENSION',
+                    'origen': 'dim_dietas',
+                    'destino': 'dim_seguimiento',
+                    'cardinalidad': '1:N',
+                    'join': 'dim_dietas.id = dim_seguimiento.dieta_id'
+                })
+        
+        # Construir diagrama final
+        diagrama_copo = {
+            'tipo_diagrama': 'SNOWFLAKE_SCHEMA',
+            'tipo_bd': 'MySQL',
+            'fecha_generacion': datetime.now().isoformat(),
+            'descripcion': 'Diagrama de Copo de Nieve - Organización de datos en hechos y dimensiones',
+            'total_tablas': diagrama_base.get('total_tablas', 0),
+            'tablas': diagrama_base.get('tablas', []),
+            'estructura': {
+                'fact_table': tabla_hechos,
+                'dimensions': dimensions,
+                'sub_dimensions': sub_dimensions,
+                'relaciones': relaciones
+            },
+            'metricas_sugeridas': {
+                'kpi_principales': [
+                    {
+                        'nombre': 'Total Ventas',
+                        'descripcion': 'Suma total de todas las órdenes',
+                        'calculo': 'SUM(ordenes.total)',
+                        'dimensiones_relacionadas': ['dim_tiempo', 'dim_usuarios']
+                    },
+                    {
+                        'nombre': 'Órdenes por Usuario',
+                        'descripcion': 'Promedio de órdenes por usuario',
+                        'calculo': 'COUNT(ordenes.id) / COUNT(DISTINCT ordenes.user_id)',
+                        'dimensiones_relacionadas': ['dim_usuarios']
+                    },
+                    {
+                        'nombre': 'Productos Más Vendidos',
+                        'descripcion': 'Top productos por cantidad vendida',
+                        'calculo': 'SUM(ordenes.cantidad) GROUP BY suplemento_id',
+                        'dimensiones_relacionadas': ['dim_productos']
+                    }
+                ]
+            },
+            'consultas_ejemplo': [
+                {
+                    'nombre': 'Ventas por tipo de usuario',
+                    'sql': """
+                        SELECT u.tipo_cuenta, COUNT(o.id) as ordenes, SUM(o.total) as ventas
+                        FROM ordenes o
+                        JOIN users u ON o.user_id = u.id
+                        GROUP BY u.tipo_cuenta
+                    """
+                },
+                {
+                    'nombre': 'Productos más vendidos por región',
+                    'sql': """
+                        SELECT d.estado, s.nombre, SUM(o.cantidad) as unidades
+                        FROM ordenes o
+                        JOIN suplementos s ON o.suplemento_id = s.id
+                        JOIN direcciones d ON o.direccion_id = d.id
+                        GROUP BY d.estado, s.id
+                    """
+                }
+            ]
+        }
+        
+        return diagrama_copo
+        
+    except Exception as e:
+        print(f"Error construyendo diagrama copo nieve MySQL: {e}")
+        traceback.print_exc()
+        return {'error': str(e), 'tipo_diagrama': 'SNOWFLAKE_SCHEMA', 'tipo_bd': 'MySQL'}
+
+
+def construir_diagrama_copo_nieve_mongodb(diagrama_base):
+    """Construir estructura de copo de nieve a partir del diagrama MongoDB"""
+    try:
+        dimension_mapping = {
+            'users': {
+                'nombre': 'dim_usuarios',
+                'descripcion': 'Dimensión de usuarios',
+                'atributos': ['nombre', 'correo', 'tipo_cuenta', 'edad']
+            },
+            'suplementos': {
+                'nombre': 'dim_productos',
+                'descripcion': 'Dimensión de productos',
+                'atributos': ['nombre', 'precio', 'categoria', 'stock']
+            },
+            'direcciones': {
+                'nombre': 'dim_ubicacion',
+                'descripcion': 'Dimensión geográfica',
+                'atributos': ['calle', 'colonia', 'ciudad', 'estado', 'codigo_postal']
+            }
+        }
+        
+        dimensions = []
+        
+        for coleccion in diagrama_base.get('colecciones', []):
+            nombre_coleccion = coleccion['nombre']
+            if nombre_coleccion in dimension_mapping:
+                dim_info = dimension_mapping[nombre_coleccion]
+                dimensions.append({
+                    'nombre': dim_info['nombre'],
+                    'coleccion_fisica': nombre_coleccion,
+                    'tipo': 'DIMENSION',
+                    'descripcion': dim_info['descripcion'],
+                    'atributos': dim_info['atributos'],
+                    'total_documentos': coleccion.get('total_documentos', 0)
+                })
+        
+        diagrama_copo = {
+            'tipo_diagrama': 'SNOWFLAKE_SCHEMA',
+            'tipo_bd': 'MongoDB',
+            'fecha_generacion': datetime.now().isoformat(),
+            'descripcion': 'Diagrama de Copo de Nieve para MongoDB',
+            'total_colecciones': diagrama_base.get('total_colecciones', 0),
+            'colecciones': diagrama_base.get('colecciones', []),
+            'estructura': {
+                'fact_collection': {
+                    'nombre': 'ordenes',
+                    'tipo': 'FACT_COLLECTION',
+                    'descripcion': 'Colección de hechos - Transacciones',
+                    'metricas': ['total', 'cantidad', 'fecha_orden']
+                },
+                'dimensions': dimensions,
+                'sub_dimensions': [],
+                'relaciones': [
+                    {
+                        'tipo': 'FACT_TO_DIMENSION',
+                        'origen': 'ordenes',
+                        'destino': dim['nombre'],
+                        'cardinalidad': 'N:1',
+                        'implementacion': 'Referencia por ObjectId'
+                    } for dim in dimensions
+                ]
+            }
+        }
+        
+        return diagrama_copo
+        
+    except Exception as e:
+        print(f"Error construyendo diagrama copo nieve MongoDB: {e}")
+        traceback.print_exc()
+        return {'error': str(e), 'tipo_diagrama': 'SNOWFLAKE_SCHEMA', 'tipo_bd': 'MongoDB'}
+
+
+def exportar_diagrama_copo_nieve_json():
+    """Exportar diagrama copo nieve como JSON"""
+    try:
+        if DB_TYPE == 'mysql':
+            diagrama_base = generar_diagrama_mysql()
+            diagrama = construir_diagrama_copo_nieve_mysql(diagrama_base)
+        else:
+            diagrama_base = generar_diagrama_mongodb()
+            diagrama = construir_diagrama_copo_nieve_mongodb(diagrama_base)
+        
+        if 'error' in diagrama:
+            return jsonify({
+                'success': False,
+                'message': diagrama['error']
+            }), 500
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
+            json.dump(diagrama, f, indent=2, default=str)
+            temp_path = f.name
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"diagrama_copo_nieve_{DB_TYPE}_{timestamp}.json"
+        
+        return send_file(
+            temp_path,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/json'
+        )
+        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
+
+def exportar_diagrama_copo_nieve_sql():
+    """Exportar diagrama copo nieve como SQL"""
+    try:
+        if DB_TYPE != 'mysql':
+            return jsonify({
+                'success': False,
+                'message': 'SQL solo disponible para MySQL'
+            }), 400
+        
+        diagrama = construir_diagrama_copo_nieve_mysql(generar_diagrama_mysql())
+        
+        if 'error' in diagrama:
+            return jsonify({
+                'success': False,
+                'message': diagrama['error']
+            }), 500
+        
+        sql_lines = [
+            "-- ===========================================",
+            f"-- DIAGRAMA DE COPO DE NIEVE (SNOWFLAKE SCHEMA)",
+            f"-- Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "-- ===========================================",
+            "",
+            "-- ===========================================",
+            "-- TABLA DE HECHOS (FACT TABLE)",
+            "-- ===========================================",
+            "",
+            "CREATE OR REPLACE VIEW vista_hechos_ordenes AS",
+            "SELECT ",
+            "    id as orden_id,",
+            "    user_id,",
+            "    suplemento_id,",
+            "    direccion_id,",
+            "    total,",
+            "    cantidad,",
+            "    fecha_orden,",
+            "    YEAR(fecha_orden) as anio,",
+            "    MONTH(fecha_orden) as mes,",
+            "    DATE(fecha_orden) as fecha",
+            "FROM ordenes;",
+            "",
+            "-- ===========================================",
+            "-- VISTA DE COPO DE NIEVE",
+            "-- ===========================================",
+            "",
+            "CREATE OR REPLACE VIEW vista_copo_nieve AS",
+            "SELECT ",
+            "    o.orden_id,",
+            "    o.total,",
+            "    o.cantidad,",
+            "    o.fecha_orden,",
+            "    o.anio,",
+            "    o.mes,",
+            "    u.nombre as usuario_nombre,",
+            "    u.tipo_cuenta,",
+            "    u.edad,",
+            "    s.nombre as producto_nombre,",
+            "    s.categoria,",
+            "    s.precio,",
+            "    d.estado,",
+            "    d.ciudad",
+            "FROM vista_hechos_ordenes o",
+            "LEFT JOIN users u ON o.user_id = u.id",
+            "LEFT JOIN suplementos s ON o.suplemento_id = s.id",
+            "LEFT JOIN direcciones d ON o.direccion_id = d.id;",
+            "",
+            "-- ===========================================",
+            "-- CONSULTAS DE EJEMPLO",
+            "-- ===========================================",
+            "",
+            "-- Ventas por tipo de usuario y mes",
+            "SELECT tipo_cuenta, anio, mes, SUM(total) as ventas, COUNT(*) as ordenes",
+            "FROM vista_copo_nieve",
+            "GROUP BY tipo_cuenta, anio, mes;",
+            "",
+            "-- Productos más vendidos por región",
+            "SELECT estado, producto_nombre, SUM(cantidad) as unidades, SUM(total) as ingresos",
+            "FROM vista_copo_nieve",
+            "GROUP BY estado, producto_nombre",
+            "ORDER BY ingresos DESC;"
+        ]
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False, encoding='utf-8') as f:
+            f.write('\n'.join(sql_lines))
+            temp_path = f.name
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"diagrama_copo_nieve_{DB_TYPE}_{timestamp}.sql"
+        
+        return send_file(
+            temp_path,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/sql'
+        )
         
     except Exception as e:
         print(f"❌ Error: {e}")

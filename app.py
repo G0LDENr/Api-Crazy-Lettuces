@@ -125,7 +125,7 @@ CORS(app,
 
 # Configurar Swagger
 app.config['SWAGGER'] = {
-    'title': 'API Diet Lettuces',
+    'title': 'API balancea',
     'uiversion': 3,
     'specs_route': '/docs/',
     'specs': [{
